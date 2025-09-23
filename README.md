@@ -7,23 +7,19 @@ The data qubit modules are fixed while the check qubit modules are equipped with
 This enables all required interactions for the syndrome extraction circuits of the BB code, which we implement using algorithm 2 of [[2]](https://arxiv.org/pdf/2508.01879).
 This implements X checks first then Z checks.
 
-## Bivariate Bicycle (BB) Code
+## Bivariate Bicycle Code
 
-A BB code [[1]](https://www.nature.com/articles/s41586-024-07107-7.pdf) is defined by the parity check matrices:
+ A BB code [[1]](https://www.nature.com/articles/s41586-024-07107-7.pdf) is defined by the parity check matrices
 
-$$
-H_x = [A \mid B] \\
-H_z = [B^T \mid A^T]
-$$
+$$H_x = [A|B] \\
+H_z = [B^T|A^T]$$
 
-where $A$ and $B$ are (matrix) polynomials of the variables:
+where $A$ and $B$ are (matrix) polynomials of the variables
 
-$$
-x = S_l \otimes \mathbb{1}_m \\
-y = \mathbb{1}_l \otimes S_m
-$$
+$$x = S_l \otimes \mathbb{1}_m\\
+y = \mathbb{1}_l \otimes S_m$$
 
-where $S_j$ is the cyclic matrix of dimension $j \times j$, e.g.
+where $S_j$ is the cyclic matrix of dimension $j\times j$, e.g.
 
 $$
 S_3 =
@@ -33,5 +29,3 @@ S_3 =
 1 & 0 & 0
 \end{bmatrix}
 $$
-
----
