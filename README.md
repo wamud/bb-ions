@@ -13,8 +13,8 @@ This implements X checks first then Z checks.
 
 $$
 \begin{aligned}
-H_x = [A|B] \\
-H_z = [B^T|A^T]
+H_x &= [A|B] \\
+H_z &= [B^T|A^T]
 \end{aligned}
 $$
 
@@ -22,8 +22,8 @@ where $A$ and $B$ are (matrix) polynomials of the variables
 
 $$
 \begin{aligned}
-x = S_l \otimes \mathbb{1}_m\\
-y = \mathbb{1}_l \otimes S_m
+x &= S_l \otimes \mathbb{1}_m\\
+y &= \mathbb{1}_l \otimes S_m
 \end{aligned}
 $$
 
