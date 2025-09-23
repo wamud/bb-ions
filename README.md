@@ -5,9 +5,11 @@ The ion trap architecture comprises data qubit modules and check qubit modules a
 When a data qubit module is aligned with a check qubit module, forming a pair, their qubits can interact.
 The data qubit modules are fixed while the check qubit modules are equipped with a cyclic shift.
 This enables all required interactions for the syndrome extraction circuits of the BB code, which we implement using algorithm 2 of [[2]](https://arxiv.org/pdf/2508.01879).
-This implements X checks first, performing the required CNOTs and measuring the check qubits, then Z checks.
+This implements X checks first then Z checks.
 
-# Bivariate Bicycle (BB) Code
+# Background:
+
+## Bivariate Bicycle (BB) Code
 
 A BB code is defined by the parity check matrices:
 
