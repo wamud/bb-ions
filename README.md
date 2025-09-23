@@ -7,11 +7,9 @@ The data qubit modules are fixed while the check qubit modules are equipped with
 This enables all required interactions for the syndrome extraction circuits of the BB code, which we implement using algorithm 2 of [[2]](https://arxiv.org/pdf/2508.01879).
 This implements X checks first then Z checks.
 
-# Background:
-
 ## Bivariate Bicycle (BB) Code
 
-A BB code is defined by the parity check matrices:
+A BB code [[1]](https://www.nature.com/articles/s41586-024-07107-7.pdf) is defined by the parity check matrices:
 
 $$
 H_x = [A \mid B] \\
