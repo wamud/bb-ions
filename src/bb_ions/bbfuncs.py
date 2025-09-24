@@ -1,10 +1,7 @@
 '''A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate Hx and Hz parity check matrices. 
-These functions are for constructing and verifying the parity check matrices and logical operators of a BB code.'''
-
+These functions are for constructing the parity check matrices of a BB code.'''
 
 import numpy as np
-
-
 
 '''make_s
 makes a cyclic matrix S. This is an idenity matrix with every 1 cyclically shifted to the right by one'''
@@ -19,7 +16,7 @@ def make_s(dim):
 '''make_x
 Makes the matrix x, which is x := S_l ⊗ I_m'''
 def make_x(l, m):
-
+4
   s_l = make_s(l)
   ident_m = np.eye(m, dtype = int)
 
@@ -111,37 +108,6 @@ def make_ones_positions_dict(A1, A2, A3, B1, B2, B3):
 
   return ones_positions_dict
 
-
-# Using autqec
-
-def find_logical_ops_and_assert_anticommute(n, k, Hx, Hz):
-
-  zeros = np.zeros_like(Hx)
-  H_symp = np.array(np.vstack((np.hstack((Hx,zeros)),np.hstack((zeros,Hz)))),dtype=int)
-
-  H_symp_rref, _, transform_rows, transform_cols = rref_mod2(H_symp)
-  H_symp_rref = H_symp_rref[~np.all(H_symp_rref == 0, axis=1)]
-  H_symp_rref_og_basis = H_symp_rref@inv_mod2(transform_cols)
-  assert H_symp_rref_og_basis.shape[0] == n-k
-  assert H_symp_rref_og_basis.shape[1] == 2*n
-
-  G, LX_symplectic, LZ_symplectic, D = compute_standard_form(H_symp_rref_og_basis)
-
-  # We have a CSS code so cut off the Z and X parts of the symplectic representations of Lx and Lz:
-  Lx = LX_symplectic[:, :n]
-  Lz = LZ_symplectic[:, n:]
-
-  # Verify anticommutation of logical operators:
-  anticommute_matrix = (Lx @ Lz.T) % 2
-  ident_matrix = np.eye(Lx.shape[0])
-
-  # Assert that the anticommute matrix is the identity:
-  assert(np.array_equal(anticommute_matrix, ident_matrix)) 
-  ## Actually doesn't need to be exactly identity to mean they all anticommute (up to being
-  #  multiplied by eachother), a binary matrix of rank 4 is equivalent.
-  # However I'd guess there's some benefit to it being the identity.
-
-  return Lx, Lz
 
 
 # # E.g.
