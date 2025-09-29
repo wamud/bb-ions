@@ -26,7 +26,6 @@ def convtorowcol(m, k):
     w = k % m
     return v, w
 
-
 '''convtok
 This finds the index (in reading order) of an element at row / column (v, w) in an array
 where each row has m elements'''
