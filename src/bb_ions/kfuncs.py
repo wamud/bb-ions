@@ -36,12 +36,15 @@ def convtouvw(l, m, k):
 This finds the index (in reading order) of an element at row / column (v, w) in an array
 where each row has m elements'''
 def conv_vw_to_k(v, w, m):
+    assert w < m, "w must be less than m -- there are only m columns per row"
     k = v * m + w
     return k
 
 ''' convtok
 Converts from the tuple (u, v, w), where u indicates which block of lm qubits a qubit is in and v and w are its row and column within that block, to an index k, which simply goes from 0 up to number of qubits in reading order'''
 def convtok(l, m, u, v, w):
+    assert w < m, "w must be less than m -- there are only m columns per row"
+    assert v < l, "v must be less than l -- there are only l rows per group"
     k = u * l * m   +   v * m   +   w
     return k
 
