@@ -1,4 +1,5 @@
-'''A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate Hx and Hz parity check matrices. 
+'''bbfuncs
+A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate Hx and Hz parity check matrices. 
 These functions are for constructing the parity check matrices of a BB code.'''
 
 import numpy as np
@@ -16,7 +17,6 @@ def make_s(dim):
 '''make_x
 Makes the matrix x, which is x := S_l ⊗ I_m'''
 def make_x(l, m):
-4
   s_l = make_s(l)
   ident_m = np.eye(m, dtype = int)
 
@@ -78,35 +78,6 @@ def verify_ones(*args):
     if not (test1 and test2):
       print(f"Tragédie, tragédie ! The {i}-th matrix given to verify_ones is not exactly one one per row")
 
-
-''' get_nonzero_indices
-Returns a list of the column numbers of the maximum element in each row in a matrix.
-When working with matrices that contain all zeros apart from one 1 per row (verified with verify_ones),
-this function returns a list which contains the column of that one 1 for each row'''
-def get_one_positions(matrix):
-  cols = np.argmax(matrix, axis = 1) # axis = 1 means search row by row (as opposed to columns)
-
-  if np.all(cols == 0):
-    return None
-
-  return cols
-
-
-'''make_ones_positions_dict
-For each matrix in the matrix_dict, this will make an entry in the dictionary ones_positions_dict.
-Each entry contains a list of the column numbers (positions) that contains the 1 for each row.
-E.g. if fed A1, then ones_positions_dict['A1'][0] is the position of the 1 in the zeroeth row of A1
-'''
-def make_ones_positions_dict(A1, A2, A3, B1, B2, B3):
-
-  matrix_dict = {'A1': A1, 'A1T': A1.T, 'A2': A2, 'A2T': A2.T, 'A3': A3, 'A3T': A3.T,
-            'B1': B1, 'B1T': B1.T, 'B2': B2, 'B2T': B2.T, 'B3': B3, 'B3T': B3.T }
-
-  ones_positions_dict = {}
-  for name, mat in matrix_dict.items():
-    ones_positions_dict[name] = get_one_positions(mat)
-
-  return ones_positions_dict
 
 
 

@@ -1,4 +1,5 @@
-'''Here we have functions to convert between indexing 2lm qubits
+'''kfuncs
+Here we have functions to convert between indexing 2lm qubits
 using 2lm integers k = {0, 1, 2, ... , 2lm - 1} and using a 
 row / column notation, organising the qubits into two groups 
 of l rows and m columns such that we can refer to qubit k by 

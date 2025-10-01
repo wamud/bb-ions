@@ -1,4 +1,5 @@
-'''Once the parity check matrices of a BB code have been constructed using the functions in bbfuncs.py, it is useful to find the paramaters of the code.
+'''bbparamfuncs
+Once the parity check matrices of a BB code have been constructed using the functions in bbfuncs.py, it is useful to find the paramaters of the code.
 I.e. how many logical qubits it contains, what each logical qubit's logical operators (X_L and Z_L) are and the distance of the code.
 
 Note on code distance:
