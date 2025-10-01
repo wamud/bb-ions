@@ -1,7 +1,5 @@
 ''' kfuncs
-Here we have functions to convert between indexing 2lm qubits
-using 2lm integers k = {0, 1, 2, ... , 2lm - 1} and using a 
-row / column notation to align with the qubit indexing in [2508.01879] which enables its Algorithm 2 for the syndrome extraction circuit. 
+Here we have functions to convert between indexing 2lm qubits using 2lm integers k = {0, 1, 2, ... , 2lm - 1} and using a row / column notation to align with the qubit indexing in [2508.01879] which enables its Algorithm 2 for the syndrome extraction circuit. 
 
 We split the qubits into two groups, u = 0 and u = 1. Each group has 2lm qubits. We split the 2lm qubits into rows of size m. Having m columns per row implies we have l rows. We can now refer to a qubit by group / row / column (u, v, w).
 

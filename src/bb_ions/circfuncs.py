@@ -1,28 +1,28 @@
 ''' circfuncs
 Given the parity check matrices (constructed using bbfuncs.py) and paramaters & logical operators (found using bbparams.py) of a Bicycle Bivariate [2308.07915] code, these functions are for constructing a stim circuit that realises a memory experiment using the BB code.
 I.e. prepare logical |0⟩ or |+⟩ in all the logical qubits of the BB code, run multiple rounds of stabiliser measurements, measure all the data qubits.
-Measurements results from stabilisers and data qubits will then be given to a decoder to see if it correctly predicts what the logical states were.'''
+Measurements results from stabilisers and data qubits will then be given to a decoder to see if it correctly predicts what the logical states were.
+
+Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Python-API-Reference'''
 
 
 
 
 ''' make_registers
-  Makes lists of qubit indices in order q- X, L, R, Z, where qX is the X-check syndrome
-  qubits, qL the 'left' data qubits (appear in left-hand side of Hx; acted on by matrix A),
-  qR the 'right' data qubits (appear in right-hand side of Hx; acted on by matrix B)
-  and qZ, the Z-check syndrome qubits.
+  Makes lists of qubit indices dividing 2n qubits evenly into qA, qB, qC, qD.
+  This is most commonly used for a BB code, for example qX, qL, qR, qZ, where qX is the X-check syndrome qubits, qL the 'left' data qubits (appear in left-hand side of Hx; acted on by matrix A), qR the 'right' data qubits (appear in right-hand side of Hx; acted on by matrix B) and qZ, the Z-check syndrome qubits.
 
-  qX: qubits 0 to n/2 - 1
-  qL: qubits n/2 to n - 1
-  qR: qubits n to 3n/2 - 1https://chatgpt.com/?temporary-chat=true 
-  qZ: qubits 3n/2 to 2n - 1'''
+  qA: qubits 0 to n/2 - 1
+  qB: qubits n/2 to n - 1
+  qC: qubits n to 3n/2 - 1 
+  qD: qubits 3n/2 to 2n - 1'''
 def make_registers(n):
-  qX = list(range( 0 , n//2))
-  qL = list(range( n//2 , n))
-  qR = list(range( n , 3*n//2))
-  qZ = list(range( 3*n//2 , 2*n))
+  qA = list(range( 0 , n//2))
+  qB = list(range( n//2 , n))
+  qC = list(range( n , 3*n//2))
+  qD = list(range( 3*n//2 , 2*n))
 
-  return qX, qL, qR, qZ
+  return qA, qB, qC, qD
 
 
 ''' initX
@@ -42,24 +42,31 @@ def initZ(circuit, register, p = 0):
     circuit.append("X_ERROR", register, p)
 
 
-'''
-
-'''
-
-''' idle
-Adds identity gates to the qubits in list 'register' followed by uniform depolarising
-noise of strength p (when an error occurs with probability p pick at random either X, Y or Z))'''
-def idle(circuit, register, p = 0):
-  circuit.append("I", register)
+''' hadamard
+Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
+After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)'''
+def hadamard(circuit, register, p = 0):
+  circuit.append("H", register)
   if p != 0:
     circuit.append("DEPOLARIZE1", register, p)
+
+
+''' idle
+Adds uniform depolarising noise of strength p (when an error occurs with probability p pick at random either X, Y or Z)) to qubits in register'''
+def idle(circuit, register, p = 0):
+  if p != 0:
+    circuit.append("DEPOLARIZE1", register, p)
+
+''' idleZ 
+Adds dephasing (Z) noise of strength p (a Z operation is applied with probability p) to qubits in 'register. Called "idleZ" as this is used as an idling error but only applies dephasing noise'''
+def idleZ(circuit, register, p = 0):
+  if p != 0:
+    circuit.append("Z_ERROR", register, p)
 
 ''' tick
 Appends a 'TICK' annotation to an input stim circuit, indicating the end of a time-step. '''
 def tick(circuit):
   circuit.append("TICK")
-
-
 
 
 ''' add_final_detectors
