@@ -1,4 +1,4 @@
-'''bbparamfuncs
+''' bbparamfuncs
 Once the parity check matrices of a BB code have been constructed using the functions in bbfuncs.py, it is useful to find the paramaters of the code.
 I.e. how many logical qubits it contains, what each logical qubit's logical operators (X_L and Z_L) are and the distance of the code.
 
@@ -16,7 +16,7 @@ from bposd import css
 from autqec.utils.qec import *
 
 
-'''get_code_params
+''' get_code_params
 Given Hx and Hz, the X and Z parity check matrices of a BB code, this function used Joschka Roff's bposd package to return the number of data qubits n and number of logical qubits k
 '''
 def get_code_params(Hx, Hz):
@@ -24,7 +24,7 @@ def get_code_params(Hx, Hz):
     return n, k
 
 
-'''bposd_logical_ops --(Recommended to use autqec_logical_ops function instead to return a canonical set of logical ops)
+''' bposd_logical_ops --(Recommended to use autqec_logical_ops function instead to return a canonical set of logical ops)
 Given the parity check matrices of a BB code, let's get the logical operators for each of its logical qubits.
 This function does this using Joschka Roffe's bposd package.
 Checking the anticommutation relations of the logical operators is done with anticommute_matrix = Lx @ Lz^T % 2. It checks each Lx against every Lz. The anticommute matrix shows that bposd returns a generating set of logical operators that is not canonical. I.e. the anticommute matrix has rank = k but is not I_k. Row-reducing the anticommute matrix until it is I_k (and performing the corresponding multiplication of logical operators) will give a canonical set where each logical operator anticommutes with its partner on the same logical qubit but commutes with all the others.
@@ -51,7 +51,7 @@ def bposd_logical_operators(Hx, Hz):
 
     return Lx, Lz
 
-'''autqec_logical_ops
+''' autqec_logical_ops
 Given the parity check matrices of a BB code, let's get the logical operators for each of its logical qubits.
 This function does this using Hasan Sayginel's autqec package.
 Checking the anticommutation relations of the logical operators is done with anticommute_matrix = Lx @ Lz^T % 2.
@@ -66,7 +66,7 @@ def autqec_logical_ops(Hx, Hz, n = None, k = None):
         n = code.N
         k = code.K
     
-    '''
+    ''' 
     First add zero matrices to convert parity check matrices to symplectic form for autqec. 
     e.g. XYZIZ in symplectic form 
     = [X part | Z part]

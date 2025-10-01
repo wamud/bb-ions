@@ -1,10 +1,10 @@
-'''bbfuncs
+''' bbfuncs
 A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate Hx and Hz parity check matrices. 
 These functions are for constructing the parity check matrices of a BB code.'''
 
 import numpy as np
 
-'''make_s
+''' make_s
 makes a cyclic matrix S. This is an idenity matrix with every 1 cyclically shifted to the right by one'''
 def make_s(dim):
   s = np.zeros((dim,dim), dtype = int)
@@ -14,7 +14,7 @@ def make_s(dim):
 
   return s
 
-'''make_x
+''' make_x
 Makes the matrix x, which is x := S_l ⊗ I_m'''
 def make_x(l, m):
   s_l = make_s(l)
@@ -23,7 +23,7 @@ def make_x(l, m):
   x = np.kron(s_l, ident_m)
   return x
 
-'''make_y
+''' make_y
 Makes the matrix y, which is y := I_l ⊗ S_m'''
 def make_y(l,m):
 
@@ -33,7 +33,7 @@ def make_y(l,m):
   y = np.kron(ident_l, s_m)
   return y
 
-'''make_z
+''' make_z
 Makes the matrix z, which is x * y or, equivalently, S_l ⊗ S_m'''
 def make_z(l,m):
   s_l = make_s(l)
@@ -43,7 +43,7 @@ def make_z(l,m):
 
   return z
 
-'''make_xyz
+''' make_xyz
 Uses above functions to make x, y and z'''
 def make_xyz(l,m):
   x = make_x(l, m)
@@ -54,7 +54,7 @@ def make_xyz(l,m):
 
 
 
-'''test_stabs_commute
+''' test_stabs_commute
 Given X and Z parity check matrices, this function tests that all the stabilisers commute by testing Hx Hz^T = [0] mod 2
 (they should have an even number of 1's in corresponding positions so give the zero matrix)'''
 def test_stabs_commute(Hx, Hz):
@@ -63,7 +63,7 @@ def test_stabs_commute(Hx, Hz):
     print("Tragédie, tragédie ! Not all the stabilisers commute")
 
 
-'''verify_ones
+''' verify_ones
 For each matrix in args, verify that there is just one one per row and the rest are zeros:
 '''
 def verify_ones(*args):

@@ -1,4 +1,4 @@
-'''circfuncs
+''' circfuncs
 Given the parity check matrices (constructed using bbfuncs.py) and paramaters & logical operators (found using bbparams.py) of a Bicycle Bivariate [2308.07915] code, these functions are for constructing a stim circuit that realises a memory experiment using the BB code.
 I.e. prepare logical |0⟩ or |+⟩ in all the logical qubits of the BB code, run multiple rounds of stabiliser measurements, measure all the data qubits.
 Measurements results from stabilisers and data qubits will then be given to a decoder to see if it correctly predicts what the logical states were.'''
@@ -6,7 +6,7 @@ Measurements results from stabilisers and data qubits will then be given to a de
 
 
 
-'''make_registers
+''' make_registers
   Makes lists of qubit indices in order q- X, L, R, Z, where qX is the X-check syndrome
   qubits, qL the 'left' data qubits (appear in left-hand side of Hx; acted on by matrix A),
   qR the 'right' data qubits (appear in right-hand side of Hx; acted on by matrix B)
@@ -41,6 +41,11 @@ def initZ(circuit, register, p = 0):
   if p != 0:
     circuit.append("X_ERROR", register, p)
 
+
+'''
+
+'''
+
 ''' idle
 Adds identity gates to the qubits in list 'register' followed by uniform depolarising
 noise of strength p (when an error occurs with probability p pick at random either X, Y or Z))'''
@@ -49,7 +54,7 @@ def idle(circuit, register, p = 0):
   if p != 0:
     circuit.append("DEPOLARIZE1", register, p)
 
-'''tick
+''' tick
 Appends a 'TICK' annotation to an input stim circuit, indicating the end of a time-step. '''
 def tick(circuit):
   circuit.append("TICK")
@@ -57,7 +62,7 @@ def tick(circuit):
 
 
 
-'''add_final_detectors
+''' add_final_detectors
 After measuring all the data qubits in the X-basis (memory X) or Z-basis (memory Z) we want to check that each check qubit
 has correctly reported the parity of the data qubits it was supposed to have measured.
 Consequently, we add detectors that include each check qubit's parity multiplied with the parity of all the data qubits it checked.
@@ -106,7 +111,7 @@ def add_final_detectors(circuit, n, ones, memory):
       )
 
 
-'''get_nonzero_indices
+''' get_nonzero_indices
 For an array, this function returns a list (per row of the initial array) containing the indices of the nonzero terms.
 '''
 def get_nonzero_indices(array):
@@ -120,7 +125,7 @@ def get_nonzero_indices(array):
 
 
 
-'''add_logical_observables
+''' add_logical_observables
 The circuit ends with a parity check of the logical operators / observables. In a surface code, for example, XL and ZL are just vertical or horizontal chains of X's and Z's across the lattice.
 In a BB code they are also chains of X's and Z's but on specific qubits, contained in the arrays Lx and Lz. For each logical qubit Lx and Lz contain a pair of anti-commuting logical operators.
 These commute with the logical operators of other logical qubits. This function adds the Lx operators as observable if we are in memory X (preserving an eigenstate of Lx's, i.e. |+⟩_L)
