@@ -18,17 +18,10 @@ def convtorowcol(m, k):
     w = k % m
     return v, w
 
-''' convtok
-This finds the index (in reading order) of an element at row / column (v, w) in an array
-where each row has m elements'''
-def convtok(v, w, m):
-    k = v * m + w
-    return k
-
 ''' convtouvw
 If k indexes qubits such that k ∈ {0, 1, ...} and we want to arrange k into groups
 of lm qubits, where each group is an array with l rows and m columns, then this function returns (u, v, w) where 
-    u indicates which group / array of lm qubits its in
+    u indicates which group / array of lm qubits it's in (0th, 1st, 2nd etc. -- can choose 0th & 1st to be data qubits)
     v is the row within the array
     w is the column within the array'''
 def convtouvw(l, m, k):
@@ -37,9 +30,18 @@ def convtouvw(l, m, k):
     v, w = convtorowcol(m, this_arrays_k)
     return u, v, w
 
-''' conv_uvw_to_k
+
+
+''' conv_vw_to_k
+This finds the index (in reading order) of an element at row / column (v, w) in an array
+where each row has m elements'''
+def conv_vw_to_k(v, w, m):
+    k = v * m + w
+    return k
+
+''' convtok
 Converts from the tuple (u, v, w), where u indicates which block of lm qubits a qubit is in and v and w are its row and column within that block, to an index k, which simply goes from 0 up to number of qubits in reading order'''
-def conv_uvw_to_k(l, m, u, v, w):
+def convtok(l, m, u, v, w):
     k = u * l * m   +   v * m   +   w
     return k
 

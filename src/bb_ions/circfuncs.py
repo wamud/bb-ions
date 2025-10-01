@@ -69,6 +69,10 @@ def tick(circuit):
   circuit.append("TICK")
 
 
+
+
+
+
 ''' add_final_detectors
 After measuring all the data qubits in the X-basis (memory X) or Z-basis (memory Z) we want to check that each check qubit
 has correctly reported the parity of the data qubits it was supposed to have measured.
@@ -97,7 +101,6 @@ def add_final_detectors(circuit, n, ones, memory):
 
   x_check_qubits, z_check_qubits = get_stabiliser_qubit_indices_BB5(ones)
 
-
   if memory == 'X': # add detectors to X-checks
     for i in reversed(list(range(n//2))):
       circuit.append(
@@ -116,20 +119,6 @@ def add_final_detectors(circuit, n, ones, memory):
           +
           [ stim.target_rec(- j - n) for j in z_check_qubits[i] ] # all the data qubits it checks. Minus n off each 0 to n - 1 data qubit index
       )
-
-
-''' get_nonzero_indices
-For an array, this function returns a list (per row of the initial array) containing the indices of the nonzero terms.
-'''
-def get_nonzero_indices(array):
-
-  array_indices = []
-
-  for i in range(array.shape[0]):
-    array_indices.append(np.nonzero(array[i])[0])
-
-  return array_indices
-
 
 
 ''' add_logical_observables
