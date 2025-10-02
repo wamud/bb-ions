@@ -7,7 +7,6 @@ Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Pytho
 
 
 
-
 ''' make_registers
   Makes lists of qubit indices dividing 2n qubits evenly into qA, qB, qC, qD.
   This is most commonly used for a BB code, for example qX, qL, qR, qZ, where qX is the X-check syndrome qubits, qL the 'left' data qubits (appear in left-hand side of Hx; acted on by matrix A), qR the 'right' data qubits (appear in right-hand side of Hx; acted on by matrix B) and qZ, the Z-check syndrome qubits.
@@ -23,7 +22,6 @@ def make_registers(n):
   qD = list(range( 3*n//2 , 2*n))
 
   return qA, qB, qC, qD
-
 
 ''' initX
 Sets qubits in the list 'register' to the plus state |+⟩.
@@ -67,10 +65,6 @@ def idleZ(circuit, register, p = 0):
 Appends a 'TICK' annotation to an input stim circuit, indicating the end of a time-step. '''
 def tick(circuit):
   circuit.append("TICK")
-
-
-
-
 
 
 ''' add_final_detectors
@@ -145,3 +139,4 @@ def add_logical_observables(circuit, n, Lx, Lz, memory):
     recordings = (indices[i] - n).astype(int) # the measurements -- 'inner workings' note above
 
     circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in recordings], 0.0)
+
