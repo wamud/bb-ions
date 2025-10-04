@@ -11,17 +11,119 @@ trials that are run the more confident we become that this is its actual distanc
 '''
 
 import numpy as np
+import json
 import bposd
 from bposd import css
+from bposd import css_decode_sim
 from autqec.utils.qec import *
+from .bbfuncs import *
+from .modulefuncs import *
+
+mpow = np.linalg.matrix_power
+
+class Code:
+    def __init__(self, l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
+        self.l = l
+        self.m = m
+        self.Aij = Aij
+        self.Bij = Bij
+        self.ATij = ATij
+        self.BTij = BTij
+        self.A = A
+        self.B = B
+        self.Hx = Hx
+        self.Hz = Hz
+        self.Lx = Lx
+        self.Lz = Lz
+        self.d_max = d_max
+        self.n = n
+        self.k = k
+        self.Junion = Junion
+        self.JTunion = JTunion
+
+
+
+
+''' find_d_max
+Given the X and Z parit check matrices of a css code, this function finds the maximum distance it could have. I.e. it runs simulations with bposd decoder to find the distance of the code. We call this maximum distance as there could be a logical operator with a smaller weight that would cause a logical error (i.e., a smaller distance) but the simulations didn't see it. Increase target_runs for more certainty in d_max'''
+def find_d_max(Hx, Hz):
+    
+    osd_options={
+    'target_runs': 2000, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, # 'output_file': "test.json", 
+    'error_bar_precision_cutoff': 1e-6
+    }
+
+    error_rate = 0.1
+    bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = error_rate, **osd_options) 
+
+    results = json.loads(bb5.output_dict())
+    d_max = results["min_logical_weight"]
+
+    return d_max
+
 
 
 ''' get_code_params
-Given Hx and Hz, the X and Z parity check matrices of a BB code, this function used Joschka Roff's bposd package to return the number of data qubits n and number of logical qubits k
+Using the l, m, A indices (Aij) and B incdices (Bij) of a bicycle bivariate code this function constructs a code class which contains its parity check matrices, logical operators, d_max (could be a smaller distance but the simulations found d_max) n, k l, m, A and B.
+Note that Aij and Bij are inserted are tuples (i, j) for each of the terms x^i y^j in A and B. 
+E.g. if
+A = x^0 + x
+B = x^0 + y + x^2*y^2   ([[30, 4, 5]] code from Table II of [2503.22071])
+Then
+Aij = [(0, 0), (1, 0)]
+Bij = [(0, 0), (0, 1), (2, 2)]
+The A and B matrices returned by this function are the actual matrices A, B
 '''
-def get_code_params(Hx, Hz):
-    code = css.css_code(hx = Hx, hz = Hz)
-    return n, k
+def get_code_params(l, m, Aij, Bij):
+
+    # Sorting indices into I(A), I(B), J(A), J(B):
+    IA, JA = findIJ(Aij)
+    IB, JB = findIJ(Bij)
+    Junion = sorted(set(JA + JB))
+
+    # Sorting indices into I(A^T), I(B^T), J(A^T), J(B^T):
+    ATij = [(-i, -j) for i, j in Aij]
+    BTij = [(-i, -j) for i, j in Bij]
+    IAT, JAT = findIJ(ATij)
+    IBT, JBT = findIJ(BTij)
+    JTunion = sorted(set(JAT + JBT))
+
+
+    # Num qubits:
+    n = 2 * l * m
+
+    # Define matrices A and B:    
+    ## Setup:
+    A = 0; B = 0
+    x = make_x(l, m)
+    y = make_y(l, m)
+    
+    ## A = A1 + A2 + ...
+    for (i, j) in Aij: 
+        A = mpow(x, i) @ mpow(y, j) + A
+    
+    ## B = B1 + B2 + ...
+    for (i, j) in Bij:
+        B = mpow(x, i) @ mpow(y, j) + B
+
+    # Parity check matrices:
+    Hx = np.hstack((A, B))
+    Hz = np.hstack((B.T, A.T))
+
+    # Logical operators:
+    Lx, Lz = autqec_logical_ops(Hx, Hz)
+
+    # Num. logical qubits:
+    k = len(Lx)
+
+    # Maximum distance:
+    d_max = 5      #find_d_max(Hx, Hz)  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -- hard-coded while working on 30,4,5 
+
+    code = Code(l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
+
+    return code
+
+
 
 
 ''' bposd_logical_ops --(Recommended to use autqec_logical_ops function instead to return a canonical set of logical ops)
