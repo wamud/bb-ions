@@ -123,14 +123,32 @@ def hadamard(circuit, register, t_had = 0):
 
 ''' measure
 Appends a Z-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
-def measure(circuit, register, t_meas = 0):
+def measure(basis, circuit, register, t_meas = 0):
   p = p_meas(t_meas)
-  circuit.append("MZ", register, p)
+  if basis == 'Z':
+    circuit.append("M", register, p)
+  elif basis == 'X':
+    circuit.append("MX", register, p)
+  else:
+    raise ValueError("Parameter 'basis' must be either 'X' or 'Z'.")
+
 
 ''' tick
 Appends a 'TICK' annotation to an input stim circuit, indicating the end of a time-step. '''
 def tick(circuit):
   circuit.append("TICK")
+
+  '''get_nonzero_indices
+For an array, this function returns a list (per row of the initial array) containing the indices of the nonzero terms.
+'''
+def get_nonzero_indices(array):
+
+  array_indices = []
+
+  for i in range(array.shape[0]):
+    array_indices.append(np.nonzero(array[i])[0])
+
+  return array_indices
 
 
 ''' add_final_detectors
@@ -187,20 +205,17 @@ In a BB code they are also chains of X's and Z's but on specific qubits, contain
 These commute with the logical operators of other logical qubits. This function adds the Lx operators as observable if we are in memory X (preserving an eigenstate of Lx's, i.e. |+⟩_L)
 or the Lz operators if we are in memory Z.
 
-Optional note on inner workings of function:
-The data qubit measurements were the most recent measurements in the circuit so are from rec[-1] (the n-th data qubit) to rec[-n] (the zeroth data qubit). So if Lx has a 1 on qubit 3,
-for example, this means it needs rec[3 - n]. Just minus n from the index in Lx.
-
-'''
+Inner workings (optional reading):
+The data qubit measurements were the most recent measurements in the circuit so are from rec[-1] (the n-th data qubit) to rec[-n] (the zeroth data qubit). So if Lx has a 1 on qubit 0 for example, this is rec[-n]. Of a 1 on qubit 3 this means it needs rec[3 - n]. Just minus n from the index in Lx.'''
 def add_logical_observables(circuit, n, Lx, Lz, memory):
-
-  num_logical_ops = Lx.shape[0]
 
   L = Lx if memory == 'X' else Lz
 
+  num_logical_ops = L.shape[0]
+
   indices = get_nonzero_indices(L) # instead of L being 1's and 0's (like a parity check matrix) just make it a list of the indices of the 1's
 
-  for i in range(num_logical_ops): # for each logical op
+  for i in range(num_logical_ops): # for each logical qubit
 
     recordings = (indices[i] - n).astype(int) # the measurements -- 'inner workings' note above
 
@@ -530,7 +545,7 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
     tick(loop_body)
 
     # Measure check qubits
-    measure(loop_body, qC, t_meas)
+    measure('Z', loop_body, qC, t_meas)
     idle(loop_body, qL + qR, t_meas) # idle data qubits
     tick(loop_body)
 
@@ -565,7 +580,7 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
     tick(loop_body)
 
     # Now measure check qubits
-    measure(loop_body, qC, t_meas)
+    measure('Z', loop_body, qC, t_meas)
     idle(loop_body, qL + qR, t_meas) # idle data qubits
     tick(loop_body)
 
