@@ -245,7 +245,7 @@ def myCNOT(circuit, l, m, control, target, t_cnot):
 ''' add_A_CNOTs
 For A in Hx = [A|B] CNOTs between X check and L data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix A which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies CNOTs between each X check qubit (X, v, w) and L data qubit (L, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
-def add_A_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
+def add_A_CNOTs(circuit, jval, code, registers, noisetimes, sequential_gates):
 
   Aij = code.Aij
   l = code.l
@@ -253,6 +253,9 @@ def add_A_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
   X = registers.X
   L = registers.L
   qR = registers.qR
+  t_cnot = noisetimes.t_cnot
+  t_idle = noisetimes.t_idle
+  t_idle_meas = noisetimes.t_idle_meas
   
   for (i, j) in Aij:
       if j == jval:  # i.e. this (i, j) appears in Aij
@@ -264,23 +267,23 @@ def add_A_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
                 
               if sequential_gates: # if we are doing one CNOT per timestep (per module) we need to add idling errors to qubits that weren't in the CNOT, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
 
-                idle(circuit, qR, t_cnot) # idle all the R data qubits
+                idle(circuit, qR, t_idle) # t_cnot) # idle all the R data qubits
                 for w in range(m):
                   for vprime in range(l): # idle L qubits not in CNOT:
                     if vprime != (v + i) % l:
                       qubit = convtok(l, m, L, vprime, w)
-                      idle(circuit, [qubit], t_cnot)
+                      idle(circuit, [qubit], t_idle) # t_cnot)
                   
                 tick(circuit)
 
           if not sequential_gates: # idle all the R data qubits only after all L data qubits had CNOTs in a single timestep
-            idle(circuit, qR, t_cnot) # idle the R data qubits
+            idle(circuit, qR, t_idle) # t_cnot) # idle the R data qubits
             tick(circuit)
 
 ''' add_B_CNOTs
 For B in Hx = [A|B], this function appends CNOTs between X check and R data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix B which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies CNOTs between each X check qubit (X, v, w) and R data qubit (R, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we run through each v to v ⊕ i (modulo l)'''
-def add_B_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
+def add_B_CNOTs(circuit, jval, code, registers, noisetimes, sequential_gates):
 
   Bij = code.Bij
   l = code.l
@@ -288,6 +291,9 @@ def add_B_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
   X = registers.X
   R = registers.R
   qL = registers.qL
+  t_cnot = noisetimes.t_cnot
+  t_idle = noisetimes.t_idle
+  t_idle_meas = noisetimes.t_idle_meas
   
   for (i, j) in Bij:
       if j == jval:  # i.e. this (i, j) appears in Bij
@@ -299,17 +305,17 @@ def add_B_CNOTs(circuit, jval, code, registers, t_cnot, sequential_gates):
 
               if sequential_gates: # if we are doing one CNOT per timestep (per module) we need to add idling errors to qubits that weren't in the CNOT, namely all the L data qubits and any R data qubits with v' ≠ v ⊕ i
 
-                idle(circuit, qL, t_cnot) # idle all the L data qubits
+                idle(circuit, qL, t_idle) # t_cnot) # idle all the L data qubits
                 for w in range(m):
                   for vprime in range(l): # idle R qubits not in CNOT:
                     if vprime != (v + i) % l:
                       qubit = convtok(l, m, R, vprime, w)
-                      idle(circuit, [qubit], t_cnot)
+                      idle(circuit, [qubit], t_idle) # t_cnot)
 
                 tick(circuit)
 
           if not sequential_gates: # idle all the L data qubits only after all R data qubits had CNOTs in a single timestep
-            idle(circuit, qL, t_cnot) # idle the L data qubits
+            idle(circuit, qL, t_idle) # t_cnot) # idle the L data qubits
             tick(circuit)
 
 
@@ -337,7 +343,7 @@ def myCZ(circuit, l, m, control, target, t_cz):
 ''' add_BT_CZs
 For B^T in Hz = [B^T|A^T], this function appends CZs between Z-check and L data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix B^T which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies CZs between each Z check qubit (Z, v, w) and L data qubit (L, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
-def add_BT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
+def add_BT_CZs(circuit, jval, code, registers, noisetimes, sequential_gates):
 
   BTij = code.BTij
   l = code.l
@@ -345,6 +351,9 @@ def add_BT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
   Z = registers.Z
   L = registers.L
   qR = registers.qR
+  t_cz = noisetimes.t_cz
+  t_idle = noisetimes.t_idle
+  t_idle_meas = noisetimes.t_idle_meas
   
   for (i, j) in BTij:
       if j == jval:  # i.e. this (i, j) appears in BTij
@@ -358,16 +367,16 @@ def add_BT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
                 
               if sequential_gates: # if we are doing one CZ per timestep (per module) we need to add idling errors to qubits that weren't in the CZ, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
 
-                idle(circuit, qR, t_cz) # idle all the R data qubits
+                idle(circuit, qR, t_idle) # t_cz) # idle all the R data qubits
                 for w in range(m):
                   for vprime in range(l): # idle L qubits not in CZ:
                     if vprime != (v + i) % l:
                       qubit = convtok(l, m, L, vprime, w)
-                      idle(circuit, [qubit], t_cz)
+                      idle(circuit, [qubit], t_idle) # t_cz)
                 tick(circuit)
 
           if not sequential_gates: # idle all the R data qubits only after all L data qubits had CZs in a single timestep
-            idle(circuit, qR, t_cz) # idle the R data qubits
+            idle(circuit, qR, t_idle) # t_cz) # idle the R data qubits
             tick(circuit)
 
 
@@ -376,7 +385,7 @@ def add_BT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
 ''' add_AT_CZs
 For A^T in Hz = [B^T|A^T], this function appends CZs between Z check qubits and R data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix A^T which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies CZs between each Z check qubit (Z, v, w) and R data qubit (R, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
-def add_AT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
+def add_AT_CZs(circuit, jval, code, registers, noisetimes, sequential_gates):
 
   ATij = code.ATij
   l = code.l
@@ -384,6 +393,9 @@ def add_AT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
   Z = registers.Z
   R = registers.R
   qL = registers.qL
+  t_cz = noisetimes.t_cz
+  t_idle = noisetimes.t_idle
+  t_idle_meas = noisetimes.t_idle_meas
   
   for (i, j) in ATij:
       if j == jval:  # i.e. this (i, j) appears in ATij
@@ -396,16 +408,16 @@ def add_AT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
                 
               if sequential_gates: # if we are doing one CZ per timestep (per module) we need to add idling errors to qubits that weren't in the CZ, namely all the L data qubits and any R data qubits with v' ≠ v ⊕ i 
 
-                idle(circuit, qL, t_cz) # idle all the L data qubits
+                idle(circuit, qL, t_idle) # t_cz) # idle all the L data qubits
                 for w in range(m):
                   for vprime in range(l): # idle R qubits not in CZ:
                     if vprime != (v + i) % l:
                       qubit = convtok(l, m, R, vprime, w)
-                      idle(circuit, [qubit], t_cz)
+                      idle(circuit, [qubit], t_idle) # t_cz)
                 tick(circuit)
 
           if not sequential_gates: # idle all the L data qubits only after all R data qubits had CZs in a single timestep
-            idle(circuit, qL, t_cz) # idle the L data qubits
+            idle(circuit, qL, t_idle) # t_cz) # idle the L data qubits
             tick(circuit)
 
 
@@ -469,12 +481,12 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
         if check == 'X':
           # Apply CNOTs for X-checks, i.e. Hx = [A|B]
-          add_A_CNOTs(circ, jval, code, registers, t_cnot, sequential) 
-          add_B_CNOTs(circ, jval, code, registers, t_cnot, sequential)
+          add_A_CNOTs(circ, jval, code, registers, noisetimes, sequential) 
+          add_B_CNOTs(circ, jval, code, registers, noisetimes, sequential)
         elif check == 'Z':
           # Apply CZs for Z-checks, i.e. Hz = [B^T|A^T]
-          add_BT_CZs(circ, jval, code, registers, t_cz, sequential)
-          add_AT_CZs(circ, jval, code, registers, t_cz, sequential)
+          add_BT_CZs(circ, jval, code, registers, noisetimes, sequential)
+          add_AT_CZs(circ, jval, code, registers, noisetimes, sequential)
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
         apply_split_error(circ, qC + qL + qR, t_split)
@@ -522,6 +534,8 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
     t_shuttle = noisetimes.t_shuttle
     t_shift_const = noisetimes.t_shift_const
     t_meas = noisetimes.t_meas
+    t_idle = noisetimes.t_idle
+    t_idle_meas = noisetimes.t_idle_meas
 
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -529,12 +543,12 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
 
     # Initialise check qubits
     init('Z', loop_body, qC, t_init)
-    idle(loop_body, qL + qR, t_init) # idle data qubits
+    idle(loop_body, qL + qR, t_idle) # t_init) # idle data qubits
     tick(loop_body)
 
     # Hadamard check qubits to |+⟩
     hadamard(loop_body, qC, t_had)
-    idle(loop_body, qL + qR, t_init) # idle data qubits
+    idle(loop_body, qL + qR, t_idle) # t_init) # idle data qubits
     tick(loop_body)
 
     # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
@@ -543,12 +557,12 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
 
     # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
     hadamard(loop_body, qC, t_had)
-    idle(loop_body, qL + qR, t_had) # idle data qubits during hadamard
+    idle(loop_body, qL + qR, t_idle) # t_had) # idle data qubits during hadamard
     tick(loop_body)
 
     # Measure check qubits
     measure('Z', loop_body, qC, t_meas)
-    idle(loop_body, qL + qR, t_meas) # idle data qubits
+    idle(loop_body, qL + qR, t_idle_meas) # t_meas) # idle data qubits
     tick(loop_body)
 
     # We now place detectors on these check qubit measurements, comparing them and the previous round's X-check measurements
@@ -565,12 +579,12 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
 
     # Initialise Z-check qubits
     init('Z', loop_body, qC, t_init) # (note qZ = qX if reuse_check_qubits == True)
-    idle(loop_body, qL + qR, t_init) # idle data qubits
+    idle(loop_body, qL + qR, t_idle) # t_init) # idle data qubits
     tick(loop_body)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     hadamard(loop_body, qC, t_had)
-    idle(loop_body, qL + qR, t_init) # idle data qubits
+    idle(loop_body, qL + qR, t_idle) # t_init) # idle data qubits
     tick(loop_body)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
@@ -578,12 +592,12 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     hadamard(loop_body, qC, t_had)
-    idle(loop_body, qL + qR, t_had) # idle data qubits
+    idle(loop_body, qL + qR, t_idle) # t_had) # idle data qubits
     tick(loop_body)
 
     # Now measure check qubits
     measure('Z', loop_body, qC, t_meas)
-    idle(loop_body, qL + qR, t_meas) # idle data qubits
+    idle(loop_body, qL + qR, t_idle_meas) # t_meas) # idle data qubits
     tick(loop_body)
 
     
