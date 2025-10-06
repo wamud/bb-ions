@@ -5,6 +5,7 @@ Measurements results from stabilisers and data qubits will then be given to a de
 
 Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Python-API-Reference'''
 
+import stim
 from .kfuncs import *
 from .noisefuncs import *
 
@@ -471,3 +472,109 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
     return jval_prev
 
+
+
+''' make_loop_body
+Constructs the stabiliser extraction round of a memory experiment using a BB code. This round or 'loop_body' can be repeated arbitrarily. Returns the loop_body which is a stim circuit. Note this does not initialise data qubits as it is designed to follow an already-constructed round-0 of stabiliser measurements which is slightly different to the repeated rounds (namely they initialise the data qubits and only have detectors on stabilisers in the same basis as the preserved logical state).
+- jval_prev: gives the previous arrangement of modules before starting this repeated / looped section. I.e. if jval_prev = j, this implies check module M^a_w was aligned with data module M^d_((w + j) % m)
+- code: paramaters of the BB code. Hx = [A|B], Hz = [B^T,A^T] etc.
+- noisetimes: how long each operation takes
+- memory_basis: 'Z' implies preserve logical 0, 'X' implies preserve logical plus
+- exclude_opposite_basis_detectors: if this is True, when preserving logical 0 (memory_basis = 'Z') then there are no detectors placed on the X-stabiliser measurments (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it by taking out unused nodes.
+- reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
+- sequential: whether or not the two-qubit gates within a leg are sequential or in parallel
+'''
+
+def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_check_qubits, sequential, exclude_opposite_basis_detectors = False):
+
+    loop_body = stim.Circuit()
+
+    qX = registers.qX
+    qL = registers.qL
+    qR = registers.qR
+    qZ = registers.qZ  # qZ will equal qX if reuse_check_qubits == True
+
+
+    ## Circuit paramaters:
+    t_init = noisetimes.t_init
+    t_had = noisetimes.t_had
+    t_merge = noisetimes.t_merge
+    t_split = noisetimes.t_split
+    t_cnot = noisetimes.t_cnot
+    t_cz = noisetimes.t_cz
+    t_shuttle = noisetimes.t_shuttle
+    t_shift_const = noisetimes.t_shift_const
+    t_meas = noisetimes.t_meas
+
+    # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    qC = qX
+
+    # Initialise check qubits
+    init('Z', loop_body, qC, t_init)
+    idle(loop_body, qL + qR, t_init) # idle data qubits
+    tick(loop_body)
+
+    # Hadamard check qubits to |+⟩
+    hadamard(loop_body, qC, t_had)
+    idle(loop_body, qL + qR, t_init) # idle data qubits
+    tick(loop_body)
+
+    # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
+    jval_prev = apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'X', code, registers, noisetimes, sequential)
+    # Alrighty we've done the X-check CNOTs!
+
+    # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
+    hadamard(loop_body, qC, t_had)
+    idle(loop_body, qL + qR, t_had) # idle data qubits during hadamard
+    tick(loop_body)
+
+    # Measure check qubits
+    measure(loop_body, qC, t_meas)
+    idle(loop_body, qL + qR, t_meas) # idle data qubits
+    tick(loop_body)
+
+    # We now place detectors on these check qubit measurements, comparing them and the previous round's X-check measurements
+    n = code.n
+    if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
+            # Append X-check stabiliser detectors:
+            for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
+                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+
+
+    # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    qC = qZ
+
+    # Initialise Z-check qubits
+    init('Z', loop_body, qC, t_init) # (note qZ = qX if reuse_check_qubits == True)
+    idle(loop_body, qL + qR, t_init) # idle data qubits
+    tick(loop_body)
+
+    # Hadamard check qubits to |+⟩ and IDLE data qubits:
+    hadamard(loop_body, qC, t_had)
+    idle(loop_body, qL + qR, t_init) # idle data qubits
+    tick(loop_body)
+
+    # Apply required cyclic shifts and CZ interactions for Z-checks:
+    jval_prev = apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'Z', code, registers, noisetimes, sequential)
+
+    # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
+    hadamard(loop_body, qC, t_had)
+    idle(loop_body, qL + qR, t_had) # idle data qubits
+    tick(loop_body)
+
+    # Now measure check qubits
+    measure(loop_body, qC, t_meas)
+    idle(loop_body, qL + qR, t_meas) # idle data qubits
+    tick(loop_body)
+
+    
+    # We now place detectors on these check qubit measurements, comparing them and the previous round's X-check measurements
+    n = code.n
+    if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
+            # Append Z-check stabiliser detectors:
+            for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
+                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+
+    return loop_body
