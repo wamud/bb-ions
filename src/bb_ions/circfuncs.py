@@ -95,17 +95,19 @@ def initZ(circuit, register, p = 0):
 Sets qubits in the list 'register' to
 - |0⟩ if basis == 'Z'
 - |+⟩ if basis == 'X'
-Also adds a reset error (set to |1⟩ or |-⟩ ) with probability p'''
-def init(basis, circuit, register, t_init = 0):
+Also adds a depolarizing error (in alignment with lonchain paper 2503.2207) with probability p (as opposed to usual reset erro which sets to orthog. eigenstate)'''
+def init(basis, circuit, register, p = 0):
   circuit.append(f"R{basis}", register)
-  
-  p = p_init(t_init)
 
   if p > 0:
-    if basis == 'Z':
-      error = 'X_ERROR'
-    elif basis == 'X':
-      error = 'Z_ERROR'
+    
+    error = 'DEPOLARIZE1'
+    
+    ## Orthog. eigenstates:
+    # if basis == 'Z':
+    #   error = 'X_ERROR'
+    # elif basis == 'X':
+    #   error = 'Z_ERROR'
     
     circuit.append(error, register, p)
 
