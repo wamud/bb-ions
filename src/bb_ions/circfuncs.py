@@ -9,10 +9,6 @@ from .kfuncs import *
 from .noisefuncs import *
 
 
-
-
-
-
 class Registers:
     def __init__(self, C = None, L = None, R = None, X = None, Z = None, qL = None, qR = None, qC = None, qX = None, qZ = None):
         self.L = L
@@ -23,7 +19,6 @@ class Registers:
         self.qR = qR
         self.qX = qX
         self.qZ = qZ
-        
 
 
 
@@ -394,3 +389,85 @@ def add_AT_CZs(circuit, jval, code, registers, t_cz, sequential_gates):
           if not sequential_gates: # idle all the L data qubits only after all R data qubits had CZs in a single timestep
             idle(circuit, qL, t_cz) # idle the L data qubits
             tick(circuit)
+
+
+
+
+'''apply_cyclic_shifts_and_stab_interactions
+Append to a stim circuit for a BB code the reqiured cyclic shifts and two-qubit gates to measure the stabilisers. This is according to Algorithm 2 of Ye ... Delfosse (2 × L array; 2508.01879). Accepts inputs
+- circ: the stim circuit to be appended to
+- jval_prev: the previous arrangement of modules. If jval_prev = j this implies that check qubit module M^a_0 was aligned with data qubit module M^d_((0 + j) % m)
+- check: whether we are performing the X-stabiliser or Z-stabiliser checks
+- code: paramaters of the BB code, e.g. Hx = [A|B], Hz = [B^T|A^T] etc.
+- registers: indices for the stim circuit of check qubits, data qubits
+- noisetimes: how long each operation takes (and thus how much noise to apply
+- sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel'''
+def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, registers, noisetimes, sequential):
+
+    if check == 'X':
+      qC = registers.qX
+      theunion = code.Junion
+    elif check == 'Z':
+      qC = registers.qZ
+      theunion = code.JTunion
+    else:
+        raise ValueError("Parameter 'check' must be either 'X' or 'Z'.")
+
+    l = code.l
+    m = code.m 
+    qL = registers.qL
+    qR = registers.qR
+
+
+    t_init = noisetimes.t_init
+    t_had = noisetimes.t_had
+    t_merge = noisetimes.t_merge
+    t_split = noisetimes.t_split
+    t_cnot = noisetimes.t_cnot
+    t_cz = noisetimes.t_cz
+    t_shuttle = noisetimes.t_shuttle
+    t_shift_const = noisetimes.t_shift_const
+    t_meas = noisetimes.t_meas
+
+
+    # Do cyclic shifts to required j-valued modules
+
+    for jval in theunion:
+
+        # Cyclic shift the check qubits
+        t_shift = t_shift_const * abs((jval % m) - (jval_prev % m)) # saying t_shfit proportional to c * (j - prev_j) 
+        apply_shift_error(circ, qC, t_shift)
+        idle(circ, qL + qR, t_shift) # idle the data qubits 
+        tick(circ)
+
+        # Shuttle check qubit modules from racetrack into leg:
+        apply_shuttle_error(circ, qC, t_shuttle)
+        idle(circ, qL + qR, t_shuttle) # idle the data qubits
+        tick(circ)
+
+        # Merge check and data qubit modules Coulomb potentials:
+        apply_merge_error(circ, qC + qL + qR, t_merge)
+        tick(circ)
+
+        if check == 'X':
+          # Apply CNOTs for X-checks, i.e. Hx = [A|B]
+          add_A_CNOTs(circ, jval, code, registers, t_cnot, sequential) 
+          add_B_CNOTs(circ, jval, code, registers, t_cnot, sequential)
+        elif check == 'Z':
+          # Apply CZs for Z-checks, i.e. Hz = [B^T|A^T]
+          add_BT_CZs(circ, jval, code, registers, t_cz, sequential)
+          add_AT_CZs(circ, jval, code, registers, t_cz, sequential)
+
+        # Split coulomb potentials of data qubit modules from check qubit modules:
+        apply_split_error(circ, qC + qL + qR, t_split)
+        tick(circ)
+
+        # # Shuttle check qubits from leg into racetrack:
+        apply_shuttle_error(circ, qC, t_shuttle)
+        idle(circ, qL + qR, t_shuttle) # idle the data qubits
+        tick(circ)
+
+        jval_prev = jval
+
+    return jval_prev
+

@@ -1,8 +1,39 @@
 ''' noisefuncs
-Hardware-inspired noise and error functions relevant to our architecture
-'''
+Hardware-inspired noise and error functions relevant to our architecture'''
+
+
+class NoiseTimes:
+    def __init__(self, t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas):
+        self.t_init = t_init
+        self.t_had = t_had
+        self.t_merge = t_merge
+        self.t_split = t_split
+        self.t_cnot = t_cnot
+        self.t_cz = t_cz
+        self.t_shuttle = t_shuttle
+        self.t_shift_const = t_shift_const
+        self.t_meas = t_meas
 
 import numpy as np
+
+
+''' make_noisetimes
+Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. This sets them all uniformly to the same input to this function t. The object noisetimes can be modified afterwards to set specific times'''
+def make_noisetimes(t):
+    t_init = t
+    t_had = t
+    t_merge = t
+    t_split = t
+    t_cnot = t
+    t_cz = t
+    t_shuttle = t
+    t_shift_const = t
+    t_meas = t
+
+    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas)
+    
+    return noisetimes
+
 
 ''' p_init
 The probability of initalising to an orthogonal eigenstate. Depends on time taken to initalise (t_init). todo: fill with more than dummy function.'''
