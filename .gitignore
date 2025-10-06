@@ -1,3 +1,5 @@
 scrap*
 src/bb_ions/__pycache__/*
 .DS_Store
+src/output.svg
+src/output.pdf
