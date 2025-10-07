@@ -9,9 +9,8 @@ from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 
 
 def main():
-    n = 30
-    circuit_paths = glob.glob(f"../circuits/nkd=[[{n}*.stim")
-    csv_path = f"../collected_stats/{n}_collected_stats.csv"
+    circuit_paths = glob.glob(f"../circuits/*.stim")
+    csv_path = f"../collected_stats/collected_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -31,7 +30,7 @@ def main():
         custom_decoders = sinter_decoders()
         )
 
-    print("Collection terminée :", samples)
+    print("Collection terminé")
 
 
 if __name__ == "__main__":

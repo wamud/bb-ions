@@ -12,13 +12,13 @@ import stim
 # d = 5
 
 # [[48, 4, 7]] from Ye Delfosse long chain [2503.22071] Table II
-l = 8
-m = 3
-# A = x^0 + x
-# B = x^0 + y + x^3 * y^2
-Aij = [(0, 0), (1, 0)]
-Bij = [(0, 0), (0, 1), (3, 2)]
-d = 7
+#l = 8
+#m = 3
+## A = x^0 + x
+## B = x^0 + y + x^3 * y^2
+#Aij = [(0, 0), (1, 0)]
+#Bij = [(0, 0), (0, 1), (3, 2)]
+#d = 7
 
 # # [[108, 8, 10]] from BB paper [2308.07915] Table III
 # l = 9
@@ -30,14 +30,14 @@ d = 7
 # d = 10
 
 
-# # [[144, 12, 12]] 'gross code' from BB paper [2308.07915] Table III
-# l = 12
-# m = 6
-# # A = x^3 + y + y^2
-# # B = y^3 + x + x^2
-# Aij = [(3, 0), (0, 1), (0, 2)]
-# Bij = [(0, 3), (1, 0), (2, 0)]
-# d = 12
+# [[144, 12, 12]] 'gross code' from BB paper [2308.07915] Table III
+l = 12
+m = 6
+# A = x^3 + y + y^2
+# B = y^3 + x + x^2
+Aij = [(3, 0), (0, 1), (0, 2)]
+Bij = [(0, 3), (1, 0), (2, 0)]
+d = 12
 
 
 # # [[288, 12, 18]] 'two gross'  from BB paper [2308.07915] Table III
