@@ -157,48 +157,55 @@ def get_nonzero_indices(array):
 After measuring all the data qubits in the X-basis (memory X) or Z-basis (memory Z) we want to check that each check qubit
 has correctly reported the parity of the data qubits it was supposed to have measured.
 Consequently, we add detectors that include each check qubit's parity multiplied with the parity of all the data qubits it checked.
-Note that in mem. Z we only add these detectors to the Z-checks because the Z-measurements don't commute with X-stabiliser
-measurements so we cannot check the parity of X-stabilisers from the data qubits that have been measured in Z
-(whatever the parity may have been for an X-stab measurement, e.g. -1 for XXXX if |0000⟩ - |1111⟩ , once we collapse to, say, |1111⟩ there is
-no more X-parity check).
+Note that in mem. Z we only add these detectors to the Z-checks because the Z-measurements don't commute with X-stabiliser measurements (so we cannot check the parity of X-stabilisers from the data qubits that have been measured in Z
+(whatever the parity may have been for an X-stab measurement, e.g. -1 for XXXX if |0000⟩ - |1111⟩ , once we collapse to, say, |1111⟩ there is no more X-parity check)).
 Conversely for memory X we only add these detectors to the X-checks.
 
 Optional further reading on inner workings of the function: figuring out each stim.target_rec[]:
 
-Most recent rec (rec[-1]) is the n-th data qubit. It was the last measured. This is the last data qubit in qR. Zeroth data qubit, also the
-zeroth data qubit in qL, is rec[-n].
+In the final round, we performed X-check measurements, then Z-check measurements and finally all the data qubit measurements.
+So the most recent rec (rec[-1]) is the n-th data qubit. It was the last measured. This is the last data qubit in qR. The zeroth data qubit, also the
+zeroth data qubit in qL, is rec[-n]. Before this is qX then qZ check qubits.
 
-So rec:
+So rec[ ]:
 -1 to -n is data qubit measurements
 -(n + 1) to - (n + n//2) is qZ measurements
 -(n + n//2 + 1) to -2n is qX measurements
 
-For each check qubit we want the detector to include its parity multiplied with the parity of all the data qubits it checked. These are contained
-in the lists x_check_qubits, z_check_qubits (except starting from zero. map to -1 being the n-th qubit and -n being the zeroth qubit, i.e. minus
-n from whatever is in the lists)
-'''
-def add_final_detectors(circuit, n, ones, memory):
+For each check qubit we want the detector to include its parity multiplied with the parity of all the data qubits it checked. These are contained in Hz and Hz, except the j-th data qubit will be rec[j - n] (so the 0-th data qubit was measured n measurements ago, the last / (n - 1)th data qubit was measured one measurement ago etc.'''
+def add_final_detectors(circ, code, memory_basis):
 
-  x_check_qubits, z_check_qubits = get_stabiliser_qubit_indices_BB5(ones)
+  Hx = code.Hx
+  Hz = code.Hz
+  n = code.n
 
-  if memory == 'X': # add detectors to X-checks
-    for i in reversed(list(range(n//2))):
-      circuit.append(
-          "DETECTOR",
-          [ stim.target_rec(-2 * n + i) ] # the X-check, starting from the first X-check, i.e. qX[0], and adding 1 each time to get to the most recent X-check
+  if memory_basis == 'Z':
+      
+      for k in list(range(n//2)): # loop over Z-check qubits
+          
+          this_check_qubits_data_qubits = np.nonzero(Hz[k])[0] # extract the 1 positions (data qubit indices) in this check qubit's row of Hz
+
+          circ.append("DETECTOR", 
+          [stim.target_rec(-(n + n//2) + k)] # This Z-check qubit
           +
-          [ stim.target_rec(- j - n) for j in x_check_qubits[i] ] # the data qubits it checks the parity of. Minus n off each 0 to n - 1 data qubit indices in x_check_qubits so the zeroth qubit is rec[-n]
-          #, [, y, time] # coordinates
-      )
+          [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # It's data qubits
+          # Note it is j - n because if j is the last data qubit, j = n - 1, we need stim.target_rec(-1) (most recent measurement)
+          )
 
-  elif memory == 'Z': # add detectors to Z-checks
-    for i in reversed(list(range(n//2))):
-      circuit.append(
-          "DETECTOR",
-          [stim.target_rec(- (n + n//2) + i)] # the Z-check, starting from the first Z-check (NOT the most recent)
+  elif memory_basis == 'X':
+      
+      for k in list(range(n//2)):
+
+          this_check_qubits_data_qubits = np.nonzero(Hx[k])[0]
+
+          circ.append("DETECTOR", 
+          [stim.target_rec(-2 * n + k)] # This X-check qubit
           +
-          [ stim.target_rec(- j - n) for j in z_check_qubits[i] ] # all the data qubits it checks. Minus n off each 0 to n - 1 data qubit index
-      )
+          [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # Its data qubits
+          )
+  
+  else:
+    raise ValueError("Paramater 'memory_basis' must be either 'X' or 'Z' ")
 
 
 ''' add_logical_observables

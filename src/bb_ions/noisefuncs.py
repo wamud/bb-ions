@@ -19,9 +19,9 @@ class NoiseTimes:
 import numpy as np
 
 
-''' make_noisetimes
+''' make_uniform_noisetimes
 Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. This sets them all uniformly to the same input to this function t. The object noisetimes can be modified afterwards to set specific times'''
-def make_noisetimes(t):
+def make_uniform_noisetimes(t):
     t_init = t
     t_had = t
     t_merge = t
@@ -53,10 +53,10 @@ def make_longchain_noisetimes(t):
     t_idle = t / 100
 
     # Our operations:
-    t_shuttle = t
-    t_shift_const = t
-    t_merge = t
-    t_split = t
+    t_shuttle = t / 10
+    t_shift_const = t / 10
+    t_merge = t / 10
+    t_split = t / 10
 
     noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
     

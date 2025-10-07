@@ -117,7 +117,7 @@ def get_code_params(l, m, Aij, Bij):
     k = len(Lx)
 
     # Maximum distance:
-    d_max = 5      #find_d_max(Hx, Hz)  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -- hard-coded while working on 30,4,5 
+    d_max = find_d_max(Hx, Hz) 
 
     code = Code(l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
 
