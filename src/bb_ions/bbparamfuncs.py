@@ -74,7 +74,9 @@ Aij = [(0, 0), (1, 0)]
 Bij = [(0, 0), (0, 1), (2, 2)]
 The A and B matrices returned by this function are the actual matrices A, B
 '''
-def get_code_params(l, m, Aij, Bij):
+def get_code_params(l, m, Aij, Bij, d_max = None):
+
+
 
     # Sorting indices into I(A), I(B), J(A), J(B):
     IA, JA = findIJ(Aij)
@@ -110,14 +112,14 @@ def get_code_params(l, m, Aij, Bij):
     Hx = np.hstack((A, B))
     Hz = np.hstack((B.T, A.T))
 
+    if d_max == None:
+        d_max = find_d_max(Hx, Hz) 
+
     # Logical operators:
     Lx, Lz = autqec_logical_ops(Hx, Hz)
 
     # Num. logical qubits:
     k = len(Lx)
-
-    # Maximum distance:
-    d_max = find_d_max(Hx, Hz) 
 
     code = Code(l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
 

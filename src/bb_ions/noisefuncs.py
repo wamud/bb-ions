@@ -19,6 +19,9 @@ class NoiseTimes:
 import numpy as np
 
 
+
+
+
 ''' make_uniform_noisetimes
 Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. This sets them all uniformly to the same input to this function t. The object noisetimes can be modified afterwards to set specific times'''
 def make_uniform_noisetimes(t):
@@ -61,6 +64,52 @@ def make_longchain_noisetimes(t):
     noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
     
     return noisetimes
+
+
+''' make_uniform_agnostic_noisetimes
+Sets noise of all operations to the input t except removes the noise introduced by our hardware proposal, namely merge, split, shuttle, shift.'''
+def make_uniform_agnostic_noisetimes(t):
+    t_init = t
+    t_had = t
+    t_cnot = t
+    t_cz = t
+    t_meas = t
+    t_idle = t
+    t_idle_meas = t
+
+    # Our hardware proposal:
+    t_merge = 0
+    t_split = 0
+    t_shuttle = 0
+    t_shift_const = 0
+
+    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
+    
+    return noisetimes
+
+
+''' make_longchain_agnostic_noisetimes
+Sets noise of all operations as per Ye Delfosse longchain paper 2503.2207. Also removes noise introduced by our hardware proposal, namely merge, split, shuttle, shift are set to zero.'''
+def make_longchain_agnostic_noisetimes(t):
+    t_init = t / 10
+    t_had = t / 10
+    t_cnot = t
+    t_cz = t
+    t_meas = t / 10
+    
+    t_idle_meas = 30 * t / 100
+    t_idle = t / 100
+
+    # Our hardware proposal:
+    t_merge = 0
+    t_split = 0
+    t_shuttle = 0
+    t_shift_const = 0
+
+    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
+    
+    return noisetimes
+
 
 
 ''' p_init
