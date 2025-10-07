@@ -1,4 +1,0 @@
-     shots,    errors,  discards, seconds,decoder,strong_id,json_metadata,custom_counts
-        17,         0,         0,   0.010,bposd,05ddc3023ce33a5e949290104e79e787afa706e2e0c78faea80b6cf9f92e4932,"{""A"":""'0010'"",""B"":""'000122'"",""b"":""X"",""code"":""BB"",""l"":5,""m"":3,""nkd"":""[[30_4_5]]"",""noise"":""longchain"",""p"":0.001,""r"":5}",
-       256,         0,         0,   0.057,bposd,05ddc3023ce33a5e949290104e79e787afa706e2e0c78faea80b6cf9f92e4932,"{""A"":""'0010'"",""B"":""'000122'"",""b"":""X"",""code"":""BB"",""l"":5,""m"":3,""nkd"":""[[30_4_5]]"",""noise"":""longchain"",""p"":0.001,""r"":5}",
-       727,         3,         0,   0.221,bposd,05ddc3023ce33a5e949290104e79e787afa706e2e0c78faea80b6cf9f92e4932,"{""A"":""'0010'"",""B"":""'000122'"",""b"":""X"",""code"":""BB"",""l"":5,""m"":3,""nkd"":""[[30_4_5]]"",""noise"":""longchain"",""p"":0.001,""r"":5}",

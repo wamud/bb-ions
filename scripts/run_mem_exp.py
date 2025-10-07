@@ -9,9 +9,9 @@ from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 
 
 def main():
-
+    n = 30
     circuit_paths = glob.glob(f"../circuits/nkd=[[{n}*.stim")
-    csv_path = "collected_stats.csv"
+    csv_path = f"../collected_stats/{n}_collected_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -22,8 +22,8 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers=1,
-        max_shots=1000,
+        num_workers=64,
+        max_shots=100000,
         max_errors=1000,
         tasks = tasks,
         decoders=['bposd'],
