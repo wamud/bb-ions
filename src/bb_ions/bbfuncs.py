@@ -1,84 +1,91 @@
-''' bbfuncs
-A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate Hx and Hz parity check matrices. 
-These functions are for constructing the parity check matrices of a BB code.'''
+"""
+A Bicycle Bivariate (BB) code [2308.07915] is a CSS code and thus has separate
+Hx and Hz parity check matrices. These functions are for constructing the
+parity check matrices of a BB code.
+"""
 
 import numpy as np
 
-''' make_s
-makes a cyclic matrix S. This is an idenity matrix with every 1 cyclically shifted to the right by one'''
 def make_s(dim):
-  s = np.zeros((dim,dim), dtype = int)
+    """ 
+    makes a cyclic matrix S. This is an idenity matrix with every 1 cyclically
+    shifted to the right by one
+    """
+    s = np.zeros((dim, dim), dtype=int)
 
-  for i in range(dim):
-    s[i % dim, (i + 1) % dim] = 1
+    for i in range(dim):
+        s[i % dim, (i + 1) % dim] = 1
 
-  return s
+    return s
 
-''' make_x
-Makes the matrix x, which is x := S_l ⊗ I_m'''
 def make_x(l, m):
-  s_l = make_s(l)
-  ident_m = np.eye(m, dtype = int)
+    """ 
+    Makes the matrix x, which is x := S_l ⊗ I_m
+    """
+    s_l = make_s(l)
+    ident_m = np.eye(m, dtype=int)
 
-  x = np.kron(s_l, ident_m)
-  return x
+    x = np.kron(s_l, ident_m)
+    return x
 
-''' make_y
-Makes the matrix y, which is y := I_l ⊗ S_m'''
-def make_y(l,m):
+def make_y(l, m):
+    """ 
+    Makes the matrix y, which is y := I_l ⊗ S_m
+    """
+    ident_l = np.eye(l, dtype=int)
+    s_m = make_s(m)
 
-  ident_l = np.eye(l, dtype = int)
-  s_m = make_s(m)
+    y = np.kron(ident_l, s_m)
+    return y
 
-  y = np.kron(ident_l, s_m)
-  return y
+def make_z(l, m):
+    """ 
+    Makes the matrix z, which is x * y or, equivalently, S_l ⊗ S_m
+    """
+    s_l = make_s(l)
+    s_m = make_s(m)
 
-''' make_z
-Makes the matrix z, which is x * y or, equivalently, S_l ⊗ S_m'''
-def make_z(l,m):
-  s_l = make_s(l)
-  s_m = make_s(m)
+    z = np.kron(s_l, s_m)
 
-  z = np.kron(s_l, s_m)
+    return z
 
-  return z
+def make_xyz(l, m):
+    """ 
+    Uses above functions to make x, y and z
+    """
+    x = make_x(l, m)
+    y = make_y(l, m)
+    z = make_z(l, m)
 
-''' make_xyz
-Uses above functions to make x, y and z'''
-def make_xyz(l,m):
-  x = make_x(l, m)
-  y = make_y(l, m)
-  z = make_z(l, m)
+    return x, y, z
 
-  return x, y, z
-
-
-
-''' test_stabs_commute
-Given X and Z parity check matrices, this function tests that all the stabilisers commute by testing Hx Hz^T = [0] mod 2
-(they should have an even number of 1's in corresponding positions so give the zero matrix)'''
 def test_stabs_commute(Hx, Hz):
-  test = (Hx @ Hz.T) % 2 # should give all-zero matrix zeros
-  if np.all(test == 0) != True:
-    print("Tragédie, tragédie ! Not all the stabilisers commute")
+    """ 
+    Given X and Z parity check matrices, this function tests that all the
+    stabilisers commute by testing Hx Hz^T = [0] mod 2 (they should have an even
+    number of 1's in corresponding positions so give the zero matrix)
+    """
+    test = (Hx @ Hz.T) % 2  # should give all-zero matrix zeros
+    if np.all(test == 0) != True:
+        print("Tragédie, tragédie ! Not all the stabilisers commute")
 
-
-''' verify_ones
-For each matrix in args, verify that there is just one one per row and the rest are zeros:
-'''
 def verify_ones(*args):
-  for i, A in enumerate(args):
-    sumlist = np.sum(A, axis = 1) # sum of each row
-    num_zeros = np.sum(A == 0, axis = 1) # num of zeros in each row
+    """ 
+    For each matrix in args, verify that there is just one one per row and the rest
+    are zeros:
+    """
+    for i, A in enumerate(args):
+        sumlist = np.sum(A, axis=1)  # sum of each row
+        num_zeros = np.sum(A == 0, axis=1)  # num of zeros in each row
 
-    test1 = np.all(sumlist == 1)
-    numcols = A.shape[1]
-    test2 = np.all(num_zeros == numcols - 1)
+        test1 = np.all(sumlist == 1)
+        numcols = A.shape[1]
+        test2 = np.all(num_zeros == numcols - 1)
 
-    if not (test1 and test2):
-      print(f"Tragédie, tragédie ! The {i}-th matrix given to verify_ones is not exactly one one per row")
-
-
+        if not (test1 and test2):
+            print(
+                f"Tragédie, tragédie ! The {i}-th matrix given to verify_ones is not exactly one one per row"
+            )
 
 
 # # E.g.
