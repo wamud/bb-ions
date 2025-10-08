@@ -3,3 +3,6 @@ src/bb_ions/__pycache__/*
 .DS_Store
 src/output.svg
 src/output.pdf
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
