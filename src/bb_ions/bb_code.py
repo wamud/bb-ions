@@ -179,7 +179,7 @@ class BBCode:
         H_symp_rref = H_symp_rref[~np.all(H_symp_rref == 0, axis=1)]
         H_symp_rref_og_basis = H_symp_rref @ inv_mod2(transform_cols)
         assert (
-            H_symp_rref_og_basis.shape[0] == self.qubits.physical - self.qubits.physical
+            H_symp_rref_og_basis.shape[0] == self.qubits.physical - self.qubits.logical
         )
         assert H_symp_rref_og_basis.shape[1] == 2 * self.qubits.physical
 
