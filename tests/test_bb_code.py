@@ -71,5 +71,6 @@ class BBCodeTest(unittest.TestCase):
         
         bb = BBCode(l, m, left_pow, right_pow)
         print(bb.estimate_distance())
+
 if __name__ == "__main__":
     unittest.main()

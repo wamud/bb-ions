@@ -8,10 +8,11 @@ Ref:
 from typing import Iterable, Tuple
 import numpy as np
 import json
+from functools import cached_property
 from numpy.linalg import matrix_power
 from bposd.css import css_code
 from bposd.css_decode_sim import css_decode_sim
-
+from autqec.utils.qec import rref_mod2, inv_mod2, compute_standard_form
 def generate_matrix_polynomial(
         x: np.ndarray,
         y: np.ndarray,
@@ -27,6 +28,17 @@ def generate_matrix_polynomial(
         for i, j in zip(*poly_pow)
     )
 
+
+class CodeQubits:
+    def __init__(self, n, k):
+        self.physical = n
+        self.logical = k
+
+
+class CodeOperators:
+    def __init__(self, x, z):
+        self.X = x
+        self.Z = z
 
 class BBCode:
     """
@@ -59,20 +71,41 @@ class BBCode:
         """
         args
         ----
-        l: 
+        l:
         m: 
-        left_pow:
-        right_pow:
+        left_pow: Iterable of x and y powers for left matrix polynomial.
+                  x^ay^b + x^cy^d + x^ey^f is represented by
+                  `left_pow` = ((a, c, e), (b, d, f))
+        right_pow: Iterable of x and y powers for right matrix polynomial
+                  x^ay^b + x^cy^d + x^ey^f is represented by
+                  `right_pow` = ((a, c, e), (b, d, f))
         """
         self.l = l
         self.m = m
-        self.left_pow = left_pow
-        self.right_pow = right_pow
-        self.Hx, self.Hz = self.generate_check_mat()
-        self.N, self.K = self.generate_nk()
+        self.left_pow = tuple(left_pow)
+        self.right_pow = tuple(right_pow)
+
         self.distance = None
         if estimate_distance:
             self.distance = self.estimate_distance()
+
+
+    @cached_property
+    def qubits(self):
+        n, k = self.generate_nk()
+        return CodeQubits(n, k)
+
+        
+    @cached_property
+    def check_operators(self):
+        Hx, Hz = self.generate_check_mat()
+        return CodeOperators(Hx, Hz)
+
+    @cached_property
+    def logical_operators(self):
+        Lx, Lz = self.generate_logical_ops()
+        
+        return CodeOperators(Lx, Lz)
 
     def generate_check_mat(self):
         """
@@ -105,7 +138,7 @@ class BBCode:
         return Hx, Hz 
     
     def generate_nk(self):
-        code = css_code(hx=self.Hx, hz=self.Hz)
+        code = css_code(hx=self.check_operators.X, hz=self.check_operators.Z)
         return code.N, code.K
 
     def estimate_distance(self):
@@ -117,7 +150,8 @@ class BBCode:
             return self.distance
 
         bb5 = css_decode_sim(
-            hx=self.Hx, hz=self.Hz, **self.OSD_OPTIONS
+            hx=self.check_operators.X, hz=self.check_operators.Z,
+            **self.OSD_OPTIONS
         )
 
         results = json.loads(bb5.output_dict())
@@ -129,21 +163,54 @@ class BBCode:
         return dmax
 
     def generate_logical_ops(self):
-        pass
+        """
+        Generate the logical operators of the code.
+        """
+
+        # Convert to symplectic form
+        zeros = np.zeros_like(self.check_operators.X)
+        H_symp = np.array(
+            np.vstack((
+                       np.hstack((self.check_operators.X, zeros)),
+                       np.hstack((zeros, self.check_operators.Z))
+                       )),
+            dtype=int
+        )
+
+        # Row reduce and find logical operators
+        H_symp_rref, _, transform_rows, transform_cols = rref_mod2(H_symp)
+        H_symp_rref = H_symp_rref[~np.all(H_symp_rref == 0, axis=1)]
+        H_symp_rref_og_basis = H_symp_rref @ inv_mod2(transform_cols)
+        assert H_symp_rref_og_basis.shape[0] == self.qubits.physical - self.qubits.physical
+        assert H_symp_rref_og_basis.shape[1] == 2 * self.qubits.physical
+
+        G, LX_symplectic, LZ_symplectic, D = compute_standard_form(
+            H_symp_rref_og_basis
+        )
+
+        # We have a CSS code so cut off the empty Z and X parts of the symplectic
+        # representations of Lx and Lz:
+        Lx = LX_symplectic[:, :self.qubits.physical]
+        Lz = LZ_symplectic[:, self.qubits.physical:]
+
+        # Verify anticommutation of logical operators and that they're canonical:
+        assert np.array_equal((Lx @ Lz.T) % 2, np.eye(Lx.shape[0]))
+
+        return Lx, Lz
 
     def __str__(self):
         A = ' + '.join([f"x^{i} * y^{j}" for i, j in zip(*self.left_pow)])
         B = ' + '.join([f"x^{i} * y^{j}" for i, j in zip(*self.right_pow)])
-        n = self.N
-        k = self.K
+        n = self.qubits.physical 
+        k = self.qubits.logical
 
         if self.distance is None:
-            d = '?'
+            d = ' '
         else:
-            d = self.distance
+            d = "<=" + str(self.distance)
         
         return '\n'.join(
-            [f"[[{n}, {k}, <={d}]]",
+            [f"[[{n}, {k}, {d}]]",
              f"l = {self.l}",
              f"m = {self.m}",
              f"A = {A}",
