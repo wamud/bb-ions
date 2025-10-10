@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from bb_ions.bb_code import generate_matrix_polynomial, BBCode
+from bb_ions.code import generate_matrix_polynomial, BBCode
 # from bb_ions.bbparamfuncs import get_code_params
 
 
