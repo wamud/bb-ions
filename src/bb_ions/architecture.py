@@ -17,6 +17,8 @@ def default_errors(p=0.01):
         "MX" : ("MX", p / 10),
         "idle_1q" : ("DEPOLARIZE1", p / 100),
         "idle_2q" : ("DEPOLARIZE1", p / 100),
+        "idle_shift" : ("DEPOLARIZE1", p / 100),
+        "idle_shuttle" : ("DEPOLARIZE1", p / 100),
         "idle_meas" : ("DEPOLARIZE1", 30 * p / 100),
         "shuttle" : ("DEPOLARIZE1", p / 10),
         "merge" : ("DEPOLARIZE1", p / 10),

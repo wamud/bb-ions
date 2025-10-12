@@ -60,10 +60,10 @@ class BBCode:
 
     def __init__(
         self,
-        l: int,
-        m: int,
-        left_pow: Iterable[Iterable[int]],
-        right_pow: Iterable[Iterable[int]],
+        l: int = 12,
+        m: int = 12,
+        left_pow: Iterable[Iterable[int]] = ((3, 0 ,0), (0, 2, 7)),
+        right_pow: Iterable[Iterable[int]] = ((0, 1, 2), (3, 0, 0)),
         estimate_distance=False,
     ):
         """
