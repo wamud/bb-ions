@@ -35,13 +35,26 @@ class BBCodeTest(unittest.TestCase):
         bb = BBCode(l, m, left_pow, right_pow)
         hx, hz = bb.generate_check_mat()
 
-        # aij = tuple(zip(*left_pow))
-        # bij = tuple(zip(*right_pow))
+        #aij = tuple(zip(*left_pow))
+        #bij = tuple(zip(*right_pow))
 
-        # code = get_code_params(l, m, aij, bij)
+        #code = get_code_params(l, m, aij, bij)
 
-        # assert np.array_equal(code.Hx, hx)
-        # assert np.array_equal(code.Hz, hz)
+        #assert np.array_equal(code.Hx, hx)
+        #assert np.array_equal(code.Hz, hz)
+
+    def test_check_mat_cases(self):
+        cases = []
+        cases.append(
+            {
+                "l" : 5, "m" : 3,
+                "left_pow" : [(0, 1), (0, 0)],
+                "right_pow" : [(0, 0, 2), (0, 1, 2)]
+            }
+        )
+
+        for c in cases:
+            self.test_generate_check_mat(**c)
 
     def test_generate_nk(
         self,

@@ -4,7 +4,6 @@ and logical operators for a bivariate-bycycle code.
 
 Ref:
 """
-
 from typing import Iterable, Tuple
 import numpy as np
 import json
@@ -23,6 +22,7 @@ def generate_matrix_polynomial(
 
     Assumes x and y are square matrices
     """
+
     return sum(matrix_power(x, i) @ matrix_power(y, j) for i, j in zip(*poly_pow))
 
 
@@ -116,10 +116,11 @@ class BBCode:
         """
         # Identity matrix cyclically shifted by 1 column
         s_l = np.roll(np.eye(self.l, dtype=int), 1, axis=1)
+        s_m = np.roll(np.eye(self.m, dtype=int), 1, axis=1)
 
         # generate variables
         x = np.kron(s_l, np.eye(self.m, dtype=int))
-        y = np.kron(np.eye(self.m, dtype=int), s_l)
+        y = np.kron(np.eye(self.l, dtype=int), s_m)
 
         # generate polynomial
         A = generate_matrix_polynomial(x, y, self.left_pow)
@@ -127,7 +128,7 @@ class BBCode:
 
         Hx = np.hstack((A, B))
         Hz = np.hstack((B.T, A.T))
-
+        
         # check that all stabilizer checks commute
         assert not np.any((Hx @ Hz.T) % 2)
 
