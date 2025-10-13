@@ -250,6 +250,30 @@ class MemoryExperiment:
 
         return circ
 
+    def add_final_detectors(self):
+        """
+        add final detectors to X or Z checks depending on memory basis.
+        """
+        
+        circ = stim.Circuit()
+        check_mat = getattr(self.code.check_operators, self.memory_basis)
+        checks = (np.nonzero(row)[0] for row in check_mat)
+        
+        n = self.code.qubits.physical
+        for idx, c in enumerate(checks):
+            if self.memory_basis == "Z":
+                check_qubit_index  = -(n + n // 2) + idx 
+            else:
+                check_qubit_index = -2 * n + idx
+        
+            circ.append(
+                "DETECTOR",
+                [stim.target_rec(check_qubit_index)]
+                + [stim.target_rec(q - n) for q in c]
+            )
+
+        return circ
+
     @cached_property
     def stim_circuit(self):
         """
@@ -263,7 +287,12 @@ class MemoryExperiment:
         circ += (d_max - 1) * repeated_loop
 
         # measure all data qubits
-        #circ += self.arch.apply_probabilistic_gate(f"M{self.memory_basis}")
+        circ += self.arch.apply_probabilistic_gate(
+            f"M{self.memory_basis}", self.reg.data_registers
+        )
+
+        # Add final detectors
+        circ += self.add_final_detectors()
 
         return circ
 
