@@ -95,20 +95,21 @@ def initZ(circuit, register, p = 0):
 Sets qubits in the list 'register' to
 - |0⟩ if basis == 'Z'
 - |+⟩ if basis == 'X'
-Also adds a depolarizing error (in alignment with lonchain paper 2503.2207) with probability p (as opposed to usual reset erro which sets to orthog. eigenstate)'''
-def init(basis, circuit, register, p = 0):
+Also adds a depolarizing error (in alignment with lonchain paper 2503.2207) with probability p if 'longchain' in the noise parameter, otherwise the more usual reset error which sets to orthog. eigenstate'''
+def init(basis, circuit, register, p = 0, noise = 'longchain'):
   circuit.append(f"R{basis}", register)
 
   if p > 0:
     
-    error = 'DEPOLARIZE1'
-    
-    ## Orthog. eigenstates:
-    # if basis == 'Z':
-    #   error = 'X_ERROR'
-    # elif basis == 'X':
-    #   error = 'Z_ERROR'
-    
+    if 'longchain' in noise:
+      error = 'DEPOLARIZE1'
+    else:
+      # Orthog. eigenstates:
+      if basis == 'Z':
+        error = 'X_ERROR'
+      elif basis == 'X':
+        error = 'Z_ERROR'
+      
     circuit.append(error, register, p)
 
 
