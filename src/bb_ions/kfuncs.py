@@ -48,3 +48,13 @@ def convtok(l, m, u, v, w):
     k = u * l * m   +   v * m   +   w
     return k
 
+
+import shutil
+import os
+
+''' empty_folder
+Empties the folder 'folder' by deleting it and recreating it'''
+def empty_folder(folder):
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+    os.makedirs(folder)

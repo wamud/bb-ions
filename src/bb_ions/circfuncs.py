@@ -618,34 +618,32 @@ def make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_c
 
 
 ''' make_circuit
-
 This function makes a stim circuit realising a memory experiment for any bivariate bicycle (BB) code [2308.07915] according to algorithm 2 of Tham et al.'s "qubit modules" paper [2508.01879]. All the X-checks are performed in parallel, then all the Z-checks. The two-qubit gates proceed according to ascending j, the powers of y in the BB code's matrices A = sum(x^i * y^j), B = sum(x^i * y^j), the two matrices which form the code's parity check matrices Hx = [A|B] and Hz = [B^T|A^T]. All of the required information is contained in the input object 'code'.
 
 Inputs are:
-    - code, 
+    - code
             An object which contains all the BB code's parameters, such as parity check matrices.
-    - memory_basis, 
+    - memory_basis
             Either 'Z' or 'X' to preserve logical 0 or + respectively in all the logical qubits
-    - p, 
+    - p
             Physical error rate
-    - noise, 
+    - noise
             Determines the relative likelihood of different types of errors. Current options are 'longchain', 'uniform' or either with '_agnostic' appended, meaning no noise will be added in steps that simulate our architecture's merge, split, shuttle & shift operations.
-    - num_syndrome_extraction_cycles, 
+    - num_syndrome_extraction_cycles
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
-    - sequential = True, 
-            Whether or not the two-qubit gates within a leg (where a data qubit module and check qubit module interact) are sequential or in parallel
-    - exclude_opposite_basis_detectors = False, 
+    - sequential_gates = True
+            Whether or not the two-qubit gates between qubits in aligned modules are sequential or in parallel.
+    - exclude_opposite_basis_detectors = False
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
-    - reuse_check_qubits = True, 
-            If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements does X-checks then Z-checks.'''
-
+    - reuse_check_qubits = True
+            If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements (algorithm 2 of 2508.01879) does X-checks then Z-checks'''
 def make_circuit(
   code,
   memory_basis,
   p,
   noise,
   num_syndrome_extraction_cycles,
-  sequential = True,
+  sequential_gates = True,
   exclude_opposite_basis_detectors = False,
   reuse_check_qubits = True):
 
@@ -696,7 +694,7 @@ def make_circuit(
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
 
     # Do cyclic shifts to required j-valued modules (and return last j position)
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_0, 'X', code, registers, noisetimes, sequential)
+    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_0, 'X', code, registers, noisetimes, sequential_gates)
     # Alrighty we've done the X-check CNOTs!
 
 
@@ -732,7 +730,7 @@ def make_circuit(
     tick(circ)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, 'Z', code, registers, noisetimes, sequential)
+    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, 'Z', code, registers, noisetimes, sequential_gates)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     hadamard(circ, qC, t_had)
@@ -751,7 +749,7 @@ def make_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
     ## Make repeated / looped stabiliser measurement rounds:
-    loop_body = make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_check_qubits, sequential, exclude_opposite_basis_detectors)
+    loop_body = make_loop_body(jval_prev, code, noisetimes, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors)
     # Append to circuit:
     circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
 

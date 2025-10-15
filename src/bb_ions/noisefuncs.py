@@ -20,8 +20,6 @@ import numpy as np
 
 
 
-
-
 ''' make_uniform_noisetimes
 Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. This sets them all uniformly to the same input to this function t. The object noisetimes can be modified afterwards to set specific times'''
 def make_uniform_noisetimes(t):
