@@ -62,6 +62,7 @@ def make_registers(l, m, reuse_check_qubits = True):
   qB: qubits n/2 to n - 1
   qC: qubits n to 3n/2 - 1 
   qD: qubits 3n/2 to 2n - 1'''
+
 def old_make_registers(n):
   qA = list(range( 0 , n//2))
   qB = list(range( n//2 , n))
