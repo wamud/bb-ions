@@ -51,86 +51,50 @@ def make_registers(l, m, reuse_check_qubits = True):
 
   return registers
 
-
-
-
-''' old_make_registers
-  Makes lists of qubit indices dividing 2n qubits evenly into qA, qB, qC, qD.
-  This is most commonly used for a BB code, for example qX, qL, qR, qZ, where qX is the X-check syndrome qubits, qL the 'left' data qubits (appear in left-hand side of Hx; acted on by matrix A), qR the 'right' data qubits (appear in right-hand side of Hx; acted on by matrix B) and qZ, the Z-check syndrome qubits.
-
-  qA: qubits 0 to n/2 - 1
-  qB: qubits n/2 to n - 1
-  qC: qubits n to 3n/2 - 1 
-  qD: qubits 3n/2 to 2n - 1'''
-def old_make_registers(n):
-  qA = list(range( 0 , n//2))
-  qB = list(range( n//2 , n))
-  qC = list(range( n , 3*n//2))
-  qD = list(range( 3*n//2 , 2*n))
-
-  return qA, qB, qC, qD
-  
-
-
-''' initX
-Sets qubits in the list 'register' to the plus state |+⟩.
-Adds a reset error (set to |-⟩ ) with probability p'''
-def initX(circuit, register, p = 0):
-  circuit.append("RX", register)
-  if p > 0:
-    circuit.append("Z_ERROR", register, p)
-
-''' initZ
-Sets qubits in the list 'register' to the zero state |0⟩.
-Adds a reset error (set to |1⟩ ) with probability p'''
-def initZ(circuit, register, p = 0):
-  circuit.append("R", register)
-  if p > 0:
-    circuit.append("X_ERROR", register, p)
-
 ''' init
 Sets qubits in the list 'register' to
 - |0⟩ if basis == 'Z'
 - |+⟩ if basis == 'X'
 Also adds a depolarizing error (in alignment with lonchain paper 2503.2207) with probability p if 'longchain' in the noise parameter, otherwise the more usual reset error which sets to orthog. eigenstate'''
-def init(basis, circuit, register, p = 0, noise = 'longchain'):
-  circuit.append(f"R{basis}", register)
+def init(basis, circuit, register, errors: dict):
+  
+  reset = f"R{basis}"
+  circuit.append(reset, register) # append RZ or RX
+  p = errors[reset].p
 
   if p > 0:
-    
-    if 'longchain' in noise:
-      error = 'DEPOLARIZE1'
-    else:
-      # Orthog. eigenstates:
-      if basis == 'Z':
-        error = 'X_ERROR'
-      elif basis == 'X':
-        error = 'Z_ERROR'
-      
-    circuit.append(error, register, p)
+    error_op = errors[reset].op
+    circuit.append(error_op, register, p)
 
 
 
 ''' hadamard
 Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
 After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)'''
-def hadamard(circuit, register, t_had = 0):
+def hadamard(circuit, register, errors):
+
   circuit.append("H", register)
-  p = p_had(t_had)
+  
+  p = errors['H'].p
+  
   if p > 0:
-    circuit.append("DEPOLARIZE1", register, p)
+    circuit.append(errors['H'].op, register, p)
 
 
 ''' measure
-Appends a Z-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
-def measure(basis, circuit, register, t_meas = 0):
-  p = p_meas(t_meas)
-  if basis == 'Z':
-    circuit.append("M", register, p)
-  elif basis == 'X':
-    circuit.append("MX", register, p)
-  else:
-    raise ValueError("Parameter 'basis' must be either 'X' or 'Z'.")
+Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
+def measure(basis: str, circuit, register, errors):
+  
+  measure_string = f"M{basis}"
+  
+  p = errors[measure_string]
+  
+  # Append error before measurement
+  if p > 0: 
+    circuit.append(errors[measure_string].op, p)
+
+  # Append measurement:
+  circuit.append(measure_string, register)
 
 
 ''' tick

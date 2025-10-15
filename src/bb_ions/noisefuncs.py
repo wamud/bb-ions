@@ -4,36 +4,60 @@ Hardware-inspired noise and error functions relevant to our architecture'''
 import numpy as np
 
 
-class Error:
-    def __init__(self, p, operation):
-        self.p = p
-        self.type = operation
 
-class Errors:
-    def __init__(self, p):
-        
-        self.RZ = Error(p, 'X_ERROR')
-        self.RX = Error(p, 'Z_ERROR')
-        self.H = Error(p, 'DEPOLARIZE1')
-        self.MZ = Error(p, None)
-        self.MX = Error(p, None)
-
-        self.CNOT = Error(p, 'DEPOLARIZE2')
-        self.CZ = Error(p, 'DEPOLARIZE2')
-
-        self.shift = Error(p, 'DEPOLARIZE1')
-        self.shuttle = Error(0, 'DEPOLARIZE1')
-        self.merge = Error(0, 'DEPOLARIZE1')
-        self.split = Error(0, 'DEPOLARIZE1')
-
-
-
-
-# class Idlings:
+# class Errors:
 #     def __init__(self, p):
         
-#         # Idling during single-qubit operations:
+#         self.RZ = Error(p, 'X_ERROR')
+#         self.RX = Error(p, 'Z_ERROR')
+#         self.H = Error(p, 'DEPOLARIZE1')
+#         self.MZ = Error(p, None)
+#         self.MX = Error(p, None)
+
+#         self.CNOT = Error(p, 'DEPOLARIZE2')
+#         self.CZ = Error(p, 'DEPOLARIZE2')
+
+#         self.shift = Error(p, 'DEPOLARIZE1')
+#         self.shuttle = Error(0, 'DEPOLARIZE1')
+#         self.merge = Error(0, 'DEPOLARIZE1')
+#         self.split = Error(0, 'DEPOLARIZE1')
+
+#     return errors
+
+
+class Error:
+    def __init__(self, operation, p):
+        self.op = operation # the error operation
+        self.p = p # its probability
+
+def default_errors(p = 0.001):
+    """
+    Defines default gates and error rates.
+    """
+    errors = {
+        "RZ" : Error("DEPOLARIZE1", p / 10), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+        "RX" : Error("DEPOLARIZE1", p / 10), # as opposed to Z_ERROR
+        "H" : Error("DEPOLARIZE1", p / 10),
+        "CX" : Error("DEPOLARIZE2", p),
+        "CZ" : Error("DEPOLARIZE2", p),
+        "MZ" : Error("X_ERROR", p / 10),
+        "MX" : Error("Z_ERROR", p / 10),
         
+        "idle_1q" : Error("DEPOLARIZE1", p / 100),
+        "idle_2q" : Error("DEPOLARIZE1", p / 100),
+        "idle_shift" : Error("DEPOLARIZE1", p / 100),
+        "idle_shuttle" : Error("DEPOLARIZE1", p / 100),
+        "idle_meas" : Error("DEPOLARIZE1", 30 * p / 100),
+        
+        "shuttle" : Error("DEPOLARIZE1", p / 10),
+        "merge" : Error("DEPOLARIZE1", p / 10),
+        "split" : Error("DEPOLARIZE1", p / 10),
+        "shift" : Error("DEPOLARIZE1", p / 10),
+        
+    }
+
+    return errors
+
 
 
 
