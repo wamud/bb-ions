@@ -127,8 +127,10 @@ Appends a Z-basis measurement onto the qubits specified by 'register' on an inpu
 def measure(basis, circuit, register, t_meas = 0):
   p = p_meas(t_meas)
   if basis == 'Z':
-    circuit.append("M", register, p)
+    circuit.append("X_ERROR", register, p)
+    circuit.append("M", register)
   elif basis == 'X':
+    circuit.append("Z_ERROR", register, p)
     circuit.append("MX", register, p)
   else:
     raise ValueError("Parameter 'basis' must be either 'X' or 'Z'.")
@@ -477,7 +479,7 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
           apply_shift_error(circ, qC, t_shift)
 
           if t_shift > 0:
-            idle(circ, qL + qR, t_shift_const / 10 ) # t_shift) # idle the data qubits 
+            idle(circ, qL + qR, t_shift / 10 ) # t_shift) # idle the data qubits 
             tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
