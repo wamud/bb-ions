@@ -4,7 +4,15 @@ Hardware-inspired noise and error functions relevant to our architecture'''
 import numpy as np
 
 
+# class Error:
+#     def __init__(self, p, type):
+#         self.p = p
+#         self.type = type
 
+# class Errors:
+#     def __init__(self, p, RZ, RX):
+#         self.RZ = Error(p, 'X_ERROR')
+#         self.RX = Error(p, 'Z_ERROR')
 
 class Errors:
     def __init__(self, p, 
@@ -18,7 +26,7 @@ class Errors:
                 p_CNOT = None, CNOT_error = 'DEPOLARIZE2',
                 p_CZ = None, CZ_error = 'DEPOLARIZE2',
 
-                p_shift = None, shift_error = 'DEPOLARIZE1',
+                p_shift_const = None, shift_error = 'DEPOLARIZE1',
                 p_shuttle = 0, shuttle_error = 'DEPOLARIZE1',
                 p_merge = 0, merge_error = 'DEPOLARIZE1',
                 p_split = 0, split_error = 'DEPOLARIZE1'
@@ -50,14 +58,14 @@ class Errors:
 
         # Additional operations:
 
-        self.p_shift = p_shift or p # setting p_shift to p, though note within apply_shift_error this is multiplied by the length of the cyclic shift
+        self.p_shift_const = p_shift_const or p # setting p_shift_const to p, though note within apply_shift_error this is multiplied by the length of the cyclic shift hence it's 'p_shift_const'
         self.shift_error = shift_error
 
         # Default values of additional operations is zero:
         self.p_shuttle = p_shuttle
         self.shuttle_error = shuttle_error
 
-        self.p_merge = p_merge
+        self.p_merge = p_merge 
         self.merge_error = merge_error
         
         self.p_split = p_split 
