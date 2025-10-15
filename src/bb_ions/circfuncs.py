@@ -440,22 +440,26 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
     for jval in theunion:
 
         # # Cyclic shift the check qubits:
-        length_of_shift = abs((jval % m) - (jval_prev % m))
-        update_shift_probs(length_of_shift, errors, idle_during)
-        ("updated shift probs")
+        if errors['shift_constant'] > 0:  
+  
+          length_of_shift = abs((jval % m) - (jval_prev % m))
+          update_shift_probs(length_of_shift, errors, idle_during)
+          ("updated shift probs")
 
-        apply_shift_error(circ, qC, errors)
-        idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
-        tick(circ)
+          apply_shift_error(circ, qC, errors)
+          idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
+          tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
-        apply_shuttle_error(circ, qC, errors)
-        idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
-        tick(circ)
+        if errors['shuttle'].p > 0:
+          apply_shuttle_error(circ, qC, errors)
+          idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
+          tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
-        apply_merge_error(circ, qC + qL + qR, errors)
-        tick(circ)
+        if errors['merge'].p > 0:
+          apply_merge_error(circ, qC + qL + qR, errors)
+          tick(circ)
 
         if check == 'X':
           # Apply CNOTs for X-checks, i.e. Hx = [A|B]
@@ -467,13 +471,15 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
           add_AT_CZs(circ, jval, code, registers, errors, idle_during, sequential)
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
-        apply_split_error(circ, qC + qL + qR, errors)
-        tick(circ)
+        if errors['split'].p > 0:
+          apply_split_error(circ, qC + qL + qR, errors)
+          tick(circ)
 
         # # Shuttle check qubits from leg into racetrack:
-        apply_shuttle_error(circ, qC, errors)
-        idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
-        tick(circ)
+        if errors['shuttle'].p > 0:
+          apply_shuttle_error(circ, qC, errors)
+          idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
+          tick(circ)
 
         jval_prev = jval
 
