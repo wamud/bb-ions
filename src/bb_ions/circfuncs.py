@@ -160,6 +160,20 @@ def add_final_detectors(circ, code, memory_basis):
     raise ValueError("Paramater 'memory_basis' must be either 'X' or 'Z' ")
 
 
+'''get_nonzero_indices
+For an array, this function returns a list (per row of the initial array) containing the indices of the nonzero terms.
+'''
+def get_nonzero_indices(array):
+
+  array_indices = []
+
+  for i in range(array.shape[0]):
+    array_indices.append(np.nonzero(array[i])[0])
+
+  return array_indices
+
+
+
 ''' add_logical_observables
 The circuit ends with a parity check of the logical operators / observables. In a surface code, for example, XL and ZL are just vertical or horizontal chains of X's and Z's across the lattice.
 In a BB code they are also chains of X's and Z's but on specific qubits, contained in the arrays Lx and Lz. For each logical qubit Lx and Lz contain a pair of anti-commuting logical operators.
