@@ -3,6 +3,6 @@ src/bb_ions/__pycache__/*
 .DS_Store
 src/output.svg
 src/output.pdf
-examples/example_circuits/*
-examples/example_stats/*
-examples/example_circuit_diagrams/*
+examples/example_circuits/
+examples/example_stats/
+examples/example_circuit_diagrams/
