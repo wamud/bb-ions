@@ -443,12 +443,12 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
         if errors['shift_constant'] > 0:  
   
           length_of_shift = abs((jval % m) - (jval_prev % m))
-          update_shift_probs(length_of_shift, errors, idle_during)
-          ("updated shift probs")
 
-          apply_shift_error(circ, qC, errors)
-          idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
-          tick(circ)
+          if length_of_shift > 0:
+            update_shift_probs(length_of_shift, errors, idle_during)
+            apply_shift_error(circ, qC, errors)
+            idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
+            tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
         if errors['shuttle'].p > 0:
