@@ -436,12 +436,12 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
         # Cyclic shift the check qubits
         t_shift = t_shift_const * abs((jval % m) - (jval_prev % m)) # saying t_shfit proportional to c * (j - prev_j) 
         apply_shift_error(circ, qC, t_shift)
-        idle(circ, qL + qR, t_shift) # idle the data qubits 
+        idle(circ, qL + qR, t_idle) # t_shift) # idle the data qubits 
         tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
         apply_shuttle_error(circ, qC, t_shuttle)
-        idle(circ, qL + qR, t_shuttle) # idle the data qubits
+        idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
         tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
@@ -463,7 +463,7 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
         # # Shuttle check qubits from leg into racetrack:
         apply_shuttle_error(circ, qC, t_shuttle)
-        idle(circ, qL + qR, t_shuttle) # idle the data qubits
+        idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
         tick(circ)
 
         jval_prev = jval
