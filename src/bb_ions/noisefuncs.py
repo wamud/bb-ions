@@ -1,28 +1,6 @@
-''' noisefuncs
-Hardware-inspired noise and error functions relevant to our architecture'''
+''' noisefuncs'''
 
 import numpy as np
-
-
-
-# class Errors:
-#     def __init__(self, p):
-        
-#         self.RZ = Error(p, 'X_ERROR')
-#         self.RX = Error(p, 'Z_ERROR')
-#         self.H = Error(p, 'DEPOLARIZE1')
-#         self.MZ = Error(p, None)
-#         self.MX = Error(p, None)
-
-#         self.CNOT = Error(p, 'DEPOLARIZE2')
-#         self.CZ = Error(p, 'DEPOLARIZE2')
-
-#         self.shift = Error(p, 'DEPOLARIZE1')
-#         self.shuttle = Error(0, 'DEPOLARIZE1')
-#         self.merge = Error(0, 'DEPOLARIZE1')
-#         self.split = Error(0, 'DEPOLARIZE1')
-
-#     return errors
 
 
 class Error:
@@ -35,199 +13,53 @@ def default_errors(p = 0.001):
     Defines default gates and error rates.
     """
     errors = {
+
         "RZ" : Error("DEPOLARIZE1", p / 10), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+
         "RX" : Error("DEPOLARIZE1", p / 10), # as opposed to Z_ERROR
         "H" : Error("DEPOLARIZE1", p / 10),
-        "CX" : Error("DEPOLARIZE2", p),
+        "CNOT" : Error("DEPOLARIZE2", p),
         "CZ" : Error("DEPOLARIZE2", p),
         "MZ" : Error("X_ERROR", p / 10),
         "MX" : Error("Z_ERROR", p / 10),
-        
-        "idle_1q" : Error("DEPOLARIZE1", p / 100),
-        "idle_2q" : Error("DEPOLARIZE1", p / 100),
-        "idle_shift" : Error("DEPOLARIZE1", p / 100),
-        "idle_shuttle" : Error("DEPOLARIZE1", p / 100),
-        "idle_meas" : Error("DEPOLARIZE1", 30 * p / 100),
-        
+
         "shuttle" : Error("DEPOLARIZE1", p / 10),
         "merge" : Error("DEPOLARIZE1", p / 10),
         "split" : Error("DEPOLARIZE1", p / 10),
         "shift" : Error("DEPOLARIZE1", p / 10),
+
+        "shift_constant" : p / 10, 
         
     }
-
+    
     return errors
 
 
 
+def default_idle_errors(p = 0.001):
+    """
+    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation.
+    """
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", p / 100),
+        "RX" : Error("DEPOLARIZE1", p / 100), 
+        "H" : Error("DEPOLARIZE1", p / 100),
+        "CNOT" : Error("DEPOLARIZE1", p / 100),
+        "CZ" : Error("DEPOLARIZE1", p / 100),
+        "MZ" : Error("DEPOLARIZE1", 30 * p / 100),
+        "MX" : Error("DEPOLARIZE1", 30 * p / 100),
+
+        "shuttle" : Error("DEPOLARIZE1", p / 100),
+        "merge" : Error("DEPOLARIZE1", p / 100),
+        "split" : Error("DEPOLARIZE1", p / 100),
+        "shift" : Error("DEPOLARIZE1", p / 100),
+
+        "shift_constant" : p / 100,
+    }
+
+    return idle_during
 
 
-class NoiseTimes:
-    def __init__(self, t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas):
-        self.t_init = t_init
-        self.t_had = t_had
-        self.t_merge = t_merge
-        self.t_split = t_split
-        self.t_cnot = t_cnot
-        self.t_cz = t_cz
-        self.t_shuttle = t_shuttle
-        self.t_shift_const = t_shift_const
-        self.t_meas = t_meas
-        self.t_idle = t_idle
-        self.t_idle_meas = t_idle_meas
-
-
-
-
-''' make_uniform_noisetimes
-Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. This sets them all uniformly to the same input to this function t. The object noisetimes can be modified afterwards to set specific times'''
-def make_uniform_noisetimes(t):
-    t_init = t
-    t_had = t
-    t_merge = t
-    t_split = t
-    t_cnot = t
-    t_cz = t
-    t_shuttle = t
-    t_shift_const = t
-    t_meas = t
-    t_idle = t
-    t_idle_meas = t
-
-    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
-    
-    return noisetimes
-
-
-''' make_longchain_noisetimes
-Create an object noisetimes of class NoiseTimes to store the lengths of time each operation takes so they can be used when applying noise. Sets according to Ye Delfosse longchain: 2503.2207'''
-def make_longchain_noisetimes(t):
-    
-    t_init = t / 10
-    t_had = t / 10
-    t_cnot = t
-    t_cz = t
-    t_meas = t / 10
-    
-    t_idle_meas = 30 * t / 100
-    t_idle = t / 100
-
-    # Our operations:
-    t_shuttle = t / 10
-    t_shift_const = t / 10
-    t_merge = t / 10
-    t_split = t / 10
-
-    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
-    
-    return noisetimes
-
-
-''' make_uniform_agnostic_noisetimes
-Sets noise of all operations to the input t except removes the noise introduced by our hardware proposal, namely merge, split, shuttle, shift.'''
-def make_uniform_agnostic_noisetimes(t):
-    t_init = t
-    t_had = t
-    t_cnot = t
-    t_cz = t
-    t_meas = t
-    t_idle = t
-    t_idle_meas = t
-
-    # Our hardware proposal:
-    t_merge = 0
-    t_split = 0
-    t_shuttle = 0
-    t_shift_const = 0
-
-    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
-    
-    return noisetimes
-
-
-''' make_longchain_agnostic_noisetimes
-Sets noise of all operations as per Ye Delfosse longchain paper 2503.2207. Also removes noise introduced by our hardware proposal, namely merge, split, shuttle, shift are set to zero.'''
-def make_longchain_agnostic_noisetimes(t):
-    t_init = t / 10
-    t_had = t / 10
-    t_cnot = t
-    t_cz = t
-    t_meas = t / 10
-    
-    t_idle_meas = 30 * t / 100
-    t_idle = t / 100
-
-    # Our hardware proposal:
-    t_merge = 0
-    t_split = 0
-    t_shuttle = 0
-    t_shift_const = 0
-
-    noisetimes = NoiseTimes(t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas)
-    
-    return noisetimes
-
-
-
-''' p_init
-The probability of initalising to an orthogonal eigenstate. Depends on time taken to initalise (t_init). todo: fill with more than dummy function.'''
-def p_init(t):
-    p = t
-    return p
-
-'''p_had
-The probability of an error occuring on the hadamard gate. For what error is actually applied see 'hadamard' in circfuncs.'''
-def p_had(t):
-    p = t
-    return p
-
-''' p_shuttle 
-If shuttling a qubit it will experience an error associated with acceleration, time of shuttle, number of T junctions it passes h e e e  through and deceleration. 
-todo: make this function more than a dummy'''
-def p_shuttle(t_shuttle):
-    p = t_shuttle
-    return p
-
-''' p_shift
-todo: make more than dummy function'''
-def p_shift(t_shift):
-    p = t_shift
-    return p
-
-''' p_merge
-Depends on length of time merging the coulomb potential of two ion modules takes. Todo: fill this function. At the moment is just a dummy function returning t.'''
-def p_merge(t):
-    p = t
-    return p
-
-'''p_cnot
-todo: fill '''
-def p_cnot(t_cnot):
-    p = t_cnot
-    return p
-
-'''p_cz
-todo: fill '''
-def p_cz(t_cz):
-    p = t_cz
-    return p
-
-''' p_split
-todo: make more than dummy function'''
-def p_split(t):
-    p = t
-    return p
-
-''' p_meas
-Probability of a measurement error given the time of measurement was t_meas. At the moment just returns p equal to t_meas'''
-def p_meas(t_meas):
-        p = t_meas
-        return p
-
-''' p_idle'''
-def p_idle(t_idle):
-    p = t_idle
-    return p 
 
 # ''' p_idle
 # If a qubit is idling for time t, this function returns what the probability of an error occurring on it will be. This probability can be fed into other functions to say what the error will actually be. For example p_idle(T = 100e-6) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience an error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2)) where T_2 = 50 seconds'''
@@ -238,47 +70,48 @@ def p_idle(t_idle):
 
 
 
+''' idle
+Adds an idling error to qubits in register. The idling error is of class Error.
+E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
+def idle(circuit, register, error: Error):
+
+  p = error.p
+  
+  if p > 0:
+    circuit.append(error.op, register, p)
+
+
 ''' apply_shuttle_error
 Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
-def apply_shuttle_error(circuit, register, t_shuttle):
-    p = p_shuttle(t_shuttle)
+def apply_shuttle_error(circuit, register, errors: dict):
+
+    p = errors['shuttle'].p
+
     if p > 0:
-        circuit.append("DEPOLARIZE1", register, p)
+
+        circuit.append(errors['shuttle'].op, register, p)
 
 
-# ''' idle
-# Adds dephasing (Z) noise of strength p (a Z operation is applied with probability p) to qubits in 'register.'''
-# def idle(circuit, register, t_idle = 0):
-#   p = p_idle(t_idle)
-#   if p > 0:
-#     circuit.append("Z_ERROR", register, p)
-
-
-''' idle
-Adds depolarising noise of strength p_idle(t_idle) to qubits in register'''
-def idle(circuit, register, t_idle = 0):
-  p = p_idle(t_idle)
-  if p > 0:
-    circuit.append("DEPOLARIZE1", register, p)
 
 ''' apply_shift_error
-todo: make more than dummy function'''
-def apply_shift_error(circuit, register, t_shift):
-    p = p_shift(t_shift)
+Applies an error to qubits to simulate them undergoing the cyclic shift required to align check and data qubit modules. Contained in errors is the shift constant. The actual value of p can be fed in to represent longer or shorter cyclic shifts'''
+def apply_shift_error(circuit, register, errors):
+    
+    p = errors['shift'].p
     if p > 0:
-        circuit.append("DEPOLARIZE1", register, p) 
+        circuit.append(errors['shift'].op, register, p) 
 
 
 ''' apply_merge_error
 Once check modules have been cyclically shifted to the data qubit module they need to interact with, we simulate merging their coulomb potentials'''
-def apply_merge_error(circuit, register, t_merge):
-    p = p_merge(t_merge)
+def apply_merge_error(circuit, register, errors: dict):
+    p = errors['merge'].p
     if p > 0:
-        circuit.append("DEPOLARIZE1", register, p)
+        circuit.append(errors['merge'].op, register, p)
 
 ''' apply_split_error
-Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them. At the moment is just depolarising noise of strength p = t_split'''
-def apply_split_error(circuit, register, t_split):
-    p = p_split(t_split)
+Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them.'''
+def apply_split_error(circuit, register, errors: dict):
+    p = errors['split'].p
     if p > 0:
-        circuit.append("DEPOLARIZE1", register, p)
+        circuit.append(errors['split'].op, register, p)
