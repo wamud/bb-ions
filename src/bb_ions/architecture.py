@@ -72,6 +72,9 @@ class Architecture:
             register = register.flatten()
         
         circ = stim.Circuit()
-        circ.append(op_err, register, err_rate)
+       
+        # this might mess up measurements, TODO: check measurements work correctly.
+        if err_rate > 0:
+            circ.append(op_err, register, err_rate)
 
         return circ

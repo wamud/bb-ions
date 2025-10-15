@@ -87,7 +87,7 @@ class MemoryExperiment:
         control: np.ndarray, target: np.ndarray
     ):
         """
-        Apply gates between control check_registgers and target left / right
+        Apply gates between control check_registers and target left / right
         data registers.
         """
         l = self.code.l
@@ -97,8 +97,8 @@ class MemoryExperiment:
         circ = stim.Circuit()
         for i, j in zip(*poly_pow):
             if j == self.jval:
-                for v in range(self.code.l):
-                    for w in range(self.code.m):
+                for v in range(l):
+                    for w in range(m):
                         circ += self.arch.apply_gate(
                             gate,
                             (control[v, w], target[(v + i) % l, (w + j) % m])
@@ -131,29 +131,39 @@ class MemoryExperiment:
         if basis == "X":
             union_set = self.Junion
         else:
-            union_set = reversed([-i for i in self.Junion])
-
+            union_set = tuple(reversed([-i for i in self.Junion]))
 
         circ = stim.Circuit()
         for jval in union_set:
             scaling = abs((jval % self.code.m) - (self.jval % self.code.m))
+
             circ += self.arch.apply_probabilistic_gate(
                     "shift", check_register, scaling=scaling
             )
+
+            #print(basis)
+            #print(self.arch.apply_probabilistic_gate(
+            #       "shift", check_register, scaling=scaling
+            #))
+
             circ += self.idle_data_registers("idle_shift", scaling=scaling)
+            #print(self.idle_data_registers("idle_shift", scaling=scaling))
             
 
             circ.append("TICK")
             
             circ += self.arch.apply_probabilistic_gate("shuttle", check_register)
+            #print(self.arch.apply_probabilistic_gate("shuttle", check_register))
             circ += self.idle_data_registers("idle_shuttle")
+            #print(self.idle_data_registers("idle_shuttle"))
             circ.append("TICK")
             
             circ += self.arch.apply_probabilistic_gate(
                 "merge",
                 join(check_register, self.reg.L, self.reg.R)
             )
-
+            circ.append("TICK")
+            
             if basis == "X":
                 gate = "CX"
                 left_pow = self.code.left_pow
@@ -166,9 +176,19 @@ class MemoryExperiment:
             circ += self.apply_aligned_gates(
                 gate, left_pow, check_register, self.reg.L
             )
+            print(basis)
+            print("\nLeft\n")
+            print(self.apply_aligned_gates(
+                gate, left_pow, check_register, self.reg.L
+            ))
+        
             circ += self.apply_aligned_gates(
                 gate, right_pow, check_register, self.reg.R
             )
+            print("\n right \n")
+            print(self.apply_aligned_gates(
+                gate, right_pow, check_register, self.reg.R
+            ))
 
             circ += self.arch.apply_probabilistic_gate(
                 "split",
@@ -274,6 +294,23 @@ class MemoryExperiment:
 
         return circ
 
+    def add_logical_observables(self):
+        """
+        returns stim circuit to measure logical observable
+        """
+        circ = stim.Circuit()
+        logical_op = getattr(self.code.logical_operators, self.memory_basis)
+        n = self.code.qubits.physical
+        record_indices = [np.nonzero(l)[0] - n for l in logical_op]
+        
+        for record in record_indices:
+            circ.append(
+                "OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in record], 0.0
+            )
+
+
+        return circ
+
     @cached_property
     def stim_circuit(self):
         """
@@ -281,18 +318,22 @@ class MemoryExperiment:
         """
 
         circ = self.apply_stabilizer_round(round_0=True)
-        repeated_loop = self.apply_stabilizer_round()
+        #repeated_loop = self.apply_stabilizer_round()
 
-        d_max = self.code.estimate_distance()
-        circ += (d_max - 1) * repeated_loop
+        #d_max = self.code.estimate_distance()
+        #circ += (d_max - 1) * repeated_loop
 
-        # measure all data qubits
-        circ += self.arch.apply_probabilistic_gate(
-            f"M{self.memory_basis}", self.reg.data_registers
-        )
+        ## measure all data qubits
+        #circ += self.arch.apply_probabilistic_gate(
+        #    f"M{self.memory_basis}", self.reg.data_registers
+        #)
 
-        # Add final detectors
-        circ += self.add_final_detectors()
+        ## Add final detectors
+        #circ += self.add_final_detectors()
 
+        #circ += self.add_logical_observables()
+
+        ##circ.detecting_regions()
+        
         return circ
 
