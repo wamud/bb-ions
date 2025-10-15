@@ -4,99 +4,36 @@ Hardware-inspired noise and error functions relevant to our architecture'''
 import numpy as np
 
 
-# class Error:
-#     def __init__(self, p, type):
-#         self.p = p
-#         self.type = type
-
-# class Errors:
-#     def __init__(self, p, RZ, RX):
-#         self.RZ = Error(p, 'X_ERROR')
-#         self.RX = Error(p, 'Z_ERROR')
+class Error:
+    def __init__(self, p, operation):
+        self.p = p
+        self.type = operation
 
 class Errors:
-    def __init__(self, p, 
-
-                p_RZ = None, RZ_error = 'X_ERROR',
-                p_RX = None, RX_error = 'Z_ERROR',
-                p_H = None, H_error = 'DEPOLARIZE1',
-                p_MZ = None,
-                p_MX = None,
-
-                p_CNOT = None, CNOT_error = 'DEPOLARIZE2',
-                p_CZ = None, CZ_error = 'DEPOLARIZE2',
-
-                p_shift_const = None, shift_error = 'DEPOLARIZE1',
-                p_shuttle = 0, shuttle_error = 'DEPOLARIZE1',
-                p_merge = 0, merge_error = 'DEPOLARIZE1',
-                p_split = 0, split_error = 'DEPOLARIZE1'
-
-                ):
+    def __init__(self, p):
         
-        # Single-qubit operations:
+        self.RZ = Error(p, 'X_ERROR')
+        self.RX = Error(p, 'Z_ERROR')
+        self.H = Error(p, 'DEPOLARIZE1')
+        self.MZ = Error(p, None)
+        self.MX = Error(p, None)
+
+        self.CNOT = Error(p, 'DEPOLARIZE2')
+        self.CZ = Error(p, 'DEPOLARIZE2')
+
+        self.shift = Error(p, 'DEPOLARIZE1')
+        self.shuttle = Error(0, 'DEPOLARIZE1')
+        self.merge = Error(0, 'DEPOLARIZE1')
+        self.split = Error(0, 'DEPOLARIZE1')
+
+
+
+
+# class Idlings:
+#     def __init__(self, p):
         
-        self.p_RZ = p_RZ or p
-        self.RZ_error = RZ_error
-
-        self.p_RX = p_RX or p
-        self.RX_error = RX_error 
-
-        self.p_H = p_H or p
-        self.H_error = H_error 
-
-        self.p_MZ = p_MZ or p
-
-        self.p_MX = p_MX or p
-
-        # Two-qubit operations:
+#         # Idling during single-qubit operations:
         
-        self.p_CNOT = p_CNOT or p
-        self.CNOT_error = CNOT_error
-
-        self.p_CZ = p_CZ or p
-        self.CZ_error = CZ_error
-
-        # Additional operations:
-
-        self.p_shift_const = p_shift_const or p # setting p_shift_const to p, though note within apply_shift_error this is multiplied by the length of the cyclic shift hence it's 'p_shift_const'
-        self.shift_error = shift_error
-
-        # Default values of additional operations is zero:
-        self.p_shuttle = p_shuttle
-        self.shuttle_error = shuttle_error
-
-        self.p_merge = p_merge 
-        self.merge_error = merge_error
-        
-        self.p_split = p_split 
-        self.split_error = split_error
-
-
-
-
-class Idlings:
-    def __init__(self, p, 
-                RZ = None, 
-                RX = None, 
-                H = None, 
-                MZ = None, 
-                MX = None,
-                CNOT = None,
-                CZ = None, 
-                ):
-        
-        # Idling during single-qubit operations:
-        
-        self.RZ = [RZ[0] or p, RZ[1] or 'DEPOLARIZE1']
-        self.RZ = [ RZ[0] or p, RZ[1] or 'DEPOLARIZE1']
-        self.RX = [ RX[0] or p, RX[1] or 'DEPOLARIZE1']
-        self.H = [ H[0] or p, H[1] or 'DEPOLARIZE1']
-        self.MZ = [ MZ[0] or p, MZ[1] or 'DEPOLARIZE1']
-        self.MX = [ MX[0] or p, MX[1] or 'DEPOLARIZE1']
-
-        # Idling during two-qubit operations:
-        self.CNOT = [ CNOT[0] or p, CNOT[1] or 'DEPOLARIZE1']
-        self.CZ = [ CZ[0] or p, CZ[1] or 'DEPOLARIZE1']
 
 
 
