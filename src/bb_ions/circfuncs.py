@@ -472,16 +472,19 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
     for jval in theunion:
 
         # Cyclic shift the check qubits
-        t_shift = t_shift_const * abs((jval % m) - (jval_prev % m)) # saying t_shfit proportional to c * (j - prev_j) 
-        apply_shift_error(circ, qC, t_shift)
-        idle(circ, qL + qR, t_idle) # t_shift) # idle the data qubits 
-        if t_shift > 0:
-          tick(circ)
+        if t_shift_const > 0:
+          t_shift = t_shift_const * abs((jval % m) - (jval_prev % m)) # saying t_shfit proportional to c * (j - prev_j) 
+          apply_shift_error(circ, qC, t_shift)
+
+          if t_shift > 0:
+            idle(circ, qL + qR, t_shift_const / 10 ) # t_shift) # idle the data qubits 
+            tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
-        apply_shuttle_error(circ, qC, t_shuttle)
-        idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
         if t_shuttle > 0:
+          apply_shuttle_error(circ, qC, t_shuttle)
+          idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
+          # circ.append("DEPOLARIZE2", [0, 1], 0.001)
           tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
@@ -772,7 +775,7 @@ def make_circuit(
     add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)
 
 
-    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions 
+    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions 
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")
