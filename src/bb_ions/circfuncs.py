@@ -463,6 +463,7 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
     t_shuttle = noisetimes.t_shuttle
     t_shift_const = noisetimes.t_shift_const
     t_meas = noisetimes.t_meas
+    t_idle = noisetimes.t_idle
 
 
     # Do cyclic shifts to required j-valued modules
@@ -477,7 +478,7 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
         # Shuttle check qubit modules from racetrack into leg:
         apply_shuttle_error(circ, qC, t_shuttle)
-        idle(circ, qL + qR, t-idle) # t_shuttle) # idle the data qubits
+        idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
         tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
