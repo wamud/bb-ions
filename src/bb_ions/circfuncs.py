@@ -549,7 +549,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
     # Initialise Z-check qubits
     init('Z', loop_body, qC, errors) # (note qZ = qX if reuse_check_qubits == True)
-    idle(loop_body, qL + qR, idle_during['MZ']) # t_init) # idle data qubits
+    idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
     tick(loop_body)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
@@ -684,12 +684,12 @@ def make_circuit(
 
     # Initialise Z-check qubits
     init('Z', circ, qC, errors) # (note qZ = qX if reuse_check_qubits == True)
-    idle(circ, qL + qR, idle_during['MZ']) # t_init, noise) # idle data qubits
+    idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
     tick(circ)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     hadamard(circ, qC, errors)
-    idle(circ, qL + qR, idle_during['H']) # t_init, noise) # idle data qubits
+    idle(circ, qL + qR, idle_during['H']) # idle data qubits
     tick(circ)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
