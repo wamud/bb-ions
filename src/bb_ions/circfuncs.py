@@ -475,16 +475,19 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
         t_shift = t_shift_const * abs((jval % m) - (jval_prev % m)) # saying t_shfit proportional to c * (j - prev_j) 
         apply_shift_error(circ, qC, t_shift)
         idle(circ, qL + qR, t_idle) # t_shift) # idle the data qubits 
-        tick(circ)
+        if t_shift > 0:
+          tick(circ)
 
         # Shuttle check qubit modules from racetrack into leg:
         apply_shuttle_error(circ, qC, t_shuttle)
         idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
-        tick(circ)
+        if t_shuttle > 0:
+          tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
         apply_merge_error(circ, qC + qL + qR, t_merge)
-        tick(circ)
+        if t_merge > 0:
+          tick(circ)
 
         if check == 'X':
           # Apply CNOTs for X-checks, i.e. Hx = [A|B]
@@ -497,12 +500,14 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
         apply_split_error(circ, qC + qL + qR, t_split)
-        tick(circ)
+        if t_split > 0:
+          tick(circ)
 
         # # Shuttle check qubits from leg into racetrack:
         apply_shuttle_error(circ, qC, t_shuttle)
         idle(circ, qL + qR, t_idle) # t_shuttle) # idle the data qubits
-        tick(circ)
+        if t_shuttle > 0:
+          tick(circ)
 
         jval_prev = jval
 
