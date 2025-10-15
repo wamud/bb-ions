@@ -6,19 +6,6 @@ import numpy as np
 
 
 
-# class Errors:
-#     def __init__(self, p, p_RZ = None, p_RZ_error = None, p_RX = None, p_RX_error = None, p_H = None, p_H_error = None):
-        
-#         # Set all values either to p or a specified value
-        
-#         self.p_RZ = p_RZ or p
-#         self.p_RZ_error = p_RZ_error or p 
-#         self.p_RX = p_RX or p 
-#         self.p_RX_error = p_RX_error or p 
-#         self.p_H = p_H or p 
-#         self.p_H_error = p_H_error or p
-
-
 class NoiseTimes:
     def __init__(self, t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas):
         self.t_init = t_init
