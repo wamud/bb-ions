@@ -1,6 +1,23 @@
 ''' noisefuncs
 Hardware-inspired noise and error functions relevant to our architecture'''
 
+import numpy as np
+
+
+
+
+# class Errors:
+#     def __init__(self, p, p_RZ = None, p_RZ_error = None, p_RX = None, p_RX_error = None, p_H = None, p_H_error = None):
+        
+#         # Set all values either to p or a specified value
+        
+#         self.p_RZ = p_RZ or p
+#         self.p_RZ_error = p_RZ_error or p 
+#         self.p_RX = p_RX or p 
+#         self.p_RX_error = p_RX_error or p 
+#         self.p_H = p_H or p 
+#         self.p_H_error = p_H_error or p
+
 
 class NoiseTimes:
     def __init__(self, t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas):
@@ -16,7 +33,6 @@ class NoiseTimes:
         self.t_idle = t_idle
         self.t_idle_meas = t_idle_meas
 
-import numpy as np
 
 
 
@@ -123,7 +139,7 @@ def p_had(t):
     return p
 
 ''' p_shuttle 
-If shuttling a qubit it will experience an error associated with acceleration, time of shuttle, number of T junctions it passes through and deceleration. 
+If shuttling a qubit it will experience an error associated with acceleration, time of shuttle, number of T junctions it passes h e e e  through and deceleration. 
 todo: make this function more than a dummy'''
 def p_shuttle(t_shuttle):
     p = t_shuttle
