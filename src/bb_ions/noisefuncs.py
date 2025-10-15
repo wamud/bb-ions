@@ -6,6 +6,93 @@ import numpy as np
 
 
 
+class Errors:
+    def __init__(self, p, 
+
+                p_RZ = None, RZ_error = 'X_ERROR',
+                p_RX = None, RX_error = 'Z_ERROR',
+                p_H = None, H_error = 'DEPOLARIZE1',
+                p_MZ = None,
+                p_MX = None,
+
+                p_CNOT = None, CNOT_error = 'DEPOLARIZE2',
+                p_CZ = None, CZ_error = 'DEPOLARIZE2',
+
+                p_shift = None, shift_error = 'DEPOLARIZE1',
+                p_shuttle = 0, shuttle_error = 'DEPOLARIZE1',
+                p_merge = 0, merge_error = 'DEPOLARIZE1',
+                p_split = 0, split_error = 'DEPOLARIZE1'
+
+                ):
+        
+        # Single-qubit operations:
+        
+        self.p_RZ = p_RZ or p
+        self.RZ_error = RZ_error
+
+        self.p_RX = p_RX or p
+        self.RX_error = RX_error 
+
+        self.p_H = p_H or p
+        self.H_error = H_error 
+
+        self.p_MZ = p_MZ or p
+
+        self.p_MX = p_MX or p
+
+        # Two-qubit operations:
+        
+        self.p_CNOT = p_CNOT or p
+        self.CNOT_error = CNOT_error
+
+        self.p_CZ = p_CZ or p
+        self.CZ_error = CZ_error
+
+        # Additional operations:
+
+        self.p_shift = p_shift or p # setting p_shift to p, though note within apply_shift_error this is multiplied by the length of the cyclic shift
+        self.shift_error = shift_error
+
+        # Default values of additional operations is zero:
+        self.p_shuttle = p_shuttle
+        self.shuttle_error = shuttle_error
+
+        self.p_merge = p_merge
+        self.merge_error = merge_error
+        
+        self.p_split = p_split 
+        self.split_error = split_error
+
+
+
+
+class Idlings:
+    def __init__(self, p, 
+                RZ = None, 
+                RX = None, 
+                H = None, 
+                MZ = None, 
+                MX = None,
+                CNOT = None,
+                CZ = None, 
+                ):
+        
+        # Idling during single-qubit operations:
+        
+        self.RZ = [RZ[0] or p, RZ[1] or 'DEPOLARIZE1']
+        self.RZ = [ RZ[0] or p, RZ[1] or 'DEPOLARIZE1']
+        self.RX = [ RX[0] or p, RX[1] or 'DEPOLARIZE1']
+        self.H = [ H[0] or p, H[1] or 'DEPOLARIZE1']
+        self.MZ = [ MZ[0] or p, MZ[1] or 'DEPOLARIZE1']
+        self.MX = [ MX[0] or p, MX[1] or 'DEPOLARIZE1']
+
+        # Idling during two-qubit operations:
+        self.CNOT = [ CNOT[0] or p, CNOT[1] or 'DEPOLARIZE1']
+        self.CZ = [ CZ[0] or p, CZ[1] or 'DEPOLARIZE1']
+
+
+
+
 class NoiseTimes:
     def __init__(self, t_init, t_had, t_merge, t_split, t_cnot, t_cz, t_shuttle, t_shift_const, t_meas, t_idle, t_idle_meas):
         self.t_init = t_init
