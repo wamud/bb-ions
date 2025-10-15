@@ -34,7 +34,56 @@ def default_errors(p = 0.001):
     
     return errors
 
+def zero_errors():
+    """
+    Defines zero error rates.
+    """
+    errors = {
 
+        "RZ" : Error("DEPOLARIZE1", 0), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+
+        "RX" : Error("DEPOLARIZE1", 0), # as opposed to Z_ERROR
+        "H" : Error("DEPOLARIZE1", 0),
+        "CNOT" : Error("DEPOLARIZE2", 0),
+        "CZ" : Error("DEPOLARIZE2", 0),
+        "MZ" : Error("X_ERROR", 0),
+        "MX" : Error("Z_ERROR", 0),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+
+        "shift_constant" : 0, 
+        
+    }
+    
+    return errors
+
+
+
+def zero_idle_errors(p = 0.001):
+    """
+    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation.
+    """
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", p / 100),
+        "RX" : Error("DEPOLARIZE1", p / 100), 
+        "H" : Error("DEPOLARIZE1", p / 100),
+        "CNOT" : Error("DEPOLARIZE1", p / 100),
+        "CZ" : Error("DEPOLARIZE1", p / 100),
+        "MZ" : Error("DEPOLARIZE1", 30 * p / 100),
+        "MX" : Error("DEPOLARIZE1", 30 * p / 100),
+
+        "shuttle" : Error("DEPOLARIZE1", p / 100),
+        "merge" : Error("DEPOLARIZE1", p / 100),
+        "split" : Error("DEPOLARIZE1", p / 100),
+        "shift" : Error("DEPOLARIZE1", p / 100),
+
+        "shift_constant" : p / 100,
+    }
+
+    return idle_during
 
 def default_idle_errors(p = 0.001):
     """
