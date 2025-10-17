@@ -48,7 +48,7 @@ for m in range(5, 8):
 
     all_ijs = list(itertools.product(range(l), range(m))) # contains every possible (i, j) for this l and m 
     random.seed(42)
-    random.shuffle(all_ijs)
+    # random.shuffle(all_ijs)
 
     combos = itertools.product(all_ijs, all_ijs, all_ijs, all_ijs, all_ijs) 
 
@@ -96,7 +96,7 @@ for m in range(5, 8):
             # f"pL at p = {p}": bb5.osdw_logical_error_rate,
         }
 
-        print(entry)
+        # print(entry)
         
         viable_entries.append(entry)
         count += 1
@@ -105,9 +105,7 @@ for m in range(5, 8):
             append_entries_to_json(viable_entries, temp_file)
             viable_entries = []
             print(f"{count} viable entries saved to {temp_file}")
-        
-        if count > 35:
-            break
+
 
     # Save any remaining entries after loop
     if viable_entries:

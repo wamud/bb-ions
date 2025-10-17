@@ -25,14 +25,11 @@ def append_entries_to_json(entries, filename):
 osd_options={ 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'tqdm_disable' : 1, 'error_bar_precision_cutoff': 1e-6 }
 
 
-min_d_max = 10
-min_k = 10
+min_d_max = 5
+min_k = 4
 
-# for l in range(9, 11):
-#     for m in range(5, 8):
-
-l = 12
-m = 12
+l = 5
+m = 3
 
 print(f"l = {l}, m = {m}")
 
@@ -105,7 +102,6 @@ for combo in combos:
         append_entries_to_json(viable_entries, temp_file)
         viable_entries = []
         print(f"{count} viable entries saved to {temp_file}")
-    
 
 # Save any remaining entries after loop
 if viable_entries:
