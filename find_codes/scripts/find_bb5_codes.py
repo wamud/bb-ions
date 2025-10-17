@@ -24,20 +24,26 @@ def append_entries_to_json(entries, filename):
 
 osd_options={ 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'tqdm_disable' : 1, 'error_bar_precision_cutoff': 1e-6 }
 
+if len(sys.argv) < 4:
 
-min_d_max = 5
-min_k = 4
+    print("This script requires inputs l, m, min_k, min_d")
 
-l = 5
-m = 3
+l = int(sys.argv[1])
+m = int(sys.argv[2])
+min_k = int(sys.argv[3])
+min_d_max = int(sys.argv[4])
+
+
 
 print(f"l = {l}, m = {m}")
 
 viable_entries = []
 count = 0
 
-temp_file = f"../found_codes/bb5_l{l}m{m}_partial.jsonl"
-results_file = f"../found_codes/bb5_l{l}m{m}.jsonl"
+filename = f"bb5_l{l}_m{m}_k{min_k}_d{min_d_max}"
+
+temp_file = f"../found_codes/{filename}_partial.jsonl"
+results_file = f"../found_codes/{filename}.jsonl"
 
 # Supprimer ancien fichier temporaire si présent
 if os.path.exists(temp_file):
