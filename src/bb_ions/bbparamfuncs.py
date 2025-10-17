@@ -21,15 +21,13 @@ import os
 import sys
 
 class Code:
-    def __init__(self, l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
+    def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
         self.l = l
         self.m = m
         self.Aij = Aij
         self.Bij = Bij
         self.ATij = ATij
         self.BTij = BTij
-        self.A = A
-        self.B = B
         self.Hx = Hx
         self.Hz = Hz
         self.Lx = Lx
@@ -118,7 +116,7 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     # Num. logical qubits:
     k = len(Lx)
 
-    code = Code(l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
+    code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
 
     return code
 
