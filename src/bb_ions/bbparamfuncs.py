@@ -11,14 +11,14 @@ trials that are run the more confident we become that this is its actual distanc
 '''
 
 import numpy as np
-import json
 import bposd
 from bposd import css
 from bposd import css_decode_sim
+import contextlib
 from autqec.utils.qec import *
 from .bbfuncs import *
-
-mpow = np.linalg.matrix_power
+import os
+import sys
 
 class Code:
     def __init__(self, l, m, Aij, Bij, ATij, BTij, A, B, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
@@ -41,6 +41,19 @@ class Code:
         self.JTunion = JTunion
 
 
+''' suppress_stdout
+For suprressing the output from css_decode_sim'''
+@contextlib.contextmanager
+def suppress_stdout():
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
+
+
 
 
 ''' find_d_max
@@ -48,15 +61,15 @@ Given the X and Z parit check matrices of a css code, this function finds the ma
 def find_d_max(Hx, Hz):
     
     osd_options={
-    'target_runs': 2000, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, # 'output_file': "test.json", 
-    'error_bar_precision_cutoff': 1e-6
+    'target_runs': 2000, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
     }
 
     error_rate = 0.1
-    bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = error_rate, **osd_options) 
 
-    results = json.loads(bb5.output_dict())
-    d_max = results["min_logical_weight"]
+    with suppress_stdout():
+        bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = error_rate, **osd_options) 
+
+    d_max = bb5.min_logical_weight 
 
     return d_max
 
@@ -71,8 +84,7 @@ B = x^0 + y + x^2*y^2   ([[30, 4, 5]] code from Table II of [2503.22071])
 Then
 Aij = [(0, 0), (1, 0)]
 Bij = [(0, 0), (0, 1), (2, 2)]
-The A and B matrices returned by this function are the actual matrices A, B
-'''
+The A and B matrices returned by this function are the actual matrices A, B'''
 def get_code_params(l, m, Aij, Bij, d_max = None):
 
 
@@ -85,6 +97,8 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     # Sorting indices into I(A^T), I(B^T), J(A^T), J(B^T):
     ATij = [(-i, -j) for i, j in Aij]
     BTij = [(-i, -j) for i, j in Bij]
+    
+    
     IAT, JAT = findIJ(ATij)
     IBT, JBT = findIJ(BTij)
     JTunion = sorted(set(JAT + JBT))
@@ -93,23 +107,7 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     # Num qubits:
     n = 2 * l * m
 
-    # Define matrices A and B:    
-    ## Setup:
-    A = 0; B = 0
-    x = make_x(l, m)
-    y = make_y(l, m)
-    
-    ## A = A1 + A2 + ...
-    for (i, j) in Aij: 
-        A = mpow(x, i) @ mpow(y, j) + A
-    
-    ## B = B1 + B2 + ...
-    for (i, j) in Bij:
-        B = mpow(x, i) @ mpow(y, j) + B
-
-    # Parity check matrices:
-    Hx = np.hstack((A, B))
-    Hz = np.hstack((B.T, A.T))
+    Hx, Hz = make_parity_check_matrices(l, m, Aij, Bij)
 
     if d_max == None:
         d_max = find_d_max(Hx, Hz) 
@@ -216,8 +214,7 @@ I(P) = list of powers of x in P
 J(P) = list of powers of y in P
 '''
 def findIJ(P):
-    IP = [P[k][0] for k in range(len(P))]
-    JP = [P[k][1] for k in range(len(P))]
+    IP, JP = zip(*P)
     return IP, JP
 
 
