@@ -99,7 +99,7 @@ for combo in combos:
         # f"pL at p = {p}": bb5.osdw_logical_error_rate,
     }
 
-    # print(entry)
+    print(entry)
     
     viable_entries.append(entry)
     count += 1
