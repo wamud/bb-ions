@@ -1,0 +1,20 @@
+[project]
+name = "bb-ions"
+version = "0.1.0"
+description = "Simulating an ion trap realisation of a Bivariate Bicycle (BB) code"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "autqec>=1.0.1",
+    "bposd>=2.1",
+    "stim>=1.15.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.0,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "jupyterlab>=4.4.9",
+]
