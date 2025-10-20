@@ -13,8 +13,8 @@ def default_errors(p=0.01):
         "H" : ("DEPOLARIZE1", p / 10),
         "CX" : ("DEPOLARIZE2", p),
         "CZ" : ("DEPOLARIZE2", p),
-        "MZ" : ("MZ", p / 10),
-        "MX" : ("MX", p / 10),
+        "MZ" : ("DEPOLARIZE1", p / 10),
+        "MX" : ("DEPOLARIZE1", p / 10),
         "idle_1q" : ("DEPOLARIZE1", p / 100),
         "idle_2q" : ("DEPOLARIZE1", p / 100),
         "idle_shift" : ("DEPOLARIZE1", p / 100),
@@ -78,3 +78,26 @@ class Architecture:
             circ.append(op_err, register, err_rate)
 
         return circ
+
+    def apply_measurement(self, basis, register):
+        """
+        return stim circuit to measure register in given basis
+        """
+        
+        meas_str = f"M{basis}"
+        meas_err, err_rate = self.errors[meas_str]
+        
+        # Flatten 2d arrays if needed.
+        if isinstance(register, np.ndarray) and register.ndim > 1:
+            register = register.flatten()
+
+        circ = stim.Circuit()
+        # apply error before measurement (as opposed to gate)
+        if err_rate > 0:
+            circ.append(meas_err, register, err_rate)
+        
+        # apply measurement
+        circ.append(meas_str, register)
+
+        return circ
+

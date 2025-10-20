@@ -30,6 +30,8 @@ class Registers:
         z_group = 0 if reuse_check_qubits else 3
         self.Z = self.index_arr[z_group, :, :]
 
+        
+
     @cached_property
     def data_registers(self):
         return join(self.L, self.R)
@@ -49,7 +51,7 @@ class MemoryExperiment:
     def __init__(
         self, code: BBCode, arch: Architecture, reuse_check_qubits=True,
         memory_basis = "Z", exclude_opposite_basis_detectors=True,
-        sequential=True
+        sequential=True, extraction_cycles = None 
     ):
         """
         args
@@ -68,6 +70,7 @@ class MemoryExperiment:
         self.jval = self.Junion[0]
         self.exclude_opposite_basis_detectors = exclude_opposite_basis_detectors
         self.sequential = sequential
+        self.extraction_cycles = extraction_cycles
 
     def idle_data_registers(self, idle_type, scaling=1, reg=None):
         
@@ -97,6 +100,9 @@ class MemoryExperiment:
         circ = stim.Circuit()
         for i, j in zip(*poly_pow):
             if j == self.jval:
+                #circ.append("S", self.jval + max(self.Junion) )
+                #circ.append("Y", (i + max(self.Junion), j + max(self.Junion)))
+                #circ.append("Z", target.flatten())
                 for v in range(l):
                     for w in range(m):
                         circ += self.arch.apply_gate(
@@ -133,14 +139,31 @@ class MemoryExperiment:
         else:
             union_set = tuple(reversed([-i for i in self.Junion]))
 
+        #print("union_set ", union_set)
+        #print(self.code.left_pow, self.code.right_pow)
+        if basis == "X":
+            gate = "CX"
+            left_pow = self.code.left_pow
+            right_pow = self.code.right_pow
+        else:
+            gate = "CZ"
+            right_pow = [[-i for i in j] for j in self.code.left_pow]
+            left_pow = [[-i for i in j] for j in self.code.right_pow]
+        #print("left_pow", left_pow)
+        #print("right_pow", right_pow)
+
         circ = stim.Circuit()
-        for jval in union_set:
+        #circ.append("X", [abs(a) for a in union_set])
+        for j_idx, jval in enumerate(union_set):
             scaling = abs((jval % self.code.m) - (self.jval % self.code.m))
 
             circ += self.arch.apply_probabilistic_gate(
                     "shift", check_register, scaling=scaling
             )
 
+            # Update to next configuration (last one looks uneeded)
+            self.jval = jval
+            
             #print(basis)
             #print(self.arch.apply_probabilistic_gate(
             #       "shift", check_register, scaling=scaling
@@ -150,7 +173,8 @@ class MemoryExperiment:
             #print(self.idle_data_registers("idle_shift", scaling=scaling))
             
 
-            circ.append("TICK")
+            if scaling > 0:
+                circ.append("TICK")
             
             circ += self.arch.apply_probabilistic_gate("shuttle", check_register)
             #print(self.arch.apply_probabilistic_gate("shuttle", check_register))
@@ -164,31 +188,27 @@ class MemoryExperiment:
             )
             circ.append("TICK")
             
-            if basis == "X":
-                gate = "CX"
-                left_pow = self.code.left_pow
-                right_pow = self.code.right_pow
-            else:
-                gate = "CZ"
-                left_pow = [[-i for i in j] for j in self.code.left_pow]
-                right_pow = [[-i for i in j] for j in self.code.right_pow]
 
+            #circ.append("X", 1)
             circ += self.apply_aligned_gates(
                 gate, left_pow, check_register, self.reg.L
             )
-            print(basis)
-            print("\nLeft\n")
-            print(self.apply_aligned_gates(
-                gate, left_pow, check_register, self.reg.L
-            ))
+            #print(basis)
+            #print("\nLeft\n")
+            #print(self.apply_aligned_gates(
+            #    gate, left_pow, check_register, self.reg.L
+            #))
         
+            #circ.append("X", 2)
             circ += self.apply_aligned_gates(
                 gate, right_pow, check_register, self.reg.R
             )
-            print("\n right \n")
-            print(self.apply_aligned_gates(
-                gate, right_pow, check_register, self.reg.R
-            ))
+            #print("\n right \n")
+            #print(self.apply_aligned_gates(
+            #    gate, right_pow, check_register, self.reg.R
+            #))
+
+            ##circ.append("X", 3)
 
             circ += self.arch.apply_probabilistic_gate(
                 "split",
@@ -199,10 +219,9 @@ class MemoryExperiment:
             circ += self.arch.apply_probabilistic_gate("shuttle", check_register)
             circ += self.idle_data_registers("idle_shuttle")
             circ.append("TICK")
+            
 
-            self.jval = jval
-
-            return circ
+        return circ
 
     def apply_stabilizer_half_round(self, basis, round_0=False):
         """
@@ -215,15 +234,19 @@ class MemoryExperiment:
         
         # Initialise check register
         circ = self.arch.apply_gate("RZ", check_register)
-
-        # Idle data registers if not the first round
-        if not round_0:
+        #circ.append(basis, (not round_0) and basis == "Z")
+        
+        # Idle data registers if not the first round X check
+        if not round_0 or basis == "Z":
             circ += self.idle_data_registers("idle_1q")
         circ.append("TICK")
         
         # Hadamard to |+> states
         # why not RX initialise?
         circ += self.arch.apply_gate("H", check_register)
+        # Idle data registers if not the first round X check
+        if not round_0 or basis == "Z":
+            circ += self.idle_data_registers("idle_1q")
        
         # If round 0, initialise data registers into memory basis.
         # This is done before the X checks for the mesurement round
@@ -244,9 +267,10 @@ class MemoryExperiment:
         circ.append("TICK")
 
         # Measure
-        circ += self.arch.apply_probabilistic_gate("MZ", check_register)
+        circ += self.arch.apply_measurement("Z", check_register)
         circ += self.idle_data_registers("idle_meas")
-
+        circ.append("TICK")
+        
         n = self.code.qubits.physical
         if round_0 and self.memory_basis == basis:
             for i in range(n // 2, 0, -1):
@@ -318,22 +342,23 @@ class MemoryExperiment:
         """
 
         circ = self.apply_stabilizer_round(round_0=True)
-        #repeated_loop = self.apply_stabilizer_round()
+        repeated_loop = self.apply_stabilizer_round()
 
-        #d_max = self.code.estimate_distance()
-        #circ += (d_max - 1) * repeated_loop
+        if self.extraction_cycles is None:
+            self.extraction_cycles = self.code.estimate_distance()
+        circ += (self.extraction_cycles - 1) * repeated_loop
 
-        ## measure all data qubits
-        #circ += self.arch.apply_probabilistic_gate(
-        #    f"M{self.memory_basis}", self.reg.data_registers
-        #)
+        # measure all data qubits
+        circ += self.arch.apply_measurement(
+            self.memory_basis, self.reg.data_registers
+        )
 
-        ## Add final detectors
-        #circ += self.add_final_detectors()
+        # Add final detectors
+        circ += self.add_final_detectors()
 
-        #circ += self.add_logical_observables()
+        circ += self.add_logical_observables()
 
-        ##circ.detecting_regions()
+        circ.detecting_regions()
         
         return circ
 
