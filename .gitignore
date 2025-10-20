@@ -6,3 +6,7 @@ src/output.pdf
 *.pyc
 __pycache__/
 .ipynb_checkpoints/
+examples/example_circuits/
+examples/example_stats/
+examples/example_diagrams/
+examples/example_circuit_diagrams/

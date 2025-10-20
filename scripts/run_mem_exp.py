@@ -5,9 +5,6 @@ import glob
 from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 
 
-
-
-
 def main():
     circuit_paths = glob.glob(f"../circuits/*.stim")
     csv_path = f"../collected_stats/collected_stats.csv"
