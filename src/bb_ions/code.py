@@ -4,7 +4,8 @@ and logical operators for a bivariate-bycycle code.
 
 Ref:
 """
-from typing import Iterable, Tuple
+
+from typing import Iterable
 import numpy as np
 import json
 from functools import cached_property
@@ -21,19 +22,46 @@ def generate_matrix_polynomial(
     Generate a matrix polynomial with variables x and y.
 
     Assumes x and y are square matrices
+
+    args
+    ----
+    x: first base matrix of poly(x, y).
+    y: second base matrix of poly(x, y).
+    poly_pow: Iterable of x and y powers. x^1 * y^2 + x^3 * y^4 will have
+              poly_pow = ((1, 3), (2, 4)).
     """
 
     return sum(matrix_power(x, i) @ matrix_power(y, j) for i, j in zip(*poly_pow))
 
 
 class CodeQubits:
-    def __init__(self, n, k):
+    """
+    Class to store logical and physical qubit values for the code.
+    """
+
+    def __init__(self, n: int, k: int):
+        """
+        args
+        ----
+        n: number of physical data qubits.
+        k: number of logical qubits.
+        """
         self.physical = n
         self.logical = k
 
 
 class CodeOperators:
-    def __init__(self, x, z):
+    """
+    Class to hold X and Z check and logical operators of the code.
+    """
+
+    def __init__(self, x: np.ndarray, z: np.ndarray):
+        """
+        args
+        ----
+        x: X operator
+        y: Y operator
+        """
         self.X = x
         self.Z = z
 
@@ -43,6 +71,7 @@ class BBCode:
     Defines a bivariate-bycycle code
     """
 
+    # Class variable holding OSD decoder options
     OSD_OPTIONS = {
         "target_runs": 2000,
         "xyz_error_bias": [1, 1, 1],
@@ -62,15 +91,16 @@ class BBCode:
         self,
         l: int = 12,
         m: int = 12,
-        left_pow: Iterable[Iterable[int]] = ((3, 0 ,0), (0, 2, 7)),
+        left_pow: Iterable[Iterable[int]] = ((3, 0, 0), (0, 2, 7)),
         right_pow: Iterable[Iterable[int]] = ((0, 1, 2), (3, 0, 0)),
         estimate_distance=False,
     ):
         """
+
         args
         ----
-        l:
-        m:
+        l: left partition of BB code.
+        m: right partition of BB code.
         left_pow: Iterable of x and y powers for left matrix polynomial.
                   x^ay^b + x^cy^d + x^ey^f is represented by
                   `left_pow` = ((a, c, e), (b, d, f))
@@ -83,64 +113,80 @@ class BBCode:
         self.left_pow = tuple(left_pow)
         self.right_pow = tuple(right_pow)
 
+        # max distance is not estimated at initilisation by default
         self.distance = None
         if estimate_distance:
             self.distance = self.estimate_distance()
 
     @cached_property
-    def qubits(self):
+    def qubits(self) -> CodeQubits:
+        """
+        Property to hold class physical and logical qubits qubits in
+        a CodeQubits class.
+        """
         n, k = self.generate_nk()
         return CodeQubits(n, k)
 
     @cached_property
-    def check_operators(self):
+    def check_operators(self) -> CodeOperators:
+        """
+        Cached property will compute check matrices Hx and Hz on first access
+        and return a CodeOperators object. Cached value returned for subsequent
+        access.
+        """
         Hx, Hz = self.generate_check_mat()
         return CodeOperators(Hx, Hz)
 
     @cached_property
-    def logical_operators(self):
+    def logical_operators(self) -> CodeOperators:
+        """
+        Cached property will compute logical operators Lx and Lz on first
+        access and return a CodeOperators object. Cached value returned for
+        subsequent access.
+        """
         Lx, Lz = self.generate_logical_ops()
 
         return CodeOperators(Lx, Lz)
 
-    def generate_check_mat(self):
+    def generate_check_mat(self) -> tuple[np.ndarray, np.ndarray]:
         """
         Generates Hx and Hz for the BB code
-
-        args
 
         Returns
         -------
         (Hx, Hz) the X and Z parity check matrices
-        ----
         """
         # Identity matrix cyclically shifted by 1 column
         s_l = np.roll(np.eye(self.l, dtype=int), 1, axis=1)
         s_m = np.roll(np.eye(self.m, dtype=int), 1, axis=1)
 
-        # generate variables
+        # Generate variables
         x = np.kron(s_l, np.eye(self.m, dtype=int))
         y = np.kron(np.eye(self.l, dtype=int), s_m)
 
-        # generate polynomial
+        # Generate polynomial
         A = generate_matrix_polynomial(x, y, self.left_pow)
         B = generate_matrix_polynomial(x, y, self.right_pow)
 
+        # Generate check matrices
         Hx = np.hstack((A, B))
         Hz = np.hstack((B.T, A.T))
-        
-        # check that all stabilizer checks commute
+
+        # Check that all stabilizer checks commute
         assert not np.any((Hx @ Hz.T) % 2)
 
         return Hx, Hz
 
-    def generate_nk(self):
+    def generate_nk(self) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Calculates code physical and logical qubits.
+        """
         code = css_code(hx=self.check_operators.X, hz=self.check_operators.Z)
         return code.N, code.K
 
-    def estimate_distance(self):
+    def estimate_distance(self) -> int:
         """
-        Estimate distance of the code
+        Estimate max distance of the code using bposd.
         """
 
         if self.distance is not None:
@@ -158,7 +204,7 @@ class BBCode:
 
         return dmax
 
-    def generate_logical_ops(self):
+    def generate_logical_ops(self) -> tuple[np.ndarray, np.ndarray]:
         """
         Generate the logical operators of the code.
         """
@@ -186,12 +232,13 @@ class BBCode:
 
         G, LX_symplectic, LZ_symplectic, D = compute_standard_form(H_symp_rref_og_basis)
 
-        # We have a CSS code so cut off the empty Z and X parts of the symplectic
-        # representations of Lx and Lz:
+        # We have a CSS code so cut off the empty Z and X parts of the
+        # symplectic representations of Lx and Lz:
         Lx = LX_symplectic[:, : self.qubits.physical]
         Lz = LZ_symplectic[:, self.qubits.physical :]
 
-        # Verify anticommutation of logical operators and that they're canonical:
+        # Verify anti-commutation of logical operators and that they're
+        # canonical:
         assert np.array_equal((Lx @ Lz.T) % 2, np.eye(Lx.shape[0]))
 
         return Lx, Lz
