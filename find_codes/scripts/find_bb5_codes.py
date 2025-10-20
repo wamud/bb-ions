@@ -326,7 +326,7 @@ N = len(all_ijs)
 T = N**5
 
 # --- Subset sampling parameters ---
-desired_samples = 17_000_000  # adjust to fit runtime (~1–2 days)
+desired_samples = 20_000_000  # adjust to fit runtime (~1–2 days)
 num_samples = min(desired_samples, T)
 seed = 42
 random.seed(seed)
