@@ -393,18 +393,22 @@ def update_shift_probs(length_of_shift, errors, idle_during):
   
   # Get what the shifting error is proportional to:
   p_shift_const = errors['shift_constant']
-  
-  # Multiply it by the length of the shift (dif. in j values) and update errors dictionary:
-  updated_prob = p_shift_const * length_of_shift
-  errors['shift'].p = updated_prob
+
+  if p_shift_const != None:
+    
+    # Multiply it by the length of the shift (dif. in j values) and update errors dictionary:
+    updated_prob = p_shift_const * length_of_shift
+    errors['shift'].p = updated_prob
 
   # Repeat for the idling error:
 
   p_shift_idle_const = idle_during['shift_constant']
 
-  updated_idle_prob = p_shift_idle_const * length_of_shift
+  if p_shift_idle_const != None:
+    
+    updated_idle_prob = p_shift_idle_const * length_of_shift
 
-  idle_during['shift'].p = updated_idle_prob
+    idle_during['shift'].p = updated_idle_prob
 
 
 
@@ -440,12 +444,12 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
     for jval in theunion:
 
         # # Cyclic shift the check qubits:
-        if errors['shift_constant'] > 0:  
+        if errors['shift'].p > 0:  
   
           length_of_shift = abs((jval % m) - (jval_prev % m))
 
-          if length_of_shift > 0:
-            update_shift_probs(length_of_shift, errors, idle_during)
+          if length_of_shift > 0: # i.e. if a shift needs to occur
+            update_shift_probs(length_of_shift, errors, idle_during) # updates noise according to length of shift, unless 
             apply_shift_error(circ, qC, errors)
             idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
             tick(circ)
@@ -594,9 +598,9 @@ Inputs are:
     - p
             Physical error rate
     - errors
-            A dictionary that can be made with errors = default_errors(p) which has an error operation and corresonding probability for each operation in the circuit.
+            A dictionary that can be made with errors = longchain_errors(p) which has an error operation and corresonding probability for each operation in the circuit.
     - idle_during
-            A dictionary that can be made with idle_during = default_idle_errors(p) which has an error operation and corresponding probability for qubits that are idling while other qubits are undergoing each operation in the circuit
+            A dictionary that can be made with idle_during = longchain_idle_errors(p) which has an error operation and corresponding probability for qubits that are idling while other qubits are undergoing each operation in the circuit
     - num_syndrome_extraction_cycles
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
     - sequential_gates = True
@@ -618,10 +622,10 @@ def make_circuit(
 
 
     if idle_during == None:
-      idle_during = default_idle_errors(p)
+      idle_during = longchain_idle_errors(p)
 
     if errors == None:
-      errors = default_errors(p)
+      errors = longchain_errors(p)
 
 
     circ = stim.Circuit()

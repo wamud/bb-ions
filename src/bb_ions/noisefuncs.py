@@ -8,14 +8,15 @@ class Error:
         self.op = operation # the error operation
         self.p = p # its probability
 
-def default_errors(p = 0.001):
+def longchain_errors(p = 0.001):
     """
-    Defines default gates and error rates.
+    Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
+    (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
     """
     errors = {
 
+        # Longchain [2503.22071] operations:
         "RZ" : Error("DEPOLARIZE1", p / 10), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
-
         "RX" : Error("DEPOLARIZE1", p / 10), # as opposed to Z_ERROR
         "H" : Error("DEPOLARIZE1", p / 10),
         "CNOT" : Error("DEPOLARIZE2", p),
@@ -23,16 +24,51 @@ def default_errors(p = 0.001):
         "MZ" : Error("X_ERROR", p / 10),
         "MX" : Error("Z_ERROR", p / 10),
 
-        "shuttle" : Error("DEPOLARIZE1", p / 10),
-        "merge" : Error("DEPOLARIZE1", p / 10),
-        "split" : Error("DEPOLARIZE1", p / 10),
-        "shift" : Error("DEPOLARIZE1", p / 10),
 
-        "shift_constant" : p / 10, 
+        # "Qubit modules" [2508.01879] pg. 4
+        "shift" : Error("DEPOLARIZE1", 30 * p / 100),
+        "shift_constant" : None, # shift_constant is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_constant to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
+
+
+        # Additional for our architecture:
+        "shuttle" : Error("DEPOLARIZE1", 0), # we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+
         
     }
     
     return errors
+
+
+def longchain_idle_errors(p = 0.001):
+    """
+    Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
+    """
+    idle_during = {
+        
+        # Longchain [2503.22071] operations:
+        "RZ" : Error("DEPOLARIZE1", p / 100),
+        "RX" : Error("DEPOLARIZE1", p / 100), 
+        "H" : Error("DEPOLARIZE1", p / 100),
+        "CNOT" : Error("DEPOLARIZE1", p / 100),
+        "CZ" : Error("DEPOLARIZE1", p / 100),
+        "MZ" : Error("DEPOLARIZE1", 30 * p / 100),
+        "MX" : Error("DEPOLARIZE1", 30 * p / 100),
+
+        # "Qubit modules" [2508.01879] pg. 4
+        "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
+        "shift_constant" : None,
+
+        # Additional for our architecture:
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+
+    }
+
+    return idle_during
+
 
 def zero_errors():
     """
@@ -84,30 +120,6 @@ def zero_idle_errors(p = 0.001):
     }
 
     return idle_during
-
-def default_idle_errors(p = 0.001):
-    """
-    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation.
-    """
-    idle_during = {
-        "RZ" : Error("DEPOLARIZE1", p / 100),
-        "RX" : Error("DEPOLARIZE1", p / 100), 
-        "H" : Error("DEPOLARIZE1", p / 100),
-        "CNOT" : Error("DEPOLARIZE1", p / 100),
-        "CZ" : Error("DEPOLARIZE1", p / 100),
-        "MZ" : Error("DEPOLARIZE1", 30 * p / 100),
-        "MX" : Error("DEPOLARIZE1", 30 * p / 100),
-
-        "shuttle" : Error("DEPOLARIZE1", p / 100),
-        "merge" : Error("DEPOLARIZE1", p / 100),
-        "split" : Error("DEPOLARIZE1", p / 100),
-        "shift" : Error("DEPOLARIZE1", p / 100),
-
-        "shift_constant" : p / 100,
-    }
-
-    return idle_during
-
 
 
 # ''' p_idle
