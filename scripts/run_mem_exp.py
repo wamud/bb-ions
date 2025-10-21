@@ -7,7 +7,7 @@ from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 
 def main():
     circuit_paths = glob.glob(f"../circuits/*.stim")
-    csv_path = f"../collected_stats/collected_stats.csv"
+    csv_path = f"../collected_stats/collected_100_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -18,13 +18,14 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers=64,
-        max_shots=100000,
-        max_errors=1000,
+        num_workers = 1,
+        max_shots = 1,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
-        custom_decoders = sinter_decoders()
+        custom_decoders = sinter_decoders(),
+        print_progress = True
         )
 
     print("Collection terminé")
