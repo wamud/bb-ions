@@ -22,9 +22,9 @@ code = gross_code()
 
 # Options:
 memory_basis = 'Z' 
-num_syndrome_extraction_cycles = 200
+num_syndrome_extraction_cycles = 2000
 
-ps = [0.001, 0.002]
+ps = [0.001]
 
 noise = 'longchain'
 
