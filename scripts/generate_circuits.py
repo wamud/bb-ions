@@ -22,8 +22,8 @@ code = gross_code()
 
 # Options:
 memory_basis = 'Z' 
-num_syndrome_extraction_cycles = 2000
-
+num_syndrome_extraction_cycles = 3 * code.d_max
+print(num_syndrome_extraction_cycles)
 ps = [0.001]
 
 noise = 'longchain'

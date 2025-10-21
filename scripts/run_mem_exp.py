@@ -15,7 +15,7 @@ def main():
     empty_folder("../collected_stats") ## CURRENTLY DELETING COLLECTED_STATS EACH TIME TO TEST TIME IT TAKES GIVEN DIFFERENT NUMBER OF CORES USED. REMOVE THIS LINE WHEN ACTUALLY RUNNING! DON"T WANNA DELETE ALL YOUR STATS
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/*1000*.stim")
+    circuit_paths = glob.glob(f"../circuits/*36*.stim")
     csv_path = f"../collected_stats/collected_stats.csv"
 
     tasks = [
@@ -28,8 +28,8 @@ def main():
 
     samples = sinter.collect(
         num_workers = 4,
-        max_shots = 4,
-        max_errors = 4,
+        max_shots = 100,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
