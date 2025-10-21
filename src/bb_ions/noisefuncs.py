@@ -8,7 +8,7 @@ class Error:
         self.op = operation # the error operation
         self.p = p # its probability
 
-def longchain_errors(p = 0.001):
+def longchain_errors(p):
     """
     Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
     (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
@@ -41,7 +41,7 @@ def longchain_errors(p = 0.001):
     return errors
 
 
-def longchain_idle_errors(p = 0.001):
+def longchain_idle_errors(p):
     """
     Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
     """
@@ -98,7 +98,7 @@ def zero_errors():
 
 
 
-def zero_idle_errors(p = 0.001):
+def zero_idling():
     """
     Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation.
     """
@@ -121,6 +121,59 @@ def zero_idle_errors(p = 0.001):
 
     return idle_during
 
+
+def uniform_errors(p):
+    """
+    Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).
+    """
+    errors = {
+
+        # Longchain [2503.22071] operations:
+        "RZ" : Error("X_ERROR", p), 
+        "RX" : Error("Z_ERROR", p),
+        "H" : Error("DEPOLARIZE1", p),
+        "CNOT" : Error("DEPOLARIZE2", p),
+        "CZ" : Error("DEPOLARIZE2", p),
+        "MZ" : Error("X_ERROR", p),
+        "MX" : Error("Z_ERROR", p),
+
+
+        # Qubit module errors -- None
+        "shift" : Error("DEPOLARIZE1", 0),
+        "shift_constant" : None, 
+
+
+        # Additional for our architecture - None
+        "shuttle" : Error("DEPOLARIZE1", 0), 
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+    }
+    
+    return errors
+
+
+def uniform_idling():
+    """
+    Uniform idling errors, but no hardware shuttle, merge, split etc.
+    """
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", p),
+        "RX" : Error("DEPOLARIZE1", p), 
+        "H" : Error("DEPOLARIZE1", p),
+        "CNOT" : Error("DEPOLARIZE1", p),
+        "CZ" : Error("DEPOLARIZE1", p),
+        "MZ" : Error("DEPOLARIZE1", p),
+        "MX" : Error("DEPOLARIZE1", p),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+
+        "shift_constant" : 0,
+    }
+
+    return idle_during
 
 # ''' p_idle
 # If a qubit is idling for time t, this function returns what the probability of an error occurring on it will be. This probability can be fed into other functions to say what the error will actually be. For example p_idle(T = 100e-6) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience an error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2)) where T_2 = 50 seconds'''

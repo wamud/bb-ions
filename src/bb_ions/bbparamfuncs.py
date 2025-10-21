@@ -39,6 +39,101 @@ class Code:
         self.JTunion = JTunion
 
 
+
+''' First are functions for defining some common codes:'''
+
+''' bb5_30_4_5_code'''
+def bb5_30_4_5_code():
+    
+    # [[30, 4, 5]] BB5 (weight-5 stabilisers) code from Ye Delfosse long chain [2503.22071] Table II
+    l = 5
+    m = 3
+    # A = x^0 + x
+    # B = x^0 + y + x^2*y^2
+    Aij = [(0, 0), (1, 0)]          # the powers (i, j) of each term x^i * y^j in A
+    Bij = [(0, 0), (0, 1), (2, 2)]
+    d = 5
+    code = get_code_params(l, m, Aij, Bij, d)
+    
+    return code
+
+
+'''bb5_48_4_7_code'''
+def bb5_48_4_7_code():
+
+    # [[48, 4, 7]] BB5 code from Ye Delfosse long chain [2503.22071] Table II
+    l = 8
+    m = 3
+    # A = x^0 + x
+    # B = x^0 + y + x^3 * y^2
+    Aij = [(0, 0), (1, 0)]
+    Bij = [(0, 0), (0, 1), (3, 2)]
+    d = 7
+
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+
+'''bb5_120_8_8_code'''
+def bb5_120_8_8_code():
+    ## [[120, 8, 8]] BB5 found from search in "find_codes" directory
+    l = 6
+    m = 10
+    Aij = [(0, 0), (0, 1)]
+    Bij = [(0, 0), (2, 0), (4, 4)]
+    code = get_code_params()
+    return code
+
+'''bb6_108_code'''
+def bb6_108_code():
+    # [[108, 8, 10]] BB6 code from BB paper [2308.07915] Table III
+    l = 9
+    m = 6
+    # A = x^3 + y + y^2
+    # B = y^3 + x + x^2
+    Aij = [(3, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 10
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
+
+
+'''gross_code'''
+def gross_code():
+    # [[144, 12, 12]] BB6 'gross' code from BB paper [2308.07915] Table III
+    l = 12
+    m = 6
+    # A = x^3 + y + y^2
+    # B = y^3 + x + x^2
+    Aij = [(3, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 12
+
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+
+'''two_gross_code'''
+def two_gross_code():
+    # [[288, 12, 18]] BB6 'two gross' code from BB paper [2308.07915] Table III
+    l = 12
+    m = 12
+    # A = x^3 + y^2 + y^7
+    # B = y^3 + x^1 + x^2
+    Aij = [(3, 0), (0, 2), (0, 7)]
+    Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 18
+
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+
+
 ''' suppress_stdout
 For suprressing the output from css_decode_sim'''
 @contextlib.contextmanager
@@ -59,7 +154,7 @@ Given the X and Z parit check matrices of a css code, this function finds the ma
 def find_d_max(Hx, Hz):
     
     osd_options={
-    'target_runs': 2000, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
+    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
     }
 
     error_rate = 0.1
