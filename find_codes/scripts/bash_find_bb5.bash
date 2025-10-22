@@ -8,7 +8,7 @@ for ((l=6; l<=15; l++)); do
         if (( n < 60 )); then
             continue  
         elif (( n <= 80 )); then
-            min_k=4
+            min_k=5
             min_d=9
         elif (( n <= 100 )); then
             min_k=6
@@ -19,9 +19,11 @@ for ((l=6; l<=15; l++)); do
         elif (( n <= 150 )); then
             min_k=9
             min_d=9
-        else
-            min_k=10
-            min_d=10
+	elif (( n <= 300 )); then
+	    min_k=12
+	    min_d=12
+   	elif (( n > 300 )); then
+	       continue	
         fi
 
         python3 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
