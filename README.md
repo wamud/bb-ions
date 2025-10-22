@@ -1,9 +1,9 @@
 # bb-ions
 
 This repository is for simulating an ion trap realisation of a Bivariate Bicycle (BB) code [[1]](https://www.nature.com/articles/s41586-024-07107-7.pdf).
-A stim circuit realising a memory experiment of a BB code can be constructed using make_circuits.ipynb -- shortly to be turned into a function make_circuit in src.
-It contains noise annotations to represent the shuttling of qubit modules and the merging and splitting of modules' Couloumb potentials in order to apply gates between them.
-The ion trap architecture data qubit modules and check qubit modules are defined as per [[2]](https://arxiv.org/pdf/2508.01879).
+See examples for how to run a memory experiment on a BB code. Alternatively, a stim circuit realising a memory experiment of a BB code can be constructed using scripts/generate_circuits.py. This can then be run using scripts/run_mem_exp.py
+The stim circuit optionally contains noise annotations to represent the shuttling of qubit modules and the merging and splitting of modules' Couloumb potentials in order to apply gates between them.
+The data qubit modules and check qubit modules are defined as per [[2]](https://arxiv.org/pdf/2508.01879).
 When a data qubit module is aligned with a check qubit module, forming a pair, their qubits can interact.
 The data qubit modules are fixed while the check qubit modules are equipped with a cyclic shift.
 This enables all required interactions for the syndrome extraction circuits of the BB code, which we implement using algorithm 2 of [[2]](https://arxiv.org/pdf/2508.01879).
