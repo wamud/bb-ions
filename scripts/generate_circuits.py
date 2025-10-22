@@ -22,8 +22,7 @@ code = gross_code()
 
 # Options:
 memory_basis = 'Z' 
-num_syndrome_extraction_cycles = 3 * code.d_max
-print(num_syndrome_extraction_cycles)
+num_syndrome_extraction_cycles = code.d_max # original BB paper used d
 ps = [0.001]
 
 noise = 'longchain'

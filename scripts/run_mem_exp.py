@@ -11,12 +11,17 @@ from bb_ions import *
 
 
 def main():
-    
-    empty_folder("../collected_stats") ## CURRENTLY DELETING COLLECTED_STATS EACH TIME TO TEST TIME IT TAKES GIVEN DIFFERENT NUMBER OF CORES USED. REMOVE THIS LINE WHEN ACTUALLY RUNNING! DON"T WANNA DELETE ALL YOUR STATS
+    if len(sys.argv) < 2:
+        print("Usage: run_mem_exp.py <num_workers> <suffix>")
+        sys.exit(1)
+
+    num_workers = int(sys.argv[1])
+    csv_file_number = sys.argv[2]    
+ 
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/*36*.stim")
-    csv_path = f"../collected_stats/collected_stats.csv"
+    circuit_paths = glob.glob(f"../circuits/*12*.stim")
+    csv_path = f"../collected_stats/collected_stats_{csv_file_number}.csv"
 
     tasks = [
         sinter.Task(
@@ -27,9 +32,9 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 4,
-        max_shots = 100,
-        max_errors = 100,
+        num_workers = num_workers,
+        max_shots = 5000,
+        max_errors = 5000,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
