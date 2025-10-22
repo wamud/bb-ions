@@ -6,9 +6,9 @@ for ((l=6; l<=15; l++)); do
         n=$((2 * l * m))
 
         if (( n < 60 )); then
-            continue  # skip combinations with n < 60
+            continue  
         elif (( n <= 80 )); then
-            min_k=5
+            min_k=4
             min_d=9
         elif (( n <= 100 )); then
             min_k=6
