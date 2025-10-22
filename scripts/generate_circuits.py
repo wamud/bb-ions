@@ -17,6 +17,9 @@ from bb_ions import *
 # Use a predefined function from bbparamfuncs:
 code = gross_code() 
 # code = bb6_108_code()
+# code = bb5_120_8_8_code()
+# code = bb6_90_8_10_code()
+
 
 
 # Options:
@@ -24,16 +27,19 @@ memory_basis = 'Z'
 num_syndrome_extraction_cycles = code.d_max # original BB paper used d
 ps = [0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 
-noise = 'tham_modules'
+noise = 'tham_modules' 
 
 
 # Generate circuits:
 for p in ps:
     
-    if noise == 'tham_modules':
+    if 'tham_modules' in noise:
         errors = tham_modules_errors(p)
-        idle_during = zero_idling() if 'zero_idling' in noise else tham_modules_idle_errors(p)
-    
+        idle_during = tham_modules_idle_errors(p)
+    # if 'our_modules' in noise:
+
+    if 'zero_idling' in noise:
+        idle_during = zero_idling()
 
     circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
         code,  
@@ -47,8 +53,8 @@ for p in ps:
         reuse_check_qubits = True,  
     )
 
-    # Save circuit and diagram:
-    filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+    # Save circuit:
+    filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},b={memory_basis},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
     circuit.to_file(f"../circuits/{filename}.stim")
     
     #  svg = str(circuit.diagram("timeline-svg"))

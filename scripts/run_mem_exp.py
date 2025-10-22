@@ -20,7 +20,11 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/*12*.stim")
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/*.stim")
+    # circuit_paths = [
+      #  path for path in glob.glob("../circuits/tham_modules_noise/*stim") if "zero_idling" not in path
+    #]
+
     csv_path = f"../collected_stats/collected_stats_{csv_file_number}.csv"
 
     tasks = [

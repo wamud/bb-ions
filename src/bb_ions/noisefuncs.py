@@ -35,9 +35,7 @@ def tham_modules_errors(p):
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
 
-        
     }
-    
     return errors
 
 

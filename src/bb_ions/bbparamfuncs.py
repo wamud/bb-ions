@@ -74,16 +74,18 @@ def bb5_48_4_7_code():
 
     return code
 
-
-'''bb5_120_8_8_code'''
-def bb5_120_8_8_code():
-    ## [[120, 8, 8]] BB5 found from search in "find_codes" directory
-    l = 6
-    m = 10
-    Aij = [(0, 0), (0, 1)]
-    Bij = [(0, 0), (2, 0), (4, 4)]
-    code = get_code_params()
+'''bb6_90_8_10_code'''
+def bb6_90_8_10_code():
+    # [[90, 8, 10]] BB6 code from BB paper [2308.07915] Table III
+    l = 15
+    m = 3
+    # A = x^9 + y + y^2
+    # B = x^0 + x^2 + x^7
+    Aij = [(9, 0), (0, 1), (0, 2)]
+    Bij = [(0, 0), (2, 0), (7, 0)]
+    code = get_code_params(l, m, Aij, Bij)
     return code
+
 
 '''bb6_108_code'''
 def bb6_108_code():
@@ -99,6 +101,15 @@ def bb6_108_code():
     return code
 
 
+'''bb5_120_8_8_code'''
+def bb5_120_8_8_code():
+    ## [[120, 8, 8]] BB5 found from search in "find_codes" directory
+    l = 6
+    m = 10
+    Aij = [(0, 0), (0, 1)]
+    Bij = [(0, 0), (2, 0), (4, 4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
 
 
 '''gross_code'''
