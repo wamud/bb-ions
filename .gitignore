@@ -8,3 +8,4 @@ examples/example_stats/
 examples/example_diagrams/
 examples/example_circuit_diagrams/
 find_codes/scripts/beccas_code.py
+find_codes/found_codes/*progress.txt
