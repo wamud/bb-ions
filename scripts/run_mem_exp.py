@@ -37,7 +37,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = num_workers,
-        max_shots = 10_000_000,
+        max_shots = 10000000,
         max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
