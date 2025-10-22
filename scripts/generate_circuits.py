@@ -16,23 +16,23 @@ from bb_ions import *
 
 # Use a predefined function from bbparamfuncs:
 code = gross_code() 
-
 # code = bb6_108_code()
 
 
 # Options:
 memory_basis = 'Z' 
 num_syndrome_extraction_cycles = code.d_max # original BB paper used d
-ps = [0.001]
+ps = [0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 
-noise = 'longchain'
+noise = 'tham_modules'
 
 
 # Generate circuits:
 for p in ps:
     
-    errors = longchain_errors(p)
-    idle_during = zero_idling() if 'zero_idling' in noise else longchain_idle_errors(p)
+    if noise == 'tham_modules':
+        errors = tham_modules_errors(p)
+        idle_during = zero_idling() if 'zero_idling' in noise else tham_modules_idle_errors(p)
     
 
     circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)

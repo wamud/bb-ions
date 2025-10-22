@@ -8,7 +8,7 @@ class Error:
         self.op = operation # the error operation
         self.p = p # its probability
 
-def longchain_errors(p):
+def tham_modules_errors(p):
     """
     Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
     (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
@@ -41,7 +41,7 @@ def longchain_errors(p):
     return errors
 
 
-def longchain_idle_errors(p):
+def tham_modules_idle_errors(p):
     """
     Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
     """
@@ -128,7 +128,7 @@ def uniform_errors(p):
     """
     errors = {
 
-        # Longchain [2503.22071] operations:
+        
         "RZ" : Error("X_ERROR", p), 
         "RX" : Error("Z_ERROR", p),
         "H" : Error("DEPOLARIZE1", p),

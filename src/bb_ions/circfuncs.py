@@ -598,9 +598,9 @@ Inputs are:
     - p
             Physical error rate
     - errors
-            A dictionary that can be made with errors = longchain_errors(p) which has an error operation and corresonding probability for each operation in the circuit.
+            A dictionary that can be made with errors = tham_modules_errors(p) which has an error operation and corresonding probability for each operation in the circuit.
     - idle_during
-            A dictionary that can be made with idle_during = longchain_idle_errors(p) which has an error operation and corresponding probability for qubits that are idling while other qubits are undergoing each operation in the circuit
+            A dictionary that can be made with idle_during = tham_modules_idle_errors(p) which has an error operation and corresponding probability for qubits that are idling while other qubits are undergoing each operation in the circuit
     - num_syndrome_extraction_cycles
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
     - sequential_gates = True
@@ -622,10 +622,10 @@ def make_circuit(
 
 
     if idle_during == None:
-      idle_during = longchain_idle_errors(p)
+      idle_during = tham_modules_idle_errors(p)
 
     if errors == None:
-      errors = longchain_errors(p)
+      errors = tham_modules_errors(p)
 
 
     circ = stim.Circuit()

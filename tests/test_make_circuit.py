@@ -1,7 +1,7 @@
 import pytest
 import stim
 from src.bb_ions.circfuncs import make_circuit
-from src.bb_ions.noisefuncs import longchain_errors, longchain_idle_errors
+from src.bb_ions.noisefuncs import tham_modules_errors, tham_modules_idle_errors
 from src.bb_ions.bbparamfuncs import get_code_params
 
 test_gross_code = stim.Circuit("""
@@ -4025,8 +4025,8 @@ def test_make_circuit():
 
     code = get_code_params(l, m, Aij, Bij, d)
 
-    errors = longchain_errors(p)
-    idle_during = longchain_idle_errors(p)
+    errors = tham_modules_errors(p)
+    idle_during = tham_modules_idle_errors(p)
 
     circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
         code,  
