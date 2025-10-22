@@ -7,4 +7,4 @@ examples/example_circuits/
 examples/example_stats/
 examples/example_diagrams/
 examples/example_circuit_diagrams/
-circuits/
+find_codes/scripts/beccas_code.py
