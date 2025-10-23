@@ -101,8 +101,15 @@ for loop in range(len(ivectors)):
         if (i2, j2) == (i3, j3) or (i2, j2) == (i4, j4) or (i3, j3) == (i4, j4):
             continue
 
+        # Also, x^i_0 * y^j_0 + x^i_1 * y^j_1 is equivalent to x^i_1 * y^j_1 + x^i_0 * y^j_0 -- in other words Aij = [(i0, j0), (i1, j1)] is equivalent to Aij = [(i1, j1), (i0, j0)] (and similarly for Bij), so no need to repeat those polynomials. To avoid repeats let's just search terms that are in ascending order lexicographically (compare first element of tuple, if equal then compare second element of tuple)
+        if (i0, j0) > (i1, j1):
+            continue
+        if not ((i2, j2) < (i3, j3) < (i4, j4)):
+            continue 
+
         Aij = [(i0, j0), (i1, j1)]
         Bij = [(i2, j2), (i3, j3), (i4, j4)]
+
 
 
 
