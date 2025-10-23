@@ -593,8 +593,6 @@ This function makes a stim circuit realising a memory experiment for any bivaria
 Inputs are:
     - code
             An object which contains all the BB code's parameters, such as parity check matrices.
-    - memory_basis
-            Either 'Z' or 'X' to preserve logical 0 or + respectively in all the logical qubits
     - p
             Physical error rate
     - errors
@@ -603,6 +601,8 @@ Inputs are:
             A dictionary that can be made with idle_during = tham_modules_idle_errors(p) which has an error operation and corresponding probability for qubits that are idling while other qubits are undergoing each operation in the circuit
     - num_syndrome_extraction_cycles
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
+    - memory_basis
+            Either 'Z' or 'X' to preserve logical 0 or + respectively in all the logical qubits
     - sequential_gates = True
             Whether or not the two-qubit gates between qubits in aligned modules are sequential or in parallel.
     - exclude_opposite_basis_detectors = False
@@ -611,21 +611,25 @@ Inputs are:
             If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements (algorithm 2 of 2508.01879) does X-checks then Z-checks'''
 def make_circuit(
   code,
-  memory_basis,
   p,
-  num_syndrome_extraction_cycles,
   errors = None,
   idle_during = None,
+  num_syndrome_extraction_cycles = None,
+  memory_basis = 'Z',
   sequential_gates = True,
   exclude_opposite_basis_detectors = False,
-  reuse_check_qubits = True):
+  reuse_check_qubits = True,
+  ):
 
 
-    if idle_during == None:
-      idle_during = tham_modules_idle_errors(p)
+    if num_syndrome_extraction_cycles == None:
+      num_syndrome_extraction_cycles = code.d_max
 
     if errors == None:
-      errors = tham_modules_errors(p)
+      errors = uniform_errors(p)
+
+    if idle_during == None:
+      idle_during = uniform_idling(p)
 
 
     circ = stim.Circuit()

@@ -25,37 +25,29 @@ code = gross_code()
 # Options:
 memory_basis = 'Z' 
 num_syndrome_extraction_cycles = code.d_max # original BB paper used d
+sequential_gates = True
 ps = [0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 
 noise = 'tham_modules' 
 
 
 # Generate circuits:
-for p in ps:
-    
-    if 'tham_modules' in noise:
-        errors = tham_modules_errors(p)
-        idle_during = tham_modules_idle_errors(p)
-    # if 'our_modules' in noise:
+for code in [gross_code(), bb6_108_code(), bb6_90_8_10_code()]:
+    for p in ps:
+        circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
+            code,  
+            p,  
+            num_syndrome_extraction_cycles,  
+            errors,
+            idle_during,
+            sequential_gates = sequential_gates, 
+            exclude_opposite_basis_detectors = True,
+            reuse_check_qubits = True,  
+        )
 
-    if 'zero_idling' in noise:
-        idle_during = zero_idling()
-
-    circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
-        code,  
-        memory_basis,  
-        p,  
-        num_syndrome_extraction_cycles,  
-        errors,
-        idle_during,
-        sequential_gates = False, 
-        exclude_opposite_basis_detectors = True,
-        reuse_check_qubits = True,  
-    )
-
-    # Save circuit:
-    filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},b={memory_basis},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
-    circuit.to_file(f"../circuits/{filename}.stim")
-    
-    #  svg = str(circuit.diagram("timeline-svg"))
-    # with open(f"example_circuit_diagrams/{filename}.svg", "w", encoding="utf-8") as f: f.write(svg)
+        # Save circuit:
+        filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={sequential_gates},b={memory_basis},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+        circuit.to_file(f"../circuits/{filename}.stim")
+        
+        #  svg = str(circuit.diagram("timeline-svg"))
+        # with open(f"example_circuit_diagrams/{filename}.svg", "w", encoding="utf-8") as f: f.write(svg)

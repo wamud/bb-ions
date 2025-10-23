@@ -4030,11 +4030,11 @@ def test_make_circuit():
 
     circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
         code,  
-        memory_basis,  
         p,  
-        num_syndrome_extraction_cycles,  
         errors,
         idle_during,
+        num_syndrome_extraction_cycles,  
+        memory_basis,  
         sequential_gates = False, 
         exclude_opposite_basis_detectors = True,
         reuse_check_qubits = True,  
