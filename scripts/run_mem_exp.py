@@ -16,16 +16,12 @@ def main():
         sys.exit(1)
 
     num_workers = int(sys.argv[1])
-    csv_file_number = sys.argv[2]    
+    csv_suffix  = sys.argv[2]    
  
     start_time = time.time()
     
-    # circuit_paths = glob.glob(f"../circuits/tham_modules_noise/*.stim")
-    circuit_paths = [
-            path for path in glob.glob("../circuits/tham_modules_noise/*stim") if "zero_idling" not in path
-    ]
-
-    csv_path = f"../collected_stats/collected_stats_{csv_file_number}.csv"
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/*.stim")
+    csv_path = f"../collected_stats/collected_stats_{csv_suffix}.csv"
 
     tasks = [
         sinter.Task(
@@ -37,7 +33,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = num_workers,
-        max_shots = 10000000,
+        max_shots = 10_000_000,
         max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
@@ -52,7 +48,7 @@ def main():
                 osd_order=0
             )
         },
-        print_progress = True
+        print_progress = False
         )
 
     end_time = time.time()
