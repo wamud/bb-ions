@@ -74,6 +74,18 @@ def bb5_48_4_7_code():
 
     return code
 
+'''bb6_72_12_6'''
+def bb6_72_12_6():
+    # [[72, 12, 6]] BB6 code from BB paper [2308.07915] Table II
+    l = 6
+    m = 6
+    # A = x^3 + y + y^2
+    # B = y^3 + x + x^2
+    Aij = [(3, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (1, 0), (2, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
 '''bb6_90_8_10_code'''
 def bb6_90_8_10_code():
     # [[90, 8, 10]] BB6 code from BB paper [2308.07915] Table III
