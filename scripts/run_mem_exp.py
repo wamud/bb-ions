@@ -33,7 +33,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = num_workers,
-        max_shots = 10_000_000,
+        max_shots = 20_000_000,
         max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
@@ -42,12 +42,10 @@ def main():
             "bposd": SinterDecoder_BPOSD(
                 # max_bp_iters = 10,
                 bp_method="minimum_sum", # product_sum, min_sum, min_sum_log
-                ms_scaling_factor = 0.625, # normalisation -- Puntalaev and Kalachaeav
+                ms_scaling_factor = 0.625, # normalisation
                 schedule="serial",
-                osd_method="osd0", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD
-                osd_order=0
-
-                # becca: osd_cs; osd_order 9; see her paper for explanations
+                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD
+                osd_order=9
             )
         },
         print_progress = False
