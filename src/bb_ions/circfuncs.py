@@ -1,5 +1,5 @@
 ''' circfuncs
-Given the parity check matrices (constructed using bbfuncs.py) and paramaters & logical operators (found using bbparams.py) of a Bicycle Bivariate [2308.07915] code, these functions (culminating in make_circuit at the bottom of this file) are for constructing a stim circuit that realises, with appropriate detectors annotated, a memory experiment using the BB code, i.e. it prepares logical |0⟩ or |+⟩ in all the logical qubits of the BB code, runs multiple rounds of stabiliser measurements, then measures all the data qubits.
+Given the parity check matrices (constructed using bbfuncs.py) and paramaters & logical operators (found using bbparams.py) of a Bicycle Bivariate [2308.07915] code, these functions (culminating in make_BB_circuit at the bottom of this file) are for constructing a stim circuit that realises, with appropriate detectors annotated, a memory experiment using the BB code, i.e. it prepares logical |0⟩ or |+⟩ in all the logical qubits of the BB code, runs multiple rounds of stabiliser measurements, then measures all the data qubits.
 Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Python-API-Reference'''
 
 import stim
@@ -389,15 +389,23 @@ def add_AT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
 
 ''' update_shift_probs
 The cyclic shift required to align check qubit and data qubit modules can be of variable length depending on the previous and current value of j (recall we are aligning check qubit module M_w with data qubit module M_(w ⊕ j) ). This function takes that length and updates the error rates / probabilities in errors and idle_during dictionaries to correspond to it. It uses an always-stored 'shift_constant' that the error rate is proportional to'''
-def update_shift_probs(length_of_shift, errors, idle_during):        
+def update_shift_probs(j_dif, errors, idle_during):        
   
-  # Get what the shifting error is proportional to:
-  p_shift_const = errors['shift_constant']
+  # Get what the shifting error is proportional to -- at the moment this is T2
+  shift_const = errors['shift_constant'] # T2 time
 
-  if p_shift_const != None:
+  if shift_const != None:
     
-    # Multiply it by the length of the shift (dif. in j values) and update errors dictionary:
-    updated_prob = p_shift_const * length_of_shift
+    # # Usual function: multiply it by the length of the shift (dif. in j values) and update errors dictionary:
+    updated_prob =  shift_const * j_dif
+
+    # # New modification: for our architecture:
+    # length_of_shift = 5e-3 * j_dif  # distance between legs is 5mm = 0.005m
+    # shuttle_speed = 1 # m/s
+    # t = length_of_shift / shuttle_speed # s
+    # updated_prob = (1 / 2) * (1 - np.exp(- t / shift_constant)) # A dephasing noise channel with T2 = shift_constant; t = j_dif
+
+
     errors['shift'].p = updated_prob
 
   # Repeat for the idling error:
@@ -406,7 +414,7 @@ def update_shift_probs(length_of_shift, errors, idle_during):
 
   if p_shift_idle_const != None:
     
-    updated_idle_prob = p_shift_idle_const * length_of_shift
+    updated_idle_prob = p_shift_idle_const * j_dif
 
     idle_during['shift'].p = updated_idle_prob
 
@@ -446,11 +454,14 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
         # # Cyclic shift the check qubits:
         if errors['shift'].p > 0:  
   
-          length_of_shift = abs((jval % m) - (jval_prev % m))
+          j_dif = abs((jval % m) - (jval_prev % m))
 
-          if length_of_shift > 0: # i.e. if a shift needs to occur
-            update_shift_probs(length_of_shift, errors, idle_during) # updates noise according to length of shift, unless 
+          if j_dif > 0: # i.e. if a shift needs to occur
+            
+            update_shift_probs(j_dif, errors, idle_during) # updates noise according to length of shift
+            
             apply_shift_error(circ, qC, errors)
+            
             idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
             tick(circ)
 
@@ -500,7 +511,6 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 - exclude_opposite_basis_detectors: if this is True, when preserving logical 0 (memory_basis = 'Z') then there are no detectors placed on the X-stabiliser measurments (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it by taking out unused nodes.
 - reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
 - sequential: whether or not the two-qubit gates within a leg are sequential or in parallel'''
-
 def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential, exclude_opposite_basis_detectors = False):
 
     loop_body = stim.Circuit()
@@ -509,6 +519,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     qL = registers.qL
     qR = registers.qR
     qZ = registers.qZ  # qZ will equal qX if reuse_check_qubits == True
+
+    idle(loop_body, qL + qR, idle_during['pause']) # This is to simulate pausing rather than applying the syndrome extraction straight away.
 
 
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -587,7 +599,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
 
 
-''' make_circuit
+''' make_BB_circuit
 This function makes a stim circuit realising a memory experiment for any bivariate bicycle (BB) code [2308.07915] according to algorithm 2 of Tham et al.'s "qubit modules" paper [2508.01879]. All the X-checks are performed in parallel, then all the Z-checks. The two-qubit gates proceed according to ascending j, the powers of y in the BB code's matrices A = sum(x^i * y^j), B = sum(x^i * y^j), the two matrices which form the code's parity check matrices Hx = [A|B] and Hz = [B^T|A^T]. All of the required information is contained in the input object 'code'.
 
 Inputs are:
@@ -609,9 +621,9 @@ Inputs are:
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
     - reuse_check_qubits = True
             If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements (algorithm 2 of 2508.01879) does X-checks then Z-checks'''
-def make_circuit(
-  code,
-  p,
+def make_BB_circuit(
+  code = None,
+  p = None,
   errors = None,
   idle_during = None,
   num_syndrome_extraction_cycles = None,

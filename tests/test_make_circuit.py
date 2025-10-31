@@ -1,6 +1,6 @@
 import pytest
 import stim
-from src.bb_ions.circfuncs import make_circuit
+from src.bb_ions.circfuncs import make_BB_circuit
 from src.bb_ions.noisefuncs import tham_modules_errors, tham_modules_idle_errors
 from src.bb_ions.bbparamfuncs import get_code_params
 
@@ -4005,7 +4005,7 @@ OBSERVABLE_INCLUDE(0) rec[-139] rec[-137] rec[-136] rec[-133] rec[-125] rec[-123
 
 
 
-def test_make_circuit():
+def test_make_BB_circuit():
 
     # [[144, 12, 12]] BB6 'gross' code from BB paper [2308.07915] Table III
     l = 12
@@ -4028,7 +4028,7 @@ def test_make_circuit():
     errors = tham_modules_errors(p)
     idle_during = tham_modules_idle_errors(p)
 
-    circuit = make_circuit(  # (see src/bb_ions/circfuncs for explanation of make_circuit inputs)
+    circuit = make_BB_circuit(  # (see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs)
         code,  
         p,  
         errors,

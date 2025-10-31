@@ -8,11 +8,13 @@ class Error:
         self.op = operation # the error operation
         self.p = p # its probability
 
+
+
+''' tham_modules_errors
+Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
+(Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)'''
 def tham_modules_errors(p):
-    """
-    Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
-    (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
-    """
+
     errors = {
 
         # Longchain [2503.22071] operations:
@@ -38,11 +40,10 @@ def tham_modules_errors(p):
     }
     return errors
 
-
+''' tham_modules_idle_errors
+    Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).'''
 def tham_modules_idle_errors(p):
-    """
-    Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
-    """
+
     idle_during = {
         
         # Longchain [2503.22071] operations:
@@ -56,12 +57,13 @@ def tham_modules_idle_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
-        "shift_constant" : None,
+        "shift_constant" : None, # i.e. the shift idling error will always be the value in the line above
 
         # Additional for our architecture:
         "shuttle" : Error("DEPOLARIZE1", 0),
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
+        "pause" : Error("DEPOLARIZE1", 0), # this is an idling error applied at the beginning of each round of stabiliser measurements; simulates waiting before each round of stab. measurement
 
     }
 
@@ -113,6 +115,7 @@ def zero_idling():
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0),
+        "pause" : Error("DEPOLARIZE1", 0),
 
         "shift_constant" : 0,
     }
@@ -126,7 +129,6 @@ def uniform_errors(p):
     """
     errors = {
 
-        
         "RZ" : Error("X_ERROR", p), 
         "RX" : Error("Z_ERROR", p),
         "H" : Error("DEPOLARIZE1", p),
@@ -140,7 +142,6 @@ def uniform_errors(p):
         "shift" : Error("DEPOLARIZE1", 0),
         "shift_constant" : None, 
 
-
         # Additional for our architecture - None
         "shuttle" : Error("DEPOLARIZE1", 0), 
         "merge" : Error("DEPOLARIZE1", 0),
@@ -150,10 +151,8 @@ def uniform_errors(p):
     return errors
 
 
-def uniform_idling():
-    """
-    Uniform idling errors, but no hardware shuttle, merge, split etc.
-    """
+def uniform_idling(p):
+
     idle_during = {
         "RZ" : Error("DEPOLARIZE1", p),
         "RX" : Error("DEPOLARIZE1", p), 
@@ -169,16 +168,48 @@ def uniform_idling():
         "shift" : Error("DEPOLARIZE1", 0),
 
         "shift_constant" : 0,
+
+        "pause" : Error("DEPOLARIZE1", 0),
+
     }
 
     return idle_during
 
-# ''' p_idle
-# If a qubit is idling for time t, this function returns what the probability of an error occurring on it will be. This probability can be fed into other functions to say what the error will actually be. For example p_idle(T = 100e-6) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience an error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2)) where T_2 = 50 seconds'''
-# def p_idle(t):
-#     T2 = 50
-#     p = 0.5 * (1 - np.exp(-t / T2))
-#     return p
+
+''' p_idle_dephasing
+If a qubit is idling for time t, this function returns what the probability of a Z-error occurring on it will be. It takes as inputs t, the time the qubit is idling for, and T2, the characteristic time for dephasing of an idling qubit. For example p_idle(t = 100e-6, T2 = 50s) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience a Z-error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2))'''
+def p_idle_dephasing(t, T2):
+    p = 0.5 * (1 - np.exp(-t / T2))
+    return p
+
+
+def dephasing_idle_errors(p, T2):
+    
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        "RX" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)), 
+        "H" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        "CNOT" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        "CZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        "MZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        "MX" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+
+        "shift_constant" : 1,
+
+        "pause" : Error("DEPOLARIZE1", 0),
+
+    }
+
+
+    return idle_during
+
+
+
 
 
 
