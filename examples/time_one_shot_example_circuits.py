@@ -17,47 +17,51 @@ def main():
 
     num_workers = int(sys.argv[1])
     csv_suffix  = sys.argv[2]    
- 
-    empty_folder("example_stats")
 
-    csv_path = f"example_stats/collected_stats_{csv_suffix}.csv"
+    for num_rounds in [60, 80, 90, 100]:
 
-    circuit_paths = glob.glob(f"example_circuits/*.stim")        
-    
+        print(num_rounds)
+        
+        empty_folder("example_stats")
 
-    start_time = time.time()
+        csv_path = f"example_stats/collected_stats_{csv_suffix}.csv"
+
+        circuit_paths = glob.glob(f"example_circuits/*r={num_rounds},*.stim")        
+        
+
+        start_time = time.time()
 
 
-    tasks = [
-        sinter.Task(
-            circuit_path = path,
-            json_metadata = sinter.comma_separated_key_values(path),
-        )
-        for path in circuit_paths
-    ]
-
-    samples = sinter.collect(
-        num_workers = num_workers,
-        max_shots = 1,  
-        max_errors = 1,
-        tasks = tasks,
-        decoders=['bposd'],
-        save_resume_filepath = csv_path,
-        custom_decoders = {
-            "bposd": SinterDecoder_BPOSD(
-                # max_bp_iters = 10, # default is 30
-                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
-                ms_scaling_factor = 0.625, # normalisation
-                schedule="serial",
-                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order=9 # default is 60
+        tasks = [
+            sinter.Task(
+                circuit_path = path,
+                json_metadata = sinter.comma_separated_key_values(path),
             )
-        },
-        print_progress = True
-        )
+            for path in circuit_paths
+        ]
 
-    end_time = time.time()
-    print(f"  Finished in {(end_time - start_time):.2f} seconds\n")
+        samples = sinter.collect(
+            num_workers = num_workers,
+            max_shots = 1,  
+            max_errors = 1,
+            tasks = tasks,
+            decoders=['bposd'],
+            save_resume_filepath = csv_path,
+            custom_decoders = {
+                "bposd": SinterDecoder_BPOSD(
+                    # max_bp_iters = 10, # default is 30
+                    bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                    ms_scaling_factor = 0.625, # normalisation
+                    schedule="serial",
+                    osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                    osd_order=9 # default is 60
+                )
+            },
+            print_progress = True
+            )
+
+        end_time = time.time()
+        print(f"  Finished in {(end_time - start_time):.2f} seconds\n")
 
 
 if __name__ == "__main__":
