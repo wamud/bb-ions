@@ -3,6 +3,13 @@
 import numpy as np
 
 
+LEG_SPACING = 5e-3 # [m]
+
+SHUTTLE_DISTANCE = 2.5e-3 # 2.5mm to get in and out of a leg. Calling this a "shuttle" as opposed to the shuttling that occurs during a cyclic shift (which we call a "shift")
+
+SHUTTLE_SPEED = 1 # [m/s]
+
+
 class Error:
     def __init__(self, operation, p):
         self.op = operation # the error operation
@@ -29,7 +36,7 @@ def tham_modules_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100),
-        "shift_constant" : None, # shift_constant is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_constant to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
+        "shift_const" : None, # shift_const is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_const to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
 
 
         # Additional for our architecture:
@@ -57,7 +64,7 @@ def tham_modules_idle_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
-        "shift_constant" : None, # i.e. the shift idling error will always be the value in the line above
+        "shift_const" : None, # i.e. the shift idling error will always be the value in the line above
 
         # Additional for our architecture:
         "shuttle" : Error("DEPOLARIZE1", 0),
@@ -90,7 +97,7 @@ def zero_errors():
         "split" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0),
 
-        "shift_constant" : 0, 
+        "shift_const" : 0, 
         
     }
     
@@ -117,16 +124,16 @@ def zero_idling():
         "shift" : Error("DEPOLARIZE1", 0),
         "pause" : Error("DEPOLARIZE1", 0),
 
-        "shift_constant" : 0,
+        "shift_const" : 0,
     }
 
     return idle_during
 
 
+''' uniform_errors
+Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).'''
 def uniform_errors(p):
-    """
-    Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).
-    """
+
     errors = {
 
         "RZ" : Error("X_ERROR", p), 
@@ -140,7 +147,7 @@ def uniform_errors(p):
 
         # Qubit module errors -- None
         "shift" : Error("DEPOLARIZE1", 0),
-        "shift_constant" : None, 
+        "shift_const" : None, 
 
         # Additional for our architecture - None
         "shuttle" : Error("DEPOLARIZE1", 0), 
@@ -167,7 +174,7 @@ def uniform_idling(p):
         "split" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0),
 
-        "shift_constant" : 0,
+        "shift_const" : 0,
 
         "pause" : Error("DEPOLARIZE1", 0),
 
@@ -182,31 +189,68 @@ def p_idle_dephasing(t, T2):
     p = 0.5 * (1 - np.exp(-t / T2))
     return p
 
+''' dephasing_idle_errors
+Defines idle errors as the realistic dephasing noise for a given T2 value with times set by the sources listed below in comments'''
+def dephasing_idle_errors(T2):
 
-def dephasing_idle_errors(p, T2):
+    t_1q = 7.5e-6     # [27] in Bruzewicz et al. Table 1
+    t_2q = 100e-6     # [27] in Bruzewicz et al. Table 1
+    t_m  = 200e-6     # Myerson et al. https://doi.org/10.1103/PhysRevLett.100.200502
+    t_r  = 207.5e-6   # reset is measurement + single qubit X
     
     idle_during = {
-        "RZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
-        "RX" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)), 
-        "H" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
-        "CNOT" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
-        "CZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
-        "MZ" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
-        "MX" : Error("DEPOLARIZE1", p_idle_dephasing(t, T2)),
+        
+        "RZ" : Error("Z_ERROR", p_idle_dephasing(t_r, T2)),
+        "RX" : Error("Z_ERROR", p_idle_dephasing(t_r, T2)), 
+        "H" : Error("Z_ERROR", p_idle_dephasing(t_1q, T2)),    
+        "CNOT" : Error("Z_ERROR", p_idle_dephasing(t_2q, T2)), 
+        "CZ" : Error("Z_ERROR", p_idle_dephasing(t_2q, T2)),   
+        "MZ" : Error("Z_ERROR", p_idle_dephasing(t_m, T2)),
+        "MX" : Error("Z_ERROR", p_idle_dephasing(t_m, T2)),
 
-        "shuttle" : Error("DEPOLARIZE1", 0),
-        "merge" : Error("DEPOLARIZE1", 0),
-        "split" : Error("DEPOLARIZE1", 0),
-        "shift" : Error("DEPOLARIZE1", 0),
+        "shuttle" : Error("Z_ERROR", p_idle_dephasing(SHUTTLE_DISTANCE / SHUTTLE_SPEED, T2)), 
+        
+        "merge" : Error("Z_ERROR", 0),
+        "split" : Error("Z_ERROR", 0),
+        
+        "shift" : Error("Z_ERROR", 0.1), # will be updated by circfuncs.update_shift_prob as long as p != 0.
 
-        "shift_constant" : 1,
+        "shift_const" : T2, # T2 time
 
-        "pause" : Error("DEPOLARIZE1", 0),
-
+        "pause" : Error("Z_ERROR", 0),
     }
 
-
     return idle_during
+
+
+def our_uniform_plus_shift_and_shuttle(p, T2):
+
+    SHUTTLE_SPEED = 1 # [m/s]
+
+    errors = {
+        
+        # Uniform errors:
+        "RZ" : Error("X_ERROR", p), 
+        "RX" : Error("Z_ERROR", p),
+        "H" : Error("DEPOLARIZE1", p),
+        "CNOT" : Error("DEPOLARIZE2", p),
+        "CZ" : Error("DEPOLARIZE2", p),
+        "MZ" : Error("X_ERROR", p),
+        "MX" : Error("Z_ERROR", p),
+
+        # Qubit module errors
+        "shift_const" : T2, 
+        "shift" : Error("Z_ERROR", 0.1), # will be updated each shift
+ 
+
+        # Additional for our architecture 
+        "shuttle" : Error("Z_ERROR", p_idle_dephasing(SHUTTLE_DISTANCE / SHUTTLE_SPEED, T2)), 
+
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+    }
+    
+    return errors
 
 
 
