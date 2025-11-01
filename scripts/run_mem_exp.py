@@ -20,7 +20,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/*.stim")
+    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*.stim")
     csv_path = f"../collected_stats/collected_stats_{csv_suffix}.csv"
 
     tasks = [
