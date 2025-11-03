@@ -3,10 +3,9 @@
 # Run this as: qsub submit.sh
 
 #PBS -N collect_stats
-#PBS -l ncpus=1
-#PBS -l mem=1GB
-#PBS -l walltime=00:00:20
-
+#PBS -l ncpus=64
+#PBS -l mem=30GB
+#PBS -l walltime=00:24:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -34,7 +33,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/collect_stats.py 
+python3 ${PBS_O_WORKDIR}/run_mem_exp.py "$@" 
 
 #####################################################
 # Copy results back to your own directory and cleanup
