@@ -9,7 +9,7 @@ import sys
 
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print("Usage: run_mem_exp.py <codeT2>")
         sys.exit(1)
 
@@ -19,7 +19,9 @@ def main():
     start_time = time.time()
     
     circuit_paths = glob.glob(f"[[{nkd}]]_T2={T2}/*.stim")
-    
+    if len(circuit_paths) == 0:
+        print("No circuits")
+
     csv_path = f"collected_stats_[[{nkd}]]_T2={T2}.csv"
 
     tasks = [

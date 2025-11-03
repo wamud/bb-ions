@@ -21,12 +21,9 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -f "collected_stats_[[$ARG1]]_T2=$ARG2.csv" ]; then
-    cp collected_stats_[[$ARG1]]_T2=$ARG2.csv ${SCRATCH}
-fi
-
 if [ -d "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" ]; then
-    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" "${SCRATCH}/"
+    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" "${SCRATCH}"
+    echo "Tried to copy..."
 else
     echo "Le dossier ../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2 n'existe pas."
 fi
@@ -46,8 +43,8 @@ python3 ${PBS_O_WORKDIR}/run_mem_exp.py $ARG1 $ARG2
 # Copy results back to your own directory and cleanup
 #####################################################
 
-mv ${SCRATCH}/collected_stats.csv ${PBS_O_WORKDIR}
+mv ${SCRATCH}/collected_stats_[[$ARG1]]_T2=$ARG2.csv ${PBS_O_WORKDIR}
 
 cd ${PBS_O_WORKDIR}
-rmdir ${SCRATCH}
+rm -rf ${SCRATCH}
 
