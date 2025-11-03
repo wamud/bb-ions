@@ -33,7 +33,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/run_mem_exp.py "$@" 
+python3 ${PBS_O_WORKDIR}/run_mem_exp.py $ARG1 $ARG2 
 
 #####################################################
 # Copy results back to your own directory and cleanup

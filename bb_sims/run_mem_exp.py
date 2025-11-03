@@ -21,7 +21,7 @@ def main():
     start_time = time.time()
     
     circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[{nkd}]]_T2={T2}/*.stim")
-    csv_path = f"../collected_stats/collected_stats_{code_T2}.csv"
+    csv_path = f"collected_stats_[[{nkd}]]_T2={T2}.csv"
 
     tasks = [
         sinter.Task(
