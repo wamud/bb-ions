@@ -15,11 +15,12 @@ def main():
         print("Usage: run_mem_exp.py <codeT2>")
         sys.exit(1)
 
-    code_T2 = sys.argv[1]
+    nkd = sys.argv[1]
+    T2 = int(sys.argv[2])
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/{code_T2}/*.stim")
+    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[{nkd}]]_T2={T2}/*.stim")
     csv_path = f"../collected_stats/collected_stats_{code_T2}.csv"
 
     tasks = [
