@@ -21,9 +21,16 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -f collected_stats.csv ]; then
-    cp collected_stats.csv ${SCRATCH}
+if [ -f "collected_stats_[[$ARG1]]_T2=$ARG2.csv" ]; then
+    cp collected_stats_[[$ARG1]]_T2=$ARG2.csv ${SCRATCH}
 fi
+
+if [ -d "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" ]; then
+    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" "${SCRATCH}/"
+else
+    echo "Le dossier ../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2 n'existe pas."
+fi
+
 
 ###############
 # Start the Job
