@@ -31,7 +31,7 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 1,
         #max_shots = 40_000_000,
         #max_errors = 100,
         max_shots = 1,
