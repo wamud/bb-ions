@@ -5,7 +5,7 @@
 #PBS -N collect_stats
 #PBS -l ncpus=32
 #PBS -l mem=30GB
-#PBS -l walltime=00:24:00
+#PBS -l walltime=00:02:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
