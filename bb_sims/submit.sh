@@ -21,11 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -d "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" ]; then
-    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2" "${SCRATCH}"
-    echo "Tried to copy..."
-else
-    echo "Le dossier ../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/[[$ARG1]]_T2=$ARG2 n'existe pas."
+if [ -d "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/$ARG1 w T2 = $ARG2" ]; then
+    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/$ARG1 w T2 = $ARG2" "${SCRATCH}"
 fi
 
 
