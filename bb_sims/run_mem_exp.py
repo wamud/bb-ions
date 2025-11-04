@@ -18,11 +18,13 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"[[{nkd}]]_T2={T2}/*.stim")
+    circuit_paths = glob.glob(f"{nkd} w T2 = {T2}/*.stim")
+    
     if len(circuit_paths) == 0:
         print("No circuits")
-
-    csv_path = f"collected_stats_[[{nkd}]]_T2={T2}.csv"
+        sys.exit(1)
+        
+    csv_path = f"collected_stats_{nkd}__T2={T2}.csv"
 
     tasks = [
         sinter.Task(

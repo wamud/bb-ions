@@ -3,9 +3,9 @@
 # Run this as: qsub submit.sh
 
 #PBS -N collect_stats
-#PBS -l ncpus=1
+#PBS -l ncpus=4
 #PBS -l mem=10GB
-#PBS -l walltime=00:01:00
+#PBS -l walltime=00:10:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -40,8 +40,8 @@ python3 ${PBS_O_WORKDIR}/run_mem_exp.py $ARG1 $ARG2
 # Copy results back to your own directory and cleanup
 #####################################################
 
-mv ${SCRATCH}/collected_stats_[[$ARG1]]_T2=$ARG2.csv ${PBS_O_WORKDIR}
+mv ${SCRATCH}/collected_stats_${ARG1}__T2=$ARG2.csv ${PBS_O_WORKDIR}
 
 cd ${PBS_O_WORKDIR}
-rm -rf ${SCRATCH}
+rmdir ${SCRATCH}
 
