@@ -11,16 +11,16 @@ from bb_ions import *
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: run_mem_exp.py <codeT2>")
-        sys.exit(1)
 
-    code_T2 = sys.argv[1]
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/{code_T2}/*.stim")
-    csv_path = f"../collected_stats/collected_stats_{code_T2}.csv"
+    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
+
+    for path in circuit_paths:
+        print(path)
+
+    csv_path = f"../collected_stats/collected_stats_pauses.csv"
 
     tasks = [
         sinter.Task(
@@ -31,11 +31,9 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 32,
-        #max_shots = 40_000_000,
-        #max_errors = 100,
-        max_shots = 1,
-        max_errors = 1,
+        num_workers = 64,
+        max_shots = 40_000_000,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
