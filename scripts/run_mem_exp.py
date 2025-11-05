@@ -17,8 +17,11 @@ def main():
     
     circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
 
-    for path in circuit_paths:
-        print(path)
+    # Excluding 288 code and p=0.0005 circuits:
+    circuit_paths = [
+        path for path in glob.glob("../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
+        if "288_12_18" not in path and "p=0.0005" not in path
+    ]
 
     csv_path = f"../collected_stats/collected_stats_pauses.csv"
 

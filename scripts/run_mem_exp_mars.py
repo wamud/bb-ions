@@ -11,17 +11,20 @@ from bb_ions import *
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: run_mem_exp.py <num_workers> <suffix>")
-        sys.exit(1)
 
-    num_workers = int(sys.argv[1])
-    csv_suffix  = sys.argv[2]    
- 
+
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*/*.stim")
-    csv_path = f"../collected_stats/collected_stats_{csv_suffix}.csv"
+    circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
+
+    # Excluding 288 code and p=0.0005 circuits:
+    circuit_paths = [
+        path for path in glob.glob("../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
+        if "288_12_18" not in path and "p=0.0005" not in path
+    ]
+
+
+    csv_path = f"../collected_stats/collected_stats_pauses_mars.csv"
 
     tasks = [
         sinter.Task(
