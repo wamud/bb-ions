@@ -10,7 +10,7 @@ import sys
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: run_mem_exp.py <codeT2>")
+        print("Usage: run_mem_exp.py <n_k_d> <T2>")
         sys.exit(1)
 
     nkd = sys.argv[1]
