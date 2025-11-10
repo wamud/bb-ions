@@ -394,7 +394,7 @@ def update_shift_probs(j_dif, errors, idle_during):
   # Get what the shifting error is proportional to -- at the moment this is T2
   shift_const = errors['shift_const'] # T2 time
 
-  if shift_const != None:
+  if shift_const != None: # E.g. in Tham modules noise the shift constant is none, meaning there is no update depending on the length of the shift (Tham ... Delfosse) assumed constant shift error of 30p/100 regardless of length of shift. 
     
     # # Usual function: multiply it by the length of the shift (dif. in j values) and update errors dictionary:
     # updated_prob =  shift_const * j_dif

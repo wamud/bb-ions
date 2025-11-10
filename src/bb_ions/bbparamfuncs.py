@@ -74,8 +74,8 @@ def bb5_48_4_7_code():
 
     return code
 
-'''bb6_72_12_6'''
-def bb6_72_12_6():
+'''bb6_72_12_6_code'''
+def bb6_72_12_6_code():
     # [[72, 12, 6]] BB6 code from BB paper [2308.07915] Table II
     l = 6
     m = 6
