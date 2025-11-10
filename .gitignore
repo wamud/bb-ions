@@ -11,4 +11,3 @@ find_codes/scripts/beccas_code.py
 find_codes/found_codes/*progress.txt
 *.e*[0-9]
 *.o*[0-9]
-*(copy)*
