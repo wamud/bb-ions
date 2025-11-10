@@ -33,13 +33,13 @@ def main():
     ]
 
     samples = sinter.collect(
-        # num_workers = 64,
-        # max_shots = 5_000_000,
-        # max_errors = 50,
+        num_workers = 64,
+        max_shots = 5_000_000,
+        max_errors = 50,
 
-        num_workers = 8,
-        max_shots = 1,
-        max_errors = 1,
+        # num_workers = 8,
+        # max_shots = 1,
+        # max_errors = 1,
 
         tasks = tasks,
         decoders=['bposd'],
