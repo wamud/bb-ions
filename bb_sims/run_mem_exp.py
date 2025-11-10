@@ -18,8 +18,16 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"{nkd} w T2 = {T2}/*.stim")
+    # circuit_paths = glob.glob(f"{nkd} w T2 = {T2}/pause_0/*.stim")
     
+
+    # # Excluding p=0.0005 circuits:
+    circuit_paths = [
+        path for path in glob.glob(f"{nkd} w T2 = 10/*/*.stim")
+        if "p=0.0005" not in path
+    ]
+
+
     if len(circuit_paths) == 0:
         print("No circuits")
         sys.exit(1)
