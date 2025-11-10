@@ -23,9 +23,9 @@ def main():
     #     if "288_12_18" not in path and "p=0.0005" not in path
     # ]
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/include_opp_basis_detectors/*.stim")
+    circuit_paths = glob.glob(f"include_opp_basis_detectors/*.stim")
 
-    csv_path = f"../collected_stats/collected_stats_tham_modules_incl_opp_detectors.csv"
+    csv_path = f"collected_stats_tham_modules_incl_opp_detectors.csv"
 
     tasks = [
         sinter.Task(
