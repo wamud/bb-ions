@@ -37,7 +37,7 @@ def main():
         # max_shots = 5_000_000,
         # max_errors = 50,
 
-        num_workers = 1,
+        num_workers = 8,
         max_shots = 1,
         max_errors = 1,
 

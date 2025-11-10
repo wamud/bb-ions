@@ -3,7 +3,7 @@
 # Run this as: qsub submit.sh
 
 #PBS -N sims
-#PBS -l ncpus=1
+#PBS -l ncpus=8
 #PBS -l mem=21GB
 #PBS -l walltime=00:10:00
 #PBS -m abe
