@@ -3,9 +3,9 @@
 # Run this as: qsub submit.sh
 
 #PBS -N sims
-#PBS -l ncpus=1
+#PBS -l ncpus=8
 #PBS -l mem=21GB
-#PBS -l walltime=00:10:00
+#PBS -l walltime=00:00:20
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -21,8 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -d "../circuits/tham_modules_noise/normal/include_opp_basis_detectors/" ]; then
-    cp -r "../circuits/tham_modules_noise/normal/include_opp_basis_detectors/" "${SCRATCH}"
+if [ -d "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/$ARG1 w T2 = $ARG2" ]; then
+    cp -r "../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/$ARG1 w T2 = $ARG2" "${SCRATCH}"
 fi
 
 
@@ -34,7 +34,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/run_mem_exp.py $ARG1 $ARG2 
+python3 ${PBS_O_WORKDIR}/run_T2_mem_exp.py $ARG1 $ARG2 
 
 #####################################################
 # Copy results back to your own directory and cleanup

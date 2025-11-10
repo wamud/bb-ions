@@ -5,27 +5,34 @@ import glob
 from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 import time
 import sys
-import os
-sys.path.append(os.path.abspath("../src"))
-from bb_ions import *
+
 
 
 def main():
+    if len(sys.argv) < 3:
+        print("Usage: run_mem_exp.py <n_k_d> <T2>")
+        sys.exit(1)
 
+    nkd = sys.argv[1]
+    T2 = int(sys.argv[2])
  
     start_time = time.time()
     
-    # circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
+    # circuit_paths = glob.glob(f"{nkd} w T2 = {T2}/pause_0/*.stim")
     
-    # # Excluding 288 code and p=0.0005 circuits:
-    # circuit_paths = [
-    #     path for path in glob.glob("../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
-    #     if "288_12_18" not in path and "p=0.0005" not in path
-    # ]
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/include_opp_basis_detectors/*.stim")
+    # # Excluding p=0.0005 circuits:
+    circuit_paths = [
+        path for path in glob.glob(f"{nkd} w T2 = 10/pause_0/*.stim")
+        if "p=0.0005" not in path
+    ]
 
-    csv_path = f"../collected_stats/collected_stats_tham_modules_incl_opp_detectors.csv"
+
+    if len(circuit_paths) == 0:
+        print("No circuits")
+        sys.exit(1)
+        
+    csv_path = f"collected_stats_{nkd}__T2={T2}.csv"
 
     tasks = [
         sinter.Task(
@@ -36,14 +43,11 @@ def main():
     ]
 
     samples = sinter.collect(
-        # num_workers = 64,
-        # max_shots = 5_000_000,
-        # max_errors = 50,
-
-        num_workers = 1,
+        num_workers = 8,
+        #max_shots = 40_000_000,
+        #max_errors = 100,
         max_shots = 1,
         max_errors = 1,
-
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -57,7 +61,7 @@ def main():
                 osd_order=9
             )
         },
-        print_progress = True
+        print_progress = False
         )
 
     end_time = time.time()
