@@ -24,7 +24,9 @@ def main():
 
 
 
-    csv_path = f"../collected_stats/mars_tham_modules_noise_long_chain_BPOSD_settings.csv"
+    # csv_path = f"../collected_stats/mars_tham_modules_noise_long_chain_BPOSD_settings.csv"
+
+    csv_path = f"../collected_stats/test_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -43,12 +45,12 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
+                # max_bp_iters = 10_000, # default 30
                 bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
+                ms_scaling_factor = 0.625, # normalisation
+                schedule = "serial", 
                 osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                osd_order = 9 
             )
         },
         print_progress = True
