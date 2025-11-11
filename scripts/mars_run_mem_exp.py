@@ -15,12 +15,12 @@ def main():
     # circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
     
      # Excluding 288 code and p=0.0005 circuits:
-    circuit_paths = [
-            path for path in glob.glob("../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
-            if "288_12_18" not in path and "p=0.0005" not in path
-            ]
+    # circuit_paths = [
+    #        path for path in glob.glob("../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
+    #        if "288_12_18" not in path and "p=0.0005" not in path
+    #        ]
 
-    # circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
 
 
 
@@ -37,7 +37,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000_000,
-        max_errors = 10,
+        max_errors = 50,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
