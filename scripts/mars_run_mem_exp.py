@@ -14,15 +14,17 @@ def main():
     
     # circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
     
-    # # Excluding 288 code and p=0.0005 circuits:
-    # circuit_paths = [
-    #     path for path in glob.glob("../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
-    #     if "288_12_18" not in path and "p=0.0005" not in path
-    # ]
+     # Excluding 288 code and p=0.0005 circuits:
+    circuit_paths = [
+            path for path in glob.glob("../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
+            if "288_12_18" not in path and "p=0.0005" not in path
+            ]
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/include_opp_basis_detectors/*.stim")
+    # circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
 
-    csv_path = f"../collected_stats/mars_collected_stats_tham_modules_incl_opp_detectors.csv"
+
+
+    csv_path = f"../collected_stats/mars_tham_modules_noise_long_chain_BPOSD_settings.csv"
 
     tasks = [
         sinter.Task(
@@ -41,12 +43,12 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                # max_bp_iters = 10, # default 30
-                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
-                ms_scaling_factor = 0.625, # normalisation
-                schedule="serial", 
-                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order=9
+                max_bp_iters = 10_000, # default 30
+                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule = "serial", 
+                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order = 5 
             )
         },
         print_progress = True
