@@ -19,11 +19,11 @@ def main():
     # # Including only p=0.0005 circuits:
     circuit_paths = [
            path for path in glob.glob("../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
-           if "p=0.0005" in path
+           if "p=0.0001" in path
            ]
 
 
-    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_32_cores.csv"
+    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_0.0001.csv"
 
 
     tasks = [
@@ -35,8 +35,8 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 32,
-        max_shots = 30_000_000,
+        num_workers = 64,
+        max_shots = 200_000_000,
         max_errors = 50,
         tasks = tasks,
         decoders=['bposd'],
