@@ -64,7 +64,7 @@ def tham_modules_idle_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
-        "shift_const" : None, # i.e. the shift idling error will always be the value in the line above
+        "shift_const" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
 
         # Additional for our architecture:
         "shuttle" : Error("DEPOLARIZE1", 0),
