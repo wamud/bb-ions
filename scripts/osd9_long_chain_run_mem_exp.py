@@ -14,16 +14,11 @@ def main():
     
     # circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
     
-    # circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
-    
-    # # Including only p=0.0005 circuits:
-    circuit_paths = [
-           path for path in glob.glob("../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
-           if "p=0.0005" in path
-           ]
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/*.stim")
 
 
-    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_32_cores.csv"
+
+    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_but_with_osd9.csv"
 
 
     tasks = [
@@ -35,9 +30,9 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 64,
         max_shots = 30_000_000,
-        max_errors = 50,
+        max_errors = 150,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -48,7 +43,7 @@ def main():
                 # ms_scaling_factor = 0.625, # normalisation
                 # schedule = "serial", 
                 osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                osd_order = 9 
             )
         },
         print_progress = True
