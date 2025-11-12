@@ -23,9 +23,9 @@ def main():
     #     if "288_12_18" not in path and "p=0.0005" not in path
     # ]
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/include_opp_basis_detectors/*.stim")
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/288_12_18/*.stim")
 
-    csv_path = f"../collected_stats/collected_stats_tham_modules_incl_opp_detectors.csv"
+    csv_path = f"../collected_stats/288_12_18_code_tham_modules_noise_long_chain_BPOSD_settings.csv"
 
     tasks = [
         sinter.Task(
@@ -37,7 +37,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = 64,
-        max_shots = 5_000_000,
+        max_shots = 10_000_000_000,
         max_errors = 50,
         tasks = tasks,
         decoders=['bposd'],

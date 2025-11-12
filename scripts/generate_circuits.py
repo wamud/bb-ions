@@ -8,14 +8,14 @@ from bb_ions import *
 
 
 
-ps = [0.0001]
+ps = [0.0001] #, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 seq_gates = True
 noise = 'tham_modules_noise'
 exclude_opposite_basis_detectors = True
 prefix = "include" if exclude_opposite_basis_detectors == False else "exclude"
 
 # Generate circuits:
-for code in [bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code()]:
+for code in [two_gross_code()]:
     num_syndrome_extraction_cycles = code.d_max
 
     for p in ps:
@@ -47,9 +47,9 @@ for code in [bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(
             
             filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
             
-            circuit.to_file(f"../circuits/{noise}/normal/{prefix}_opp_basis_detectors/{filename}.stim")
+            circuit.to_file(f"../circuits/{noise}/normal/{prefix}_opp_basis_detectors/288_12_18/{filename}.stim")
             
             # # Optional: make an svg diagram:
-            # svg_string = str(circuit.diagram("timeline-svg"))
-            # with open(f"scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
+            svg_string = str(circuit.diagram("timeline-svg"))
+            with open(f"scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
 
