@@ -1,0 +1,27 @@
+#!/bin/bash
+
+cd code
+cd cominisatps
+ln -s . minisat
+cd simp
+MROOT=.. make clean
+MROOT=.. make libr
+cd ../..
+
+tar -zxvf scipoptsuite-8.0.3.tgz
+cd scipoptsuite-8.0.3
+sed -i "s/add_library(libscip/add_library(libscip STATIC/g" scip/src/CMakeLists.txt
+mkdir build && cd build
+cmake -DNO_EXTERNAL_CODE=on -DSOPLEX=on ..
+make libscip
+cd ../..
+
+cd cashwmaxsatcoreplus
+make distclean
+make config
+MAXPRE=  make r
+cp -p build/release/bin/cashwmaxsatcoreplus ../../bin/
+rm -rf build
+cd ..
+rm cominisatps/minisat
+cd ..

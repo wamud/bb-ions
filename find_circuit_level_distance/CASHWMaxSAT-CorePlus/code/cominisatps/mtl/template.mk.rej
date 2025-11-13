@@ -1,0 +1,20 @@
+--- mtl/template.mk	2016-05-02 03:22:00.000000000 +0200
++++ mtl/template.mk	2020-07-17 11:36:18.589345683 +0200
+@@ -44,7 +44,7 @@
+ %.o:			CFLAGS +=$(COPTIMIZE) -g -D DEBUG
+ %.op:			CFLAGS +=$(COPTIMIZE) -pg -g -D NDEBUG
+ %.od:			CFLAGS +=-O0 -g -D DEBUG
+-%.or:			CFLAGS +=$(COPTIMIZE) -g -D NDEBUG
++%.or:			CFLAGS +=$(COPTIMIZE)  -D NDEBUG
+ 
+ ## Link options
+ $(EXEC):		LFLAGS += -g
+@@ -95,7 +95,7 @@
+ depend.mk: $(CSRCS) $(CHDRS)
+ 	@echo Making dependencies
+ 	@$(CXX) $(CFLAGS) -I$(MROOT) \
+-	   $(CSRCS) -MM | sed 's|\(.*\):|$(PWD)/\1 $(PWD)/\1r $(PWD)/\1d $(PWD)/\1p:|' > depend.mk
++	   $(CSRCS) -MM | sed 's|\([^:]*\):|$(PWD)/\1 $(PWD)/\1r $(PWD)/\1d $(PWD)/\1p:|' > depend.mk
+ 	@for dir in $(DEPDIR); do \
+ 	      if [ -r $(MROOT)/$${dir}/depend.mk ]; then \
+ 		  echo Depends on: $${dir}; \

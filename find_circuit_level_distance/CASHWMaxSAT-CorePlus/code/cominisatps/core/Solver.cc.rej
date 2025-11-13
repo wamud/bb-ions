@@ -1,0 +1,186 @@
+--- core/Solver.cc	2016-05-02 03:22:00.000000000 +0200
++++ core/Solver.cc	2020-07-17 09:34:07.994400936 +0200
+@@ -150,6 +150,7 @@
+     trail    .capacity(v+1);
+     setDecisionVar(v, dvar);
+ 
++    assump.push(false);
+     // Additional space needed for stamping.
+     // TODO: allocate exact memory.
+     seen      .push(0);
+@@ -550,16 +551,20 @@
+ |    Specialized analysis procedure to express the final conflict in terms of assumptions.
+ |    Calculates the (possibly empty) set of assumptions that led to the assignment of 'p', and
+ |    stores the result in 'out_conflict'.
++|
++|  void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
+ |________________________________________________________________________________________________@*/
+-void Solver::analyzeFinal(Lit p, vec<Lit>& out_conflict)
++void Solver::analyzeFinal(CRef confl, vec<Lit>& out_conflict)
+ {
+     out_conflict.clear();
+-    out_conflict.push(p);
+ 
+     if (decisionLevel() == 0)
+         return;
+ 
+-    seen[var(p)] = 1;
++    Clause& cl = ca[confl];
++    for (int j = 0; j < cl.size(); j++)
++        if (level(var(cl[j])) > 0)
++            seen[var(cl[j])] = 1;
+ 
+     for (int i = trail.size()-1; i >= trail_lim[0]; i--){
+         Var x = var(trail[i]);
+@@ -577,7 +582,9 @@
+         }
+     }
+ 
+-    seen[var(p)] = 0;
++    for (int j = cl.size() == 2 ? 0 : 1; j < cl.size(); j++)
++        if (level(var(cl[j])) > 0)
++            seen[var(cl[j])] = 0;
+ }
+ 
+ 
+@@ -650,12 +657,22 @@
+                 *j++ = w; continue; }
+ 
+             // Look for new watch:
++            int choosenPos = -1, maxAssumpLevel = assumptions.size() > 0 ? 1 : 0;
+             for (int k = 2; k < c.size(); k++)
+                 if (value(c[k]) != l_False){
+-                    c[1] = c[k]; c[k] = false_lit;
+-                    watches[~c[1]].push(w);
+-                    goto NextClause; }
+-
++                    choosenPos = k;
++                    if(decisionLevel()>maxAssumpLevel || value(c[k])==l_True || !assump[var(c[k])]) 
++                        break; }
++            if(choosenPos!=-1) {
++                c[1] = c[choosenPos]; c[choosenPos] = false_lit;
++                watches[~c[1]].push(w);
++                goto NextClause; }
++             /*   for (int k = 2; k < c.size(); k++)
++                    if (value(c[k]) != l_False){
++                        c[1] = c[k]; c[k] = false_lit;
++                        watches[~c[1]].push(w);
++                        goto NextClause; }
++*/
+             // Did not find watch -- clause is unit under assignment:
+             *j++ = w;
+             if (value(first) == l_False){
+@@ -789,7 +806,8 @@
+         ok = stampAll(true);
+ 
+     checkGarbage();
+-    rebuildOrderHeap();
++    if ((int)dec_vars - nAssigns() < (glucose_restart ? order_heap_glue_r : order_heap_no_r).size() / 2) // M. Piotrow 20.07.2017
++        rebuildOrderHeap();
+ 
+     simpDB_assigns = nAssigns();
+     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
+@@ -933,6 +951,7 @@
+             conflicts++; nof_conflicts--;
+             if (conflicts == 100000 && learnts_core.size() < 100) core_lbd_cut = 5;
+             if (decisionLevel() == 0) return l_False;
++            if (decisionLevel() == 1) { analyzeFinal(confl, conflict); return l_False; }
+ 
+             learnt_clause.clear();
+             analyze(confl, learnt_clause, backtrack_level, lbd);
+@@ -998,7 +1017,7 @@
+                 restart = lbd_queue.full() && (lbd_queue.avg() * K > global_lbd_sum / conflicts_glue);
+                 cached = true;
+             }
+-            if (restart /*|| !withinBudget()*/){
++            if (restart || !withinBudget()){
+                 lbd_queue.clear();
+                 // Reached bound on number of conflicts:
+                 progress_estimate = progressEstimate();
+@@ -1017,22 +1036,18 @@
+                 reduceDB(); }
+ 
+             Lit next = lit_Undef;
+-            /*while (decisionLevel() < assumptions.size()){
+-                // Perform user provided assumption:
+-                Lit p = assumptions[decisionLevel()];
+-                if (value(p) == l_True){
+-                    // Dummy decision level:
+-                    newDecisionLevel();
+-                }else if (value(p) == l_False){
+-                    analyzeFinal(~p, conflict);
+-                    return l_False;
+-                }else{
+-                    next = p;
+-                    break;
++
++            if (decisionLevel() == 0) {
++                newDecisionLevel();
++                for (int i = 0; i < assumptions.size(); i++) {
++                    Lit p = assumptions[i];
++                    if (value(p) == l_False) { conflict.push(~p); return l_False; }
++                    else if (value(p) != l_True) uncheckedEnqueue(p);
+                 }
++                continue;
+             }
+ 
+-            if (next == lit_Undef)*/{
++            if (next == lit_Undef){
+                 // New variable decision:
+                 decisions++;
+                 next = pickBranchLit();
+@@ -1101,25 +1116,23 @@
+ 
+     solves++;
+ 
++    for (int i = 0; i <assumptions.size(); i++)
++        assump[var(assumptions[i])] = true;
++
+     max_learnts               = nClauses() * learntsize_factor;
+     learntsize_adjust_confl   = learntsize_adjust_start_confl;
+     learntsize_adjust_cnt     = (int)learntsize_adjust_confl;
+     lbool   status            = l_Undef;
+ 
+-    if (verbosity >= 1){
+-        printf("c ============================[ Search Statistics ]==============================\n");
+-        printf("c | Conflicts |          ORIGINAL         |          LEARNT          | Progress |\n");
+-        printf("c |           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |\n");
+-        printf("c ===============================================================================\n");
+-    }
++    if (verbosity >= 1)
++        printf("c ======================[ COMiniSatPS search starting  ]========================\n");
+ 
+     add_tmp.clear();
+-
+     glucose_restart = true;
+     int init = 10000;
+-    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
++    while (status == l_Undef && init > 0 && withinBudget())
+        status = search(init);
+-    glucose_restart = false;
++    if (status == l_Undef && withinBudget()) glucose_restart = false;
+ 
+     // Search:
+     int phase_allotment = 100;
+@@ -1127,9 +1140,9 @@
+         int weighted = glucose_restart ? phase_allotment * 2 : phase_allotment;
+         fflush(stdout);
+ 
+-        while (status == l_Undef && weighted > 0 /*&& withinBudget()*/)
++        while (status == l_Undef && weighted > 0 && withinBudget())
+             status = search(weighted);
+-        if (status != l_Undef /*|| !withinBudget()*/)
++        if (status != l_Undef || !withinBudget())
+             break; // Should break here for correctness in incremental SAT solving.
+ 
+         glucose_restart = !glucose_restart;
+@@ -1137,9 +1150,6 @@
+             phase_allotment += phase_allotment / 10;
+     }
+ 
+-    if (verbosity >= 1)
+-        printf("c ===============================================================================\n");
+-
+ #ifdef BIN_DRUP
+     if (drup_file && status == l_False) binDRUP_flush(drup_file);
+ #endif

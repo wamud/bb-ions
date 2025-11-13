@@ -1,0 +1,24 @@
+###
+ # @Author: Shiwei Pan
+ # @Date: 2023-05-11 14:35:50
+ # @LastEditTime: 2023-05-11 16:18:02
+ # @FilePath: \CASHWMaxSAT-CorePlus\bin\starexec_run_default
+ # @Description:
+ #
+ # Copyright (c) 2023 by School of Computer Science and Information Technology, Northeast Normal University, All Rights Reserved.
+###
+#!/bin/bash
+wl=3600
+mem=32768
+
+echo "c [MSE2023] -- begin -- [MSE2023]"
+xz -cdk $1 > maxsat.wcnf
+./run --timestamp -d 10 -o output.out -v output.var -w output.wat -C $wl -W $wl -M $mem ./cashwmaxsatcoreplus -v0 -no-bin -no-sat -m -bm -no-par maxsat.wcnf
+cat output.out
+cat output.var
+rm -f maxsat.wcnf
+rm -f output.out
+rm -f output.var
+rm -f output.wat
+echo "c [MSE2023] -- end -- [MSE2023]"
+

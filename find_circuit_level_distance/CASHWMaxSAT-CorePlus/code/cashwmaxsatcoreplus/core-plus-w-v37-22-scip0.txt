@@ -1,0 +1,3 @@
+auc.cat_paths_60_200_0009.txt.wcnf  1 157873 0.390205 0 0
+auc.cat_paths_60_200_0009.txt.wcnf  1 157873 0.39693 0 0
+bn-human-BNU_1_0025865_session_1-bg.wcnf  0 119550528 608.407 0 0 1673.000000MB

@@ -1,0 +1,13 @@
+--- mtl/Vec.h	2016-05-02 03:22:00.000000000 +0200
++++ mtl/Vec.h	2021-10-27 11:36:29.850452660 +0200
+@@ -41,8 +41,8 @@
+     int cap;
+ 
+     // Don't allow copying (error prone):
+-    vec<T>&  operator = (vec<T>& other) { assert(0); return *this; }
+-             vec        (vec<T>& other) { assert(0); }
++    vec<T>&  operator = (vec<T>& ) { assert(0); return *this; }
++             vec        (vec<T>& ) { assert(0); }
+              
+     // Helpers for calculating next capacity:
+     static inline int  imax   (int x, int y) { int mask = (y-x) >> (sizeof(int)*8-1); return (x&mask) + (y&(~mask)); }
