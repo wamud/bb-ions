@@ -51,7 +51,7 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     end_time = time.time()
