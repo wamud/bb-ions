@@ -13,7 +13,7 @@ code_72 = stim.Circuit.from_file("../circuits/relaybp_circuits/circuit=bicycle_b
 
 circuits = [code_72, gross_code]
 
-circuit = circuits[int(sys.argv[1])]
+
 
 if int(sys.argv[1]) == 0:
     n = 72
@@ -25,6 +25,8 @@ elif int(sys.argv[1]) == 1:
     d_max = 12
 else:
     raise ValueError("usage: python3 find_relay_circuit_level_distance.py 0/1")
+
+circuit = circuits[int(sys.argv[1])]
 
 msg = f"- [[{n}, {k}, {d_max}]]"
 print(msg)
