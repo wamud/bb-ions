@@ -12,3 +12,5 @@ find_codes/found_codes/*progress.txt
 *.e*[0-9]
 *.o*[0-9]
 *(copy)*
+find_circuit_level_distance/problem.wncf
+find_circuit_level_distance/*.svg
