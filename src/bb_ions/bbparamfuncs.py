@@ -156,6 +156,23 @@ def two_gross_code():
     return code
 
 
+'''bb6_360_code'''
+def bb6_360_code():
+    # [[360, 12, ≤24]] BB6 code from BB paper [2308.07915] Table III
+    l = 30
+    m = 6
+    # A = x^9 + y^1 + y^2
+    # B = y^3 + x^25 + x^26
+    Aij = [(9, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (25, 0), (26, 0)]
+    d = 24
+
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+
+
 
 ''' suppress_stdout
 For suprressing the output from css_decode_sim'''

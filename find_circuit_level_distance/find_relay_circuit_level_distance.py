@@ -14,7 +14,6 @@ code_72 = stim.Circuit.from_file("../circuits/relaybp_circuits/circuit=bicycle_b
 circuits = [code_72, gross_code]
 
 
-
 if int(sys.argv[1]) == 0:
     n = 72
     k = 12 
