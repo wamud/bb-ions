@@ -29,65 +29,65 @@ def main():
         for path in circuit_paths
     ]
 
-    samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 100_000,
-        max_errors = 100,
-        tasks = tasks,
-        decoders=['bposd'],
-        save_resume_filepath = csv_path,
-        custom_decoders = {
-            "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
-            )
-        },
-        print_progress = True
-        )
+    # samples = sinter.collect(
+    #     num_workers = 64,
+    #     max_shots = 100_000,
+    #     max_errors = 100,
+    #     tasks = tasks,
+    #     decoders=['bposd'],
+    #     save_resume_filepath = csv_path,
+    #     custom_decoders = {
+    #         "bposd": SinterDecoder_BPOSD(
+    #             max_bp_iters = 10_000, # default 30
+    #             bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+    #             # ms_scaling_factor = 0.625, # normalisation
+    #             # schedule = "serial", 
+    #             osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+    #             osd_order = 5 
+    #         )
+    #     },
+    #     print_progress = True
+    #     )
 
-    samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 1_000_000,
-        max_errors = 50,
-        tasks = tasks,
-        decoders=['bposd'],
-        save_resume_filepath = csv_path,
-        custom_decoders = {
-            "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
-            )
-        },
-        print_progress = True
-        )
+    # samples = sinter.collect(
+    #     num_workers = 64,
+    #     max_shots = 1_000_000,
+    #     max_errors = 50,
+    #     tasks = tasks,
+    #     decoders=['bposd'],
+    #     save_resume_filepath = csv_path,
+    #     custom_decoders = {
+    #         "bposd": SinterDecoder_BPOSD(
+    #             max_bp_iters = 10_000, # default 30
+    #             bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+    #             # ms_scaling_factor = 0.625, # normalisation
+    #             # schedule = "serial", 
+    #             osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+    #             osd_order = 5 
+    #         )
+    #     },
+    #     print_progress = True
+    #     )
 
-    samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 10_000_000_000,
-        max_errors = 10,
-        tasks = tasks,
-        decoders=['bposd'],
-        save_resume_filepath = csv_path,
-        custom_decoders = {
-            "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
-            )
-        },
-        print_progress = True
-        )
+    # samples = sinter.collect(
+    #     num_workers = 64,
+    #     max_shots = 10_000_000_000,
+    #     max_errors = 10,
+    #     tasks = tasks,
+    #     decoders=['bposd'],
+    #     save_resume_filepath = csv_path,
+    #     custom_decoders = {
+    #         "bposd": SinterDecoder_BPOSD(
+    #             max_bp_iters = 10_000, # default 30
+    #             bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+    #             # ms_scaling_factor = 0.625, # normalisation
+    #             # schedule = "serial", 
+    #             osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+    #             osd_order = 5 
+    #         )
+    #     },
+    #     print_progress = True
+    #     )
 
     samples = sinter.collect(
         num_workers = 64,
