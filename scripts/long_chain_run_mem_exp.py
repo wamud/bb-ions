@@ -16,7 +16,9 @@ def main():
     circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/include_opp_basis_detectors/*.stim")
     circuit_paths.sort()
 
-    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors.csv"
+    
+    csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors_2.csv"
+    existing = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors.csv"
 
     for circuit_path in circuit_paths:
         print(circuit_path)
@@ -95,6 +97,7 @@ def main():
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
+        existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
