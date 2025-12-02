@@ -18,10 +18,7 @@ def main():
 
     
     csv_path = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors_2.csv"
-    existing = f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors.csv"
-
-    for circuit_path in circuit_paths:
-        print(circuit_path)
+    existing = [f"../collected_stats/tham_modules_noise_long_chain_BPOSD_settings_incl_opp_detectors.csv"]
 
     tasks = [
         sinter.Task(
