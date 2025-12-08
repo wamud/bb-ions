@@ -13,7 +13,7 @@ def main():
     start_time = time.time()
     
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/include_opp_basis_detectors/*.stim")
+    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/include_opp_basis_detectors/need_more_runs/*.stim")
     circuit_paths.sort()
 
     
