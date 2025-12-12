@@ -309,7 +309,44 @@ def myCZ(circuit, l, m, control, target, errors: dict):
     
     error_op = errors['CZ'].op
 
-    circuit.append(error_op, [kc, kt], p)
+    if error_op == 'HELIOS':
+      print("HELIOOOOOOOOOSSSS!!!!") # i.e. need to fill from here lol. Look at PAULI_CHANNEL_2
+
+
+      # circuit = stim.Circuit("R 0 1 ")
+
+      # # Probabilités pour chaque erreur à appliquer sur deux qubits
+
+      # # Taken from Fig. 7. of Helios [2511.05465] (things that can be conjugated by ZZ to eachother are symmetrical - same orbit of R_ZZ -- as are things that you can swap X and Y to get to eachother (search "gauge freedom" in the paper, this is because the two qubit gate is RZZ(π/2)) 
+      # # IX, IY, ZX, ZY = 0.4e-4
+      # # XI, YI, XZ, YX = FILLLLLLLLLLLLLLL
+      # probs = [
+      #     0,    # IX
+      #     0,    # IY
+      #     0,    # IZ
+      #     0,    # XI
+      #     0.1,  # XX
+      #     0,    # XY
+      #     0,    # XZ
+      #     0,    # YI
+      #     0,    # YX
+      #     0.05, # YY
+      #     0,    # YZ
+      #     0,    # ZI
+      #     0,    # ZX
+      #     0,    # ZY
+      #     0     # ZZ
+      # ]
+
+      # # Ajoute l'instruction PAULI_CHANNEL_2 pour les qubits 0 et 1
+      # circuit.append("PAULI_CHANNEL_2", [0, 1], probs)
+
+      # circuit.diagram("timeline-svg")
+
+
+
+    else:
+      circuit.append(error_op, [kc, kt], p)
 
 
 ''' add_BT_CZs
@@ -331,7 +368,9 @@ def add_BT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
                 control = (Z, v, w)
                 target = (L, (v + i) % l , (w + j) % m) # LEFT qubits as we're doing matrix BT in Hz = [B^T|A^T]
 
+
                 myCZ(circuit, l, m, control, target, errors)
+
 
                 
               if sequential_gates: # if we are doing one CZ per timestep (per module) we need to add idling errors to qubits that weren't in the CZ, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
