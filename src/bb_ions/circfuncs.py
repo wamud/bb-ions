@@ -388,18 +388,18 @@ def add_AT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
 
 
 ''' update_shift_probs
-The cyclic shift required to align check qubit and data qubit modules can be of variable length depending on the previous and current value of j (recall we are aligning check qubit module M_w with data qubit module M_(w ⊕ j) ). This function takes that length and updates the error rates / probabilities in errors and idle_during dictionaries to correspond to it. It uses an always-stored 'shift_const' that the error rate is proportional to.
+The cyclic shift required to align check qubit and data qubit modules can be of variable length depending on the previous and current value of j (recall we are aligning check qubit module M_w with data qubit module M_(w ⊕ j) ). This function takes that length and updates the error rates / probabilities in errors and idle_during dictionaries to correspond to it. It uses an always-stored 'shift_prop_to' that the error rate is proportional to.
 
-If the 'shift_const' in the errors and/or idle_during dictionaries is set to None then the 'shift' probability in the errors and/or idle_during dictionaries will not be updated, it remains whatever it was initially set to (for example that Tham, Ye .. Delfosse modules paper has it set to a constant 30p/100)'''
+If the 'shift_prop_to' in the errors and/or idle_during dictionaries is set to None then the 'shift' probability in the errors and/or idle_during dictionaries will not be updated, it remains whatever it was initially set to (for example that Tham, Ye .. Delfosse modules paper has it set to a constant 30p/100)'''
 def update_shift_probs(j_dif, errors, idle_during):        
   
   # Get what the shifting error is proportional to -- at the moment this is T2
-  shift_const = errors['shift_const'] # T2 time
+  shift_prop_to = errors['shift_prop_to'] # T2 time
 
-  if shift_const != None: # E.g. in Tham modules noise the shift constant is none, meaning there is no update depending on the length of the shift -- Tham ... Delfosse assumed constant shift error of 30p/100 regardless of length of shift. 
+  if shift_prop_to != None: # E.g. in Tham modules noise the shift constant is none, meaning there is no update depending on the length of the shift -- Tham ... Delfosse assumed constant shift error of 30p/100 regardless of length of shift. 
     
     # # Usual function: multiply it by the length of the shift (dif. in j values) and update errors dictionary:
-    # updated_prob =  shift_const * j_dif
+    # updated_prob =  shift_prop_to * j_dif
 
     # # New modification: for our architecture, where we just say the shift error is equivalent to idling for that length of time
     # # TO DO: work into making an option able to be specified when make_BB_circuit() is called. For now just manually adding it to make the circuits and start running them.
@@ -407,13 +407,13 @@ def update_shift_probs(j_dif, errors, idle_during):
     length_of_shift = LEG_SPACING * j_dif  # LEG_SPACING defined in noisefuncs
     shuttle_speed = 1 # [m/s]
     t = length_of_shift / shuttle_speed  # [s]
-    updated_prob = (1 / 2) * (1 - np.exp(- t / shift_const)) # A dephasing noise channel with T2 = shift_const
+    updated_prob = (1 / 2) * (1 - np.exp(- t / shift_prop_to)) # A dephasing noise channel with T2 = shift_prop_to
 
     errors['shift'].p = updated_prob
 
   # Repeat for the idling error:
 
-  p_shift_idle_const = idle_during['shift_const']
+  p_shift_idle_const = idle_during['shift_prop_to']
 
   if p_shift_idle_const != None:
     
@@ -425,7 +425,7 @@ def update_shift_probs(j_dif, errors, idle_during):
     length_of_shift = LEG_SPACING * j_dif 
     shuttle_speed = 1 # m/s
     t = length_of_shift / shuttle_speed # s
-    updated_idle_prob = (1 / 2) * (1 - np.exp(- t / shift_const)) # A dephasing noise channel with T2 = shift_const
+    updated_idle_prob = (1 / 2) * (1 - np.exp(- t / shift_prop_to)) # A dephasing noise channel with T2 = shift_prop_to
 
     idle_during['shift'].p = updated_idle_prob
 

@@ -36,7 +36,7 @@ def tham_modules_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100),
-        "shift_const" : None, # shift_const is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_const to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
+        "shift_prop_to" : None, # shift_prop_to is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_prop_to to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
 
 
         # Additional for our architecture:
@@ -64,7 +64,7 @@ def tham_modules_idle_errors(p):
 
         # "Qubit modules" [2508.01879] pg. 4
         "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
-        "shift_const" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
+        "shift_prop_to" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
 
         # Additional for our architecture:
         "shuttle" : Error("DEPOLARIZE1", 0),
@@ -97,7 +97,7 @@ def zero_errors():
         "split" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0),
 
-        "shift_const" : 0, 
+        "shift_prop_to" : 0, 
         
     }
     
@@ -124,7 +124,7 @@ def zero_idling():
         "shift" : Error("DEPOLARIZE1", 0),
         "pause" : Error("DEPOLARIZE1", 0),
 
-        "shift_const" : 0,
+        "shift_prop_to" : 0,
     }
 
     return idle_during
@@ -147,7 +147,7 @@ def uniform_errors(p):
 
         # Qubit module errors -- None
         "shift" : Error("DEPOLARIZE1", 0),
-        "shift_const" : None, 
+        "shift_prop_to" : None, 
 
         # Additional for our architecture - None
         "shuttle" : Error("DEPOLARIZE1", 0), 
@@ -174,7 +174,7 @@ def uniform_idling(p):
         "split" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0),
 
-        "shift_const" : 0,
+        "shift_prop_to" : 0,
 
         "pause" : Error("DEPOLARIZE1", 0),
 
@@ -215,7 +215,7 @@ def dephasing_idle_errors(T2):
         
         "shift" : Error("Z_ERROR", 0.1), # will be updated by circfuncs.update_shift_prob as long as p != 0.
 
-        "shift_const" : T2, # T2 time
+        "shift_prop_to" : T2, # T2 time
 
         "pause" : Error("Z_ERROR", 0),
     }
@@ -239,7 +239,7 @@ def our_uniform_plus_shift_and_shuttle(p, T2):
         "MX" : Error("Z_ERROR", p),
 
         # Qubit module errors
-        "shift_const" : T2, 
+        "shift_prop_to" : T2, 
         "shift" : Error("Z_ERROR", 0.1), # will be updated each shift
  
 
