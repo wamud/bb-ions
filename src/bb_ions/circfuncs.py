@@ -390,8 +390,7 @@ def add_AT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
 ''' update_shift_probs
 The cyclic shift required to align check qubit and data qubit modules can be of variable length depending on the previous and current value of j (recall we are aligning check qubit module M_w with data qubit module M_(w ⊕ j) ). This function takes that length and updates the error rates / probabilities in errors and idle_during dictionaries to correspond to it. It uses an always-stored 'shift_const' that the error rate is proportional to.
 
-If the 'shift_const' in the errors and/or idle_during dictionaries is set to None then the 'shift' probability in the errors and/or idle_during dictionaries will not be updated, it remains whatever it was initially set to (for example that Tham, Ye .. Delfosse modules paper has it set to a constant 30p/100)
-'''
+If the 'shift_const' in the errors and/or idle_during dictionaries is set to None then the 'shift' probability in the errors and/or idle_during dictionaries will not be updated, it remains whatever it was initially set to (for example that Tham, Ye .. Delfosse modules paper has it set to a constant 30p/100)'''
 def update_shift_probs(j_dif, errors, idle_during):        
   
   # Get what the shifting error is proportional to -- at the moment this is T2
