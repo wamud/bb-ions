@@ -72,7 +72,6 @@ def tham_modules_idle_errors(p):
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
         "pause" : Error("DEPOLARIZE1", 0), # this is an idling error applied at the beginning of each round of stabiliser measurements; simulates waiting before each round of stab. measurement
-
     }
 
     return idle_during
@@ -85,6 +84,33 @@ Note that they combined all transport (cylic shift, merge/split Coulomb potentia
 Note also that setting p = 0.001 will give all the values as per Helios, most notably a two-qubit gate error rate of 7 × 10^-4 ≈ 1 × 10^-3 and a reset / measure error rate of 1e-3'''
 def helios_errors(p):
 
+    # Below is distribution of Pauli errors for Rzz gate taken from Table A4 of Helios [2511.05465]: (things that can be conjugated by ZZ to eachother are symmetrical - same orbit of R_ZZ -- as are things that you can swap X and Y to get to eachother (search "gauge freedom" in the paper, this is because the two qubit gate is RZZ(π/2)) 
+
+    # IX, IY, ZX, ZY = 4.5e-5
+    # XI, YI, XZ, YX = 6e-5
+    # XX, YY, XY, YX = 0 # is two orders of magnitude less so might as well be 0
+    # IZ, ZI = 1.9e-4
+    # ZZ = 6e-5
+
+    rzzprobs = [
+        4.5e-5,    # IX
+        4.5e-5,    # IY
+        19e-5,    # IZ
+        0,    # XI
+        0,    # XX
+        0,    # XY
+        0,    # XZ
+        0,    # YI
+        0,    # YX
+        0,    # YY
+        0,    # YZ
+        19e-5,    # ZI
+        4.5e-5,    # ZX
+        4.5e-5,    # ZY
+        6e-5     # ZZ
+    ]
+
+
     helioserrors = {
 
         # These values are equal to Helios values when p = 0.001:
@@ -92,8 +118,8 @@ def helios_errors(p):
         "RZ" : Error("X_ERROR", p), 
         "RX" : Error("Z_ERROR", p),  
         "H" : Error("DEPOLARIZE1", 1.4e-2  * p), # Helios value is 1.4e-5, so add a power of 3 to it to account for p = 1e-3
-        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p), # 
-        "CZ" : Error("DEPOLARIZE2", 7e-1 * p),
+        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p), 
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3* p * prob for prob in rzzprobs]),
         "MZ" : Error("X_ERROR", p),
         "MX" : Error("Z_ERROR", p),
 
@@ -117,7 +143,9 @@ def helios_errors(p):
     This calculation uses that the idling error is depolarising noise. It is also identical to the cyclic shift error so probably an overestimate as these idling errors will sometimes apply to qubits that aren't moving (however this opens up the simulation possibility of equivalently just saying they're being shuttled around and cooled whenever they're idling).
     For more details on the calculation see https://docs.google.com/spreadsheets/d/1WdbadMM03gGbK52di-t6eae_xXPnevyxqVAySLAWTwM/edit?usp=sharing
     but basically they did an experiment where they randomly pair 98 qubits which are found in a loop. They then have to cyclically shift the loop back and forth until they have the correct pairings in the legs (which can only fit eight qubits at a time and there are two legs) and then perform four two-qubit gates, then intrazone shift, then the other four two-qubit gates after some cooling. They did all the required Coulomb potential split/merge, shifts, shuttles, cooling, junction exit / enter etc. as if they were performing these two-qubit gates but without actually performing the gates and found that the average infidelity on the qubits was 1.6 × 10^-4. They say this is due to spatiotemporal inhomogeneities in the magnetic field, implying it is dephasing noise as this changing B field would slightly change the energy levels of the hyperfine qubit that they're using and thus cause a mismatch between their phase tracking and the natural time evolution of the state under the schrodinger equation (which causes it to precess around the Bloch sphere with a relative phase e^-it(E_0 - E_1)/ℏ). With a calculation as shown in the link we can get p_z of 2.4 × 10^-4 from this average infidelity. We can then reverse calculate an effective T_2 (making the assumption that even un-moving qubits suffer from the same level of dephasing -- an overestimate) using the p_z from a dephasing channel p_z = (1/2)(1 - e^(-t/T_2)) and get T2 = 115s.'''
-def helios_idle_errors(T2 = 115):
+def helios_idle_errors():
+
+    T2 = 115 # see note above
 
     # t_2q = 70e-6  # from paper. It's ≈ 70μs
     t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and 300μs of cooling and the 70μs two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates (i.e. simulating just one operation zone when sequential_gates = True in the circuit! (Also it's still an order of magnitude lower than tham_modules idling errors)).
@@ -267,11 +295,23 @@ def uniform_idling(p):
     return idle_during
 
 
+
+''' round_sig
+Rounds a number to the given amount of significant figures'''
+def round_sig(x, sig):
+    if x == 0:
+        return 0
+    else:
+        return round(x, sig - int(np.floor(np.log10(abs(x)))) - 1)
+
+
+
 ''' p_idle_dephasing
 If a qubit is idling for time t, this function returns what the probability of a Z-error occurring on it will be. It takes as inputs t, the time the qubit is idling for, and T2, the characteristic time for dephasing of an idling qubit. For example p_idle(t = 100e-6, T2 = 50s) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience a Z-error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2))'''
 def p_idle_dephasing(t, T2):
     p = 0.5 * (1 - np.exp(-t / T2))
-    return p
+    p_rounded = round_sig(p, 3) # round to 3 sig fig
+    return p_rounded
 
 ''' dephasing_idle_errors
 Defines idle errors as the realistic dephasing noise for a given T2 value with times set by the sources listed below in comments'''
