@@ -8,9 +8,6 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-
-
-
 ps = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 seq_gates = True
 exclude_opposite_basis_detectors = False  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
