@@ -1,3 +1,6 @@
+# This file generates BB code circuits with the syndrome extraction circuits as usual (i.e. following Edwin Tham, Min Ye ... Delfosse "modules" paper's Algorithm 2) but with the noise model based on Helios' quantum computer.
+
+
 import stim
 import sys
 import os
@@ -8,17 +11,17 @@ from bb_ions import *
 
 
 
-ps = [0.002, 0.003, 0.004, 0.005, 0.006]
+ps = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 seq_gates = True
-exclude_opposite_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
+exclude_opposite_basis_detectors = False  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 
 
 noise = 'helios'
 
 # Generate circuits:
-for code in [bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(), two_gross_code()]:
+for code in [bb6_360_code()]: #[bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(), two_gross_code()]:
     
-    num_syndrome_extraction_cycles = code.d_max
+    num_syndrome_extraction_cycles = 12 # code.d_max
     memory_basis = 'X'  # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
 
     for p in ps:
