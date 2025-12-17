@@ -14,3 +14,4 @@ find_codes/found_codes/*progress.txt
 *(copy)*
 find_circuit_level_distance/problem.wcnf
 find_circuit_level_distance/*.svg
+collected_stats/helios_noise*
