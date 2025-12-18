@@ -15,6 +15,10 @@ def main():
     
     circuit_paths = glob.glob(f"/288_code_copy/*.stim")
 
+    if len(circuit_paths) == 0:
+        print("No circuits")
+        sys.exit()
+
     for path in circuit_paths:
         print(path)
 
