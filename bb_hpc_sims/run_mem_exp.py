@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"/288_code_copy/*.stim")
+    circuit_paths = glob.glob(f"/*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
