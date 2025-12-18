@@ -12,17 +12,9 @@ def main():
  
     start_time = time.time()
     
-    # circuit_paths = glob.glob(f"../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
-    
-    # # Excluding 288 code and p=0.0005 circuits:
-    # circuit_paths = [
-    #     path for path in glob.glob("../circuits/uniform_plus_shift_and_shuttle_w_dephasing_idling/*T2 = 10*/pause_0/*.stim")
-    #     if "288_12_18" not in path and "p=0.0005" not in path
-    # ]
-
     circuit_paths = glob.glob(f"include_opp_basis_detectors/*.stim")
 
-    csv_path = f"collected_stats_tham_modules_incl_opp_detectors.csv"
+    csv_path = f"helios_noise_HPC_288_code.csv"
 
     tasks = [
         sinter.Task(
@@ -34,12 +26,9 @@ def main():
 
     samples = sinter.collect(
         num_workers = 64,
-        max_shots = 5_000_000,
-        max_errors = 50,
+        max_shots = 1_000_000_000_000,
+        max_errors = 10,
 
-        # num_workers = 8,
-        # max_shots = 1,
-        # max_errors = 1,
 
         tasks = tasks,
         decoders=['bposd'],

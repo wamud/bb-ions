@@ -5,7 +5,7 @@
 #PBS -N sims
 #PBS -l ncpus=64
 #PBS -l mem=300GB
-#PBS -l walltime=150:00:00
+#PBS -l walltime=336:00:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -21,8 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -d "../circuits/tham_modules_noise/normal/include_opp_basis_detectors/" ]; then
-    cp -r "../circuits/tham_modules_noise/normal/include_opp_basis_detectors/" "${SCRATCH}"
+if [ -d "../circuits/helios/exclude_opp_basis_detectors/288_code_copy/" ]; then
+    cp -r "../circuits/helios/exclude_opp_basis_detectors/288_code_copy/" "${SCRATCH}"
 fi
 
 
