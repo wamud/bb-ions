@@ -15,9 +15,13 @@ def main():
     
     circuit_paths = glob.glob(f"/288_code_copy/*.stim")
 
-    pbs_jobid = os.environ.get("PBS_JOBID")
+    for path in circuit_paths:
+        print(path)
 
-    csv_path = f"helios_noise_HPC_288_code_{pbs_jobid}.csv"
+    pbs_jobid = os.environ.get("PBS_JOBID")
+    job_number = pbs_jobid.split(".", 1)[0]
+
+    csv_path = f"helios_stats_{job_number}.csv"
 
 
     tasks = [
