@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"288_code_copy/*.stim")
+    circuit_paths = glob.glob(f"288_code_copy/*p=0.001*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -38,7 +38,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = 64,
-        max_shots = 10_000,
+        max_shots = 1_000_000_000,
         max_errors = 10,
 
 
