@@ -4,8 +4,8 @@
 
 #PBS -N sims
 #PBS -l ncpus=64
-#PBS -l mem=300GB
-#PBS -l walltime=336:00:00
+#PBS -l mem=100GB
+#PBS -l walltime=00:10:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -40,7 +40,7 @@ python3 ${PBS_O_WORKDIR}/run_mem_exp.py
 # Copy results back to your own directory and cleanup
 #####################################################
 
-mv ${SCRATCH}/collected_stats*.csv ${PBS_O_WORKDIR}
+mv ${SCRATCH}/*.csv ${PBS_O_WORKDIR}
 
 cd ${PBS_O_WORKDIR}
 rm -rf ${SCRATCH}
