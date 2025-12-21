@@ -40,7 +40,7 @@ python3 ${PBS_O_WORKDIR}/little_run_mem_exp.py
 # Copy results back to your own directory and cleanup
 #####################################################
 
-mv ${SCRATCH}/*.csv ${PBS_O_WORKDIR}/collected_stats
+mv ${SCRATCH}/*.csv "${PBS_O_WORKDIR}/collected_stats/"
 
 cd ${PBS_O_WORKDIR}
 rm -rf ${SCRATCH}
