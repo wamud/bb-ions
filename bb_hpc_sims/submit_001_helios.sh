@@ -34,7 +34,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/run_helios_mem_exp.py
+python3 ${PBS_O_WORKDIR}/run_001_helios_mem_exp.py
 
 #####################################################
 # Copy results back to your own directory and cleanup
