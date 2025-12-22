@@ -5,7 +5,7 @@
 #PBS -N sims
 #PBS -l ncpus=64
 #PBS -l mem=100GB
-#PBS -l walltime=01:00:00
+#PBS -l walltime=00:20:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
