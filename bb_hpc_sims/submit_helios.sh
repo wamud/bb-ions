@@ -4,8 +4,8 @@
 
 #PBS -N sims
 #PBS -l ncpus=64
-#PBS -l mem=100GB
-#PBS -l walltime=100:00:00
+#PBS -l mem=500GB
+#PBS -l walltime=200:00:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
@@ -21,10 +21,10 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
+## CURRENTLY WRITTEN JUST FOR 360 CODE:
 if [ -d "../circuits/helios/exclude_opp_basis_detectors/360_code/" ]; then
     cp -r "../circuits/helios/exclude_opp_basis_detectors/360_code/" "${SCRATCH}"
 fi
-
 
 ###############
 # Start the Job
@@ -34,7 +34,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/run_mem_exp.py
+python3 ${PBS_O_WORKDIR}/run_helios_mem_exp.py
 
 #####################################################
 # Copy results back to your own directory and cleanup
