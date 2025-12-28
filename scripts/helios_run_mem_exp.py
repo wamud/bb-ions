@@ -13,7 +13,7 @@ def main():
     start_time = time.time()
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/360_code/*.stim")
+    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/360_code/*p=0.001*.stim")
     circuit_paths.sort()
 
     
