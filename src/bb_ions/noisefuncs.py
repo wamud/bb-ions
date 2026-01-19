@@ -93,21 +93,21 @@ def helios_errors(p):
     # ZZ = 6e-5
 
     rzzprobs = [
-        4.5e-5,    # IX
-        4.5e-5,    # IY
+        4.5e-5,   # IX
+        4.5e-5,   # IY
         19e-5,    # IZ
-        5.8e-5,    # XI
-        0,    # XX
-        0,    # XY
-        5.8e-5,    # XZ
-        5.8e-5,    # YI
-        0,    # YX
-        0,    # YY
-        5.8e-5,    # YZ
+        5.8e-5,   # XI
+        0,        # XX
+        0,        # XY
+        5.8e-5,   # XZ
+        5.8e-5,   # YI
+        0,        # YX
+        0,        # YY
+        5.8e-5,   # YZ
         19e-5,    # ZI
-        4.5e-5,    # ZX
-        4.5e-5,    # ZY
-        6e-5     # ZZ
+        4.5e-5,   # ZX
+        4.5e-5,   # ZY
+        6e-5      # ZZ
     ]
 
 
