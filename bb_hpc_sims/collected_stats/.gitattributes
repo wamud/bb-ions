@@ -1,3 +1,4 @@
 helios_stats_1388106_copie.csv filter=lfs diff=lfs merge=lfs -text
 helios_stats_1388108.csv filter=lfs diff=lfs merge=lfs -text
 helios_stats_1388109.csv filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
