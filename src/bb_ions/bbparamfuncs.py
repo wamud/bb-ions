@@ -42,6 +42,17 @@ class Code:
 
 ''' First are functions for defining some common codes:'''
 
+def bb6_18_4_4_code():
+    # [[18, 4, 4]] BB6 (weight-6 stabilisers) code from Wang et al. [2503.22071]
+    l = 3
+    m = 3
+    # A = x + y^0 + y^2
+    # B = y + x^0 + x^2
+    Aij = [(1,0), (0,0), (0,2)]
+    Bij = [(0,1), (0,0), (2,0)]
+    d = 4
+    code = get_code_params(l, m, Aij, Bij, d)
+
 ''' bb5_30_4_5_code'''
 def bb5_30_4_5_code():
     
