@@ -5,6 +5,7 @@ Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Pytho
 import stim
 from .kfuncs import *
 from .noisefuncs import *
+import math
 
 
 class Registers:
@@ -25,8 +26,7 @@ Makes lists of qubit indices dividing n = 2lm qubits evenly into qA, qB, qC, qD.
   qA: qubits 0 to n/2 - 1
   qB: qubits n/2 to n - 1
   qC: qubits n to 3n/2 - 1 
-  qD: qubits 3n/2 to 2n - 1
-This is the same as the make_registers function, it's just that it uses the convtok within it'''
+  qD: qubits 3n/2 to 2n - 1'''
 def make_registers(l, m, reuse_check_qubits = True):
   
   
@@ -50,6 +50,53 @@ def make_registers(l, m, reuse_check_qubits = True):
   registers = Registers(X = X, L = L, R = R, Z = Z, qX = qX, qL = qL, qR = qR, qZ = qZ)
 
   return registers
+
+
+''' add_qubit_coordinates
+Adds coordinates to the qubits for use in circuit diagrams and importing to crumble.
+Note that (0,0) is the top left of the diagram, and increasing row or column moves down or right respectively.
+We will place qubits in blocks of (reading clockwise from top left) X-check, L-data, Z-check, R-data.
+Implying that the zeroth X-check qubit at (0,0), zeroth L-data at (0,1), zeroth R-data at (1,0) and zeroth Z-check at (1,1).
+We will do l rows by m columns of each of these blocks.
+If reuse check qubits is true we will simply not fill in Z-check qubits
+Workings:
+To convert indices k into rows of length m (i.e. m columns per row) it is:
+row = floor(k/m) , column = k mod m
+We then additionally need to place each qubit in the appropritate spot in its block so will have some factors of 2'''
+def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
+  
+  qX = registers.qX
+  qL = registers.qL
+  qR = registers.qR
+  qZ = registers.qZ
+
+  l = code.l
+  m = code.m
+  n = code.n
+
+  
+
+  # qX: top left of each block:
+  for k in range(n//2):
+    circ.append("QUBIT_COORDS", qX[k], [2 * math.floor(k/m), 2 * (k % m)])
+  
+  # qL: top right of each block.
+  # Will be same row as qX, then to the right by 1 for each column.
+  for k in range(n//2):
+    circ.append("QUBIT_COORDS", qL[k], [2 * math.floor(k/m), (2 * (k % m)) + 1])
+
+  # qR: bottom left of each block.
+  # Can just add 1 to each qX row. Same column.
+  for k in range(n//2):
+    circ.append("QUBIT_COORDS", qR[k], [(2 * math.floor(k/m)) + 1  , 2 * (k % m)])
+
+  # qZ: if reusing one set of check qubits we don't have separate qZ and will just draw qX. If NOT reusing then qZ is bottom right of each block.
+  # Same as L-data, but add 1 to each of its rows.
+  if reuse_check_qubits == False:
+    for k in range(n//2):
+      circ.append("QUBIT_COORDS", qZ[k], [(2 * math.floor(k/m)) + 1, (2 * (k % m)) + 1])
+
+  return 
 
 ''' init
 Sets qubits in the list 'register' to
@@ -649,7 +696,10 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # Measure check qubits
     measure('Z', loop_body, qC, errors)
     idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
-    tick(loop_body)
+    
+    if reuse_check_qubits == True: ## If not re-using, then can reset the Z-check qubits in this same time step.
+      tick(loop_body)
+
 
     # We now place detectors on these check qubit measurements which compare them and the previous round's X-check measurements
     n = code.n
@@ -684,8 +734,9 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # Now measure check qubits
     measure('Z', loop_body, qC, errors)
     idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
-    tick(loop_body)
-
+    if reuse_check_qubits == True:
+      tick(loop_body)
+    
     
     # We now place detectors on these check qubit measurements, comparing them and the previous round's X-check measurements
     n = code.n
@@ -695,6 +746,10 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
                 loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
 
     return loop_body
+
+
+
+
 
 
 
@@ -766,7 +821,7 @@ def make_BB_circuit(
     qR = registers.qR
     qZ = registers.qZ  # qZ will equal qX if reuse_check_qubits == True
 
-
+    add_qubit_coordinates(circ, code, registers, reuse_check_qubits)
 
     ## Round 0:
     # - wait's a time step to initalise data qubits (we are assuming can't prepare |+⟩ state directly but need RZ then H)
@@ -820,7 +875,9 @@ def make_BB_circuit(
     # Now measure the check qubits
     measure('Z', circ, qC, errors)
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
-    tick(circ)
+    if reuse_check_qubits == True:
+      tick(circ)
+
 
     # If preserving logical plus we put detectors on these measurements in the first round:
     n = code.n
@@ -854,7 +911,8 @@ def make_BB_circuit(
     # Now measure check qubits
     measure('Z', circ, qC, errors)
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
-    tick(circ)
+    if reuse_check_qubits == True:
+      tick(circ)
 
     # If preserving logical zero we put detectors on these (Z) check measurements in the first round:
     n = code.n

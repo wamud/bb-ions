@@ -53,6 +53,8 @@ def bb6_18_4_4_code():
     d = 4
     code = get_code_params(l, m, Aij, Bij, d)
 
+    return code
+
 ''' bb5_30_4_5_code'''
 def bb5_30_4_5_code():
     
