@@ -185,7 +185,7 @@ def bb6_360_code():
     return code
 
 '''Codes from Abhishek's paper 2511.13560'''
-def bb72_14_8_code():
+def bb8_72_14_8_code():
     # From 2511.13560
     l = 6
     m = 6
@@ -197,7 +197,7 @@ def bb72_14_8_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb144_14_14_code():
+def bb8_144_14_14_code():
     # From 2511.13560
     l = 12
     m = 6
@@ -209,7 +209,7 @@ def bb144_14_14_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb216_14_20_code():
+def bb8_216_14_20_code():
     # From 2511.13560
     l = 18
     m = 6
@@ -221,7 +221,7 @@ def bb216_14_20_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb64_14_8_code():
+def bb8_64_14_8_code():
     # From 2511.13560
     l = 8
     m = 4
@@ -233,7 +233,7 @@ def bb64_14_8_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb128_14_12_code():
+def bb8_128_14_12_code():
     # From 2511.13560
     l = 8
     m = 8
@@ -245,7 +245,7 @@ def bb128_14_12_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb192_14_20_code():
+def bb8_192_14_20_code():
     # From 2511.13560
     l = 8
     m = 12
