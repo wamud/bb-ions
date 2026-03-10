@@ -21,8 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -d "../circuits/helios/exclude_opp_basis_detectors/288_code_copy/" ]; then
-    cp -r "../circuits/helios/exclude_opp_basis_detectors/288_code_copy/" "${SCRATCH}"
+if [ -d "../circuits/helios/exclude_opp_basis_detectors/bb8/" ]; then
+    cp -r "../circuits/helios/exclude_opp_basis_detectors/bb8/" "${SCRATCH}"
 fi
 
 

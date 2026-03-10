@@ -25,7 +25,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"helios_stats_{job_number}.csv"
+    csv_path = f"bb8_helios_stats_{job_number}.csv"
 
 
     tasks = [
