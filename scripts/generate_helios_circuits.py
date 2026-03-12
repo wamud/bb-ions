@@ -16,9 +16,10 @@ exclude_opposite_basis_detectors = True  # If set to false then it includes dete
 noise = 'helios'
 
 # Generate circuits:
-#for code in [bb6_360_code(), bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(), two_gross_code()]:
+for code in [gross_code()]: #[bb6_360_code(), bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(), two_gross_code()]:
 
-for code in [ bb8_72_14_8_code(), bb8_144_14_14_code(), bb8_216_14_20_code(), bb8_64_14_8_code(), bb8_128_14_12_code(), bb8_192_14_20_code()]:
+# bb8 circuits: 
+# for code in [ bb8_72_14_8_code(), bb8_144_14_14_code(), bb8_216_14_20_code(), bb8_64_14_8_code(), bb8_128_14_12_code(), bb8_192_14_20_code()]:
 
     
     num_syndrome_extraction_cycles = code.d_max
@@ -46,5 +47,5 @@ for code in [ bb8_72_14_8_code(), bb8_144_14_14_code(), bb8_216_14_20_code(), bb
         
         filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
-        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/bb8/{filename}.stim")
+        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/test/{filename}.stim")
 
