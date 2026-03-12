@@ -3,7 +3,7 @@
 # Run this as: qsub submit.sh
 
 #PBS -N sims
-#PBS -l ncpus=64
+#PBS -l ncpus=32
 #PBS -l mem=300GB
 #PBS -l walltime=200:00:00
 #PBS -m abe
@@ -22,8 +22,8 @@ cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
 ## CURRENTLY WRITTEN JUST FOR 360 CODE:
-if [ -d "../circuits/helios/exclude_opp_basis_detectors/360_code/" ]; then
-    cp -r "../circuits/helios/exclude_opp_basis_detectors/360_code/" "${SCRATCH}"
+if [ -d "../circuits/helios/exclude_opp_basis_detectors/756_code/" ]; then
+    cp -r "../circuits/helios/exclude_opp_basis_detectors/756_code/" "${SCRATCH}"
 fi
 
 ###############

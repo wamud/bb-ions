@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"360_code/*p=0.001*.stim")
+    circuit_paths = glob.glob(f"test/*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -36,9 +36,10 @@ def main():
         for path in circuit_paths
     ]
 
+
     samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 2_000_000_000,
+        num_workers = 32,
+        max_shots = 100_000_000_000,
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],

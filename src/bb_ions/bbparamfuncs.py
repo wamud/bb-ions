@@ -89,7 +89,7 @@ def bb5_48_4_7_code():
 
 '''bb6_72_12_6_code'''
 def bb6_72_12_6_code():
-    # [[72, 12, 6]] BB6 code from BB paper [2308.07915] Table II
+    # [[72, 12, 6]] BB6 code from OG BB paper [2308.07915] Table II
     l = 6
     m = 6
     # A = x^3 + y + y^2
@@ -101,7 +101,7 @@ def bb6_72_12_6_code():
 
 '''bb6_90_8_10_code'''
 def bb6_90_8_10_code():
-    # [[90, 8, 10]] BB6 code from BB paper [2308.07915] Table III
+    # [[90, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
     l = 15
     m = 3
     # A = x^9 + y + y^2
@@ -114,7 +114,7 @@ def bb6_90_8_10_code():
 
 '''bb6_108_code'''
 def bb6_108_code():
-    # [[108, 8, 10]] BB6 code from BB paper [2308.07915] Table III
+    # [[108, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
     l = 9
     m = 6
     # A = x^3 + y + y^2
@@ -139,7 +139,7 @@ def bb5_120_8_8_code():
 
 '''gross_code'''
 def gross_code():
-    # [[144, 12, 12]] BB6 'gross' code from BB paper [2308.07915] Table III
+    # [[144, 12, 12]] BB6 'gross' code from OG BB paper [2308.07915] Table III
     l = 12
     m = 6
     # A = x^3 + y + y^2
@@ -155,7 +155,7 @@ def gross_code():
 
 '''two_gross_code'''
 def two_gross_code():
-    # [[288, 12, 18]] BB6 'two gross' code from BB paper [2308.07915] Table III
+    # [[288, 12, 18]] BB6 'two gross' code from OG BB paper [2308.07915] Table III
     l = 12
     m = 12
     # A = x^3 + y^2 + y^7
@@ -171,7 +171,7 @@ def two_gross_code():
 
 '''bb6_360_code'''
 def bb6_360_code():
-    # [[360, 12, ≤24]] BB6 code from BB paper [2308.07915] Table III
+    # [[360, 12, ≤24]] BB6 code from OG BB paper [2308.07915] Table III
     l = 30
     m = 6
     # A = x^9 + y^1 + y^2
@@ -183,6 +183,19 @@ def bb6_360_code():
     code = get_code_params(l, m, Aij, Bij, d)
 
     return code
+
+'''bb6_756_code'''
+def bb6_756_code():
+    # [[756, 16, ≤34]] BB6 code from OG BB paper [2308.07915] Table III
+    # Takes about a minute to find all the logical operators of this code
+    l = 21
+    m = 18
+    Aij = [(3,0),(0,10),(0,17)]
+    Bij = [(0,5),(3,0),(19,0)]
+    d_max = 34
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
 
 '''Codes from Abhishek's paper 2511.13560'''
 def bb8_72_14_8_code():
@@ -210,7 +223,7 @@ def bb8_144_14_14_code():
     return code
 
 def bb8_216_14_20_code():
-    # From 2511.13560
+    # From 2511.13560 -- actually returns code distance of d_max ≤ 16.
     l = 18
     m = 6
     # A = x^6 y^4 + x^5 y^4 + x^15 + x^11 y^3
@@ -256,6 +269,9 @@ def bb8_192_14_20_code():
     d = 20
     code = get_code_params(l, m, Aij, Bij, d)
     return code
+
+
+
 
 
 
@@ -328,14 +344,21 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
 
     Hx, Hz = make_parity_check_matrices(l, m, Aij, Bij)
 
-    if d_max == None:
-        d_max = find_d_max(Hx, Hz) 
-
     # Logical operators:
     Lx, Lz = autqec_logical_ops(Hx, Hz)
 
     # Num. logical qubits:
     k = len(Lx)
+
+    if k == 0:
+        print("This code has no logical qubits")
+        d_max = None
+        code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)    
+        
+        return code
+
+    if d_max == None:
+        d_max = find_d_max(Hx, Hz) 
 
     code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
 
