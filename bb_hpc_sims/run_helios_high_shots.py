@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"test/*.stim")
+    circuit_paths = glob.glob(f"756_code/*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -25,7 +25,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"helios_stats_{job_number}.csv"
+    csv_path = f"helios_756_code_{job_number}.csv"
 
 
     tasks = [
@@ -39,7 +39,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = 32,
-        max_shots = 100_000_000_000,
+        max_shots = 1_000_000_000_000,
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
