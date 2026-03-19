@@ -42,6 +42,21 @@ class Code:
 
 ''' First are functions for defining some common codes:'''
 
+def bb6_18_4_3_code():
+    # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf
+    l = 3 # assumed
+    m = 3 # assumed
+    # A = x + 1 + y
+    # B = x + 1 + xy^2
+    Aij = [(1,0), (0,0), (0,1)]
+    Bij = [(1,0), (0,0), (1,2)]
+    d=3
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+
+
 def bb6_18_4_4_code():
     # [[18, 4, 4]] BB6 (weight-6 stabilisers) code from Wang et al. [2503.22071]
     l = 3

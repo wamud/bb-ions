@@ -46,10 +46,12 @@ min_k = int(sys.argv[3])
 min_d_max = int(sys.argv[4])
 
 
+weight = 7
+
 print(f"l = {l}, m = {m}")
 
 
-filename = f"bb5_l{l}_m{m}_k{min_k}_d{min_d_max}"
+filename = f"bb{weight}_l{l}_m{m}_k{min_k}_d{min_d_max}"
 
 temp_file = f"../found_codes/{filename}_partial.jsonl"
 results_file = f"../found_codes/{filename}.jsonl"
@@ -57,20 +59,20 @@ progress_file = f"../found_codes/l{l}_m{m}_progress.txt"
 
 
 
-# We will make ivectors containing i0, i1, i2, i3, i4 and jvectors containing j0, j1, j2, j3, j4
+# We will make ivectors containing i0, i1, i2, i3, i4, i5 and jvectors containing j0, j1, j2, j3, j4, j5
 # which are the powers of the terms in the matrices A and B, i.e. 
-# A = x^i0 * y^j0 + x^i1 * y^j1
-# B = x^i2 * y^j2 + x^i3 * y^j3 + x^i4 * y^j4
+# A = x^i0 * y^j0 + x^i1 * y^j1 + x^i2 * y^j2
+# B = x^i3 * y^j3 + x^i4 * y^j4 + x^i5 * y^j5
 # In turn, A and B will be used in the Bicycle Bivariate code's parity check matrices as Hx = [A|B] and Hz = [B^T|A^T]
 
 random.seed(42)
 
 ivalues = range(l)
-ivectors = list(itertools.product(ivalues, repeat = 5))
+ivectors = list(itertools.product(ivalues, repeat = {weight}))
 random.shuffle(ivectors)
 
 jvalues = range(m)
-jvectors = list(itertools.product(jvalues, repeat = 5))
+jvectors = list(itertools.product(jvalues, repeat = {weight}))
 random.shuffle(jvectors)
 
 
@@ -79,7 +81,7 @@ for loop in range(len(ivectors)):
     for count, jvec in enumerate(jvectors):
         ivec = ivectors[(count + loop) % len(ivectors)]
 
-        if count % 5000 == 0:
+        if count % 100 == 0:
             with open(progress_file, "w") as f:
                 f.write(f"loop = {loop}, count = {count}")
 
@@ -89,32 +91,40 @@ for loop in range(len(ivectors)):
         i2 = ivec[2]
         i3 = ivec[3]
         i4 = ivec[4]
+        i5 = ivec[5]
+        i6 = ivec[6]
+
+        
         j0 = jvec[0]
         j1 = jvec[1]
         j2 = jvec[2]
         j3 = jvec[3]
         j4 = jvec[4]
+        j5 = jvec[5]
+        j6 = jvec[6]
 
         # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
-        if (i0, j0) == (i1, j1):
+        if (i0, j0) == (i1, j1) or (i0, j0) == (i2, j2) or (i1, j1) == (i2, j2):
             continue
-        if (i2, j2) == (i3, j3) or (i2, j2) == (i4, j4) or (i3, j3) == (i4, j4):
+        if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i3, j3) == (i6, j6) 
+            or (i4, j4) == (i5, j5) or (i4, j4) == (i6, j6)
+            or (i5, j5) == (i6, j6):
+            
             continue
 
         # Also equivalent polynomials with reordered terms need not be repeated. I.e. x^1y^2 + x^3 is equivalent to x^3 + x^1y^2.
         # To avoid repeats let's just search terms that are in ascending order lexicographically (compare first element of tuple, if equal then compare second element of tuple)
-        if (i0, j0) > (i1, j1):
-            continue
-        if not ((i2, j2) < (i3, j3) < (i4, j4)):
+        if not ((i0, j0) < (i1, j1) < (i2, j2)):
+            continue 
+        if not ((i3, j3) < (i4, j4) < (i5, j5) < (i6, j6)):
             continue 
 
-        Aij = [(i0, j0), (i1, j1)]
-        Bij = [(i2, j2), (i3, j3), (i4, j4)]
+        Aij = [(i0, j0), (i1, j1), (i2, j2)]
+        Bij = [(i3, j3), (i4, j4), (i5, j5), (i6, j6)]
 
 
+        #### UP TO HERE !!!
 
-
-        # (Could make Aij have three terms and Bij have two but if searching all the terms anyway that will just swap the roles of the left and right data qubits).
 
         Hx, Hz = make_parity_check_matrices(l, m, Aij, Bij)
 
@@ -131,27 +141,30 @@ for loop in range(len(ivectors)):
 
         with suppress_stdout():
 
-            bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = p, target_runs = target_runs, **osd_options)
-            d_max = bb5.min_logical_weight
+            bb6 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = p, target_runs = target_runs, **osd_options)
+            d_max = bb6.min_logical_weight
 
         if d_max < min_d_max:
-            del bb5 
+            del bb6 
             gc.collect()
             continue
 
+        
+        
+
         entry = {
-            "nkd": [2 * l * m, k, bb5.min_logical_weight],
+            "nkd": [2 * l * m, k, bb6.min_logical_weight],
             "l" : l,
             "m" : m,
             "Aij": Aij,
             "Bij": Bij,
-            # f"pL at p = {p}": bb5.osdw_logical_error_rate,
+            # f"pL at p = {p}": bb6.osdw_logical_error_rate,
         }
 
         print(entry)
 
         append_entries_to_json([entry], temp_file)
-        del bb5
+        del bb6
         gc.collect()
 
 

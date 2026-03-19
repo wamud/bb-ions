@@ -785,9 +785,9 @@ def make_BB_circuit(
   idle_during = None,
   num_syndrome_extraction_cycles = None,
   memory_basis = 'Z',
-  sequential_gates = True,
+  sequential_gates = False,
   exclude_opposite_basis_detectors = False,
-  reuse_check_qubits = True,
+  reuse_check_qubits = False,
   only_CZs = False,
   ):
 
