@@ -15,7 +15,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/sep_obs/helios/exclude_opp_basis_detectors/*p=0.001*.stim")
+    circuit_paths = glob.glob(f"../circuits/sep_obs/helios/exclude_opp_basis_detectors/.stim")  # CURRENTLY POINTINT TO SEP OBS FOLDER 
     circuit_paths.sort()
 
     for path in circuit_paths:
