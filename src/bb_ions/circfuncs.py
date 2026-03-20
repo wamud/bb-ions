@@ -241,7 +241,7 @@ def add_logical_observables(circuit, n, Lx, Lz, memory):
 
     recordings = (indices[i] - n).astype(int) # the measurements -- 'inner workings' note above
 
-    circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in recordings], 0.0)
+    circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in recordings], i)
 
 ''' myCNOT
 Appends a CNOT to a stim circuit between 
