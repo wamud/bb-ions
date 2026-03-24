@@ -245,8 +245,7 @@ def bb8_216_14_20_code():
     Aij = [(6,4),(5,4),(15,0),(11,3)]
     # B = y^5 + x^8 y + x^11 y^5 + x^9 y^4
     Bij = [(0,5),(8,1),(11,5),(9,4)]
-    d = 20
-    code = get_code_params(l, m, Aij, Bij, d)
+    code = get_code_params(l, m, Aij, Bij)
     return code
 
 def bb8_64_14_8_code():
