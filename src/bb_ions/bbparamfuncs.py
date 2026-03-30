@@ -306,7 +306,7 @@ def suppress_stdout():
 
 
 ''' find_d_max
-Given the X and Z parit check matrices of a css code, this function finds the maximum distance it could have. I.e. it runs simulations with bposd decoder to find the distance of the code. We call this maximum distance as there could be a logical operator with a smaller weight that would cause a logical error (i.e., a smaller distance) but the simulations didn't see it. Increase target_runs for more certainty in d_max'''
+Given the X and Z parity-check matrices of a css code, this function finds the maximum distance it could have. I.e. it runs simulations with bposd decoder to find the distance of the code. We call this maximum distance as there could be a logical operator with a smaller weight that would cause a logical error (i.e., a smaller distance) but the simulations didn't see it. Increase target_runs for more certainty in d_max'''
 def find_d_max(Hx, Hz):
     
     osd_options={
@@ -316,9 +316,9 @@ def find_d_max(Hx, Hz):
     error_rate = 0.1
 
     with suppress_stdout():
-        bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = error_rate, **osd_options) 
+        the_code = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = error_rate, **osd_options) 
 
-    d_max = bb5.min_logical_weight 
+    d_max = the_code.min_logical_weight 
 
     return d_max
 
