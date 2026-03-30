@@ -213,6 +213,19 @@ def bb6_756_code():
 
 
 '''Codes from Abhishek's paper 2511.13560'''
+
+def bb8_64_14_8_code():
+    # From 2511.13560
+    l = 8
+    m = 4
+    # A = x y^3 + 1 + x^6 + x^3 y^2
+    Aij = [(1,3),(0,0),(6,0),(3,2)]
+    # B = x^6 y + x^4 y + x^3 + x^5 y
+    Bij = [(6,1),(4,1),(3,0),(5,1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
 def bb8_72_14_8_code():
     # From 2511.13560
     l = 6
@@ -221,8 +234,19 @@ def bb8_72_14_8_code():
     Aij = [(0,4),(5,4),(3,0),(5,3)]
     # B = y^5 + x^2 y + x^5 y^5 + x^3 y^4
     Bij = [(0,5),(2,1),(5,5),(3,4)]
-    d = 8
-    code = get_code_params(l, m, Aij, Bij, d)
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+def bb8_128_14_12_code():
+    # From 2511.13560
+    l = 8
+    m = 8
+    # A = x y^3 + y^4 + x^6 y^4 + x^3 y^6
+    Aij = [(1,3),(0,4),(6,4),(3,6)]
+    # B = x^6 y + x^4 y^5 + x^3 + x^5 y^5
+    Bij = [(6,1),(4,5),(3,0),(5,5)]
+    code = get_code_params(l, m, Aij, Bij)
     return code
 
 def bb8_144_14_14_code():
@@ -233,9 +257,21 @@ def bb8_144_14_14_code():
     Aij = [(6,4),(5,4),(3,0),(11,3)]
     # B = y^5 + x^8 y + x^5 y^5 + x^9 y^4
     Bij = [(0,5),(8,1),(5,5),(9,4)]
-    d = 14
-    code = get_code_params(l, m, Aij, Bij, d)
+    code = get_code_params(l, m, Aij, Bij)
     return code
+
+
+def bb8_192_14_16_code():
+    # From 2511.13560 -- called 192_14_20 code but came back as d_max = 16 
+    l = 8
+    m = 12
+    # A = x y^3 + y^8 + x^6 y^4 + x^3 y^2
+    Aij = [(1,3),(0,8),(6,4),(3,2)]
+    # B = x^6 y + x^4 y^5 + x^3 + x^5 y
+    Bij = [(6,1),(4,5),(3,0),(5,1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
 
 def bb8_216_14_20_code():
     # From 2511.13560 -- actually returns code distance of d_max ≤ 16.
@@ -246,42 +282,6 @@ def bb8_216_14_20_code():
     # B = y^5 + x^8 y + x^11 y^5 + x^9 y^4
     Bij = [(0,5),(8,1),(11,5),(9,4)]
     code = get_code_params(l, m, Aij, Bij)
-    return code
-
-def bb8_64_14_8_code():
-    # From 2511.13560
-    l = 8
-    m = 4
-    # A = x y^3 + 1 + x^6 + x^3 y^2
-    Aij = [(1,3),(0,0),(6,0),(3,2)]
-    # B = x^6 y + x^4 y + x^3 + x^5 y
-    Bij = [(6,1),(4,1),(3,0),(5,1)]
-    d = 8
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
-
-def bb8_128_14_12_code():
-    # From 2511.13560
-    l = 8
-    m = 8
-    # A = x y^3 + y^4 + x^6 y^4 + x^3 y^6
-    Aij = [(1,3),(0,4),(6,4),(3,6)]
-    # B = x^6 y + x^4 y^5 + x^3 + x^5 y^5
-    Bij = [(6,1),(4,5),(3,0),(5,5)]
-    d = 12
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
-
-def bb8_192_14_20_code():
-    # From 2511.13560
-    l = 8
-    m = 12
-    # A = x y^3 + y^8 + x^6 y^4 + x^3 y^2
-    Aij = [(1,3),(0,8),(6,4),(3,2)]
-    # B = x^6 y + x^4 y^5 + x^3 + x^5 y
-    Bij = [(6,1),(4,5),(3,0),(5,1)]
-    d = 20
-    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
