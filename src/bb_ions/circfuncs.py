@@ -27,7 +27,7 @@ Makes lists of qubit indices dividing n = 2lm qubits evenly into qA, qB, qC, qD.
   qB: qubits n/2 to n - 1
   qC: qubits n to 3n/2 - 1 
   qD: qubits 3n/2 to 2n - 1'''
-def make_registers(l, m, reuse_check_qubits = True):
+def make_registers(l, m, reuse_check_qubits = False):
   
   
   if reuse_check_qubits == True:  # qX and qZ will be the same register
@@ -55,6 +55,7 @@ def make_registers(l, m, reuse_check_qubits = True):
 ''' add_qubit_coordinates
 Adds coordinates to the qubits for use in circuit diagrams and importing to crumble.
 Note that (0,0) is the top left of the diagram, and increasing row or column moves down or right respectively.
+NOTE: in Stim it is QUBIT_COORD(COLUMN, ROW) 
 We will place qubits in blocks of (reading clockwise from top left) X-check, L-data, Z-check, R-data.
 Implying that the zeroth X-check qubit at (0,0), zeroth L-data at (0,1), zeroth R-data at (1,0) and zeroth Z-check at (1,1).
 We will do l rows by m columns of each of these blocks.
@@ -78,23 +79,23 @@ def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
 
   # qX: top left of each block:
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qX[k], [2 * math.floor(k/m), 2 * (k % m)])
+    circ.append("QUBIT_COORDS", qX[k], [2 * (k % m), 2 * math.floor(k/m)])
   
   # qL: top right of each block.
   # Will be same row as qX, then to the right by 1 for each column.
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qL[k], [2 * math.floor(k/m), (2 * (k % m)) + 1])
+    circ.append("QUBIT_COORDS", qL[k], [(2 * (k % m)) + 1, 2 * math.floor(k/m)])
 
   # qR: bottom left of each block.
   # Can just add 1 to each qX row. Same column.
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qR[k], [(2 * math.floor(k/m)) + 1  , 2 * (k % m)])
+    circ.append("QUBIT_COORDS", qR[k], [2 * (k % m), (2 * math.floor(k/m)) + 1])
 
   # qZ: if reusing one set of check qubits we don't have separate qZ and will just draw qX. If NOT reusing then qZ is bottom right of each block.
   # Same as L-data, but add 1 to each of its rows.
   if reuse_check_qubits == False:
     for k in range(n//2):
-      circ.append("QUBIT_COORDS", qZ[k], [(2 * math.floor(k/m)) + 1, (2 * (k % m)) + 1])
+      circ.append("QUBIT_COORDS", qZ[k], [(2 * (k % m)) + 1, (2 * math.floor(k/m)) + 1])
 
   return 
 
