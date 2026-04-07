@@ -26,7 +26,7 @@ for ((l=6; l<=15; l++)); do
 	       continue	
         fi
 
-        python3 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
+        python3.11 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
 
     done
 done

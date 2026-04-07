@@ -234,7 +234,7 @@ osd_options = {
     'osd_order': 4, 
     'channel_update': None, 
     'seed': 42, 
-    'max_iter': 9, 
+    'max_iter': 100, 
     'tqdm_disable': 1, 
     'error_bar_precision_cutoff': 1e-6
 }

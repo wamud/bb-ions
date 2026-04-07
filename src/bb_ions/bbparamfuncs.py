@@ -70,6 +70,109 @@ def bb6_18_4_4_code():
 
     return code
 
+''' Some BB6 codes that might have been compared to in the long chain paper [2503.22071] (found using code in find_codes folder)'''
+
+'''bb6_30_4_4_code_one'''
+def bb6_30_4_4_code_one():
+    # One of the many [[30,4,4]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (0, 1), (1, 2)]
+    Bij = [(0, 1), (0, 2), (2, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_30_4_4_code_two'''
+def bb6_30_4_4_code_two():
+    # One of the many [[30,4,4]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (1, 1), (2, 2)]
+    Bij = [(0, 2), (2, 0), (3, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_30_4_4_code_three'''
+def bb6_30_4_4_code_three():
+    # One of the many [[30,4,4]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (1, 2), (3, 1)]
+    Bij = [(0, 1), (3, 0), (3, 2)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_30_4_6_code_one'''
+def bb6_30_4_6_code_one():
+    # One of the many [[30,4,6]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (0, 2), (1, 1)]
+    Bij = [(1, 1), (3, 2), (4, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_30_4_6_code_two'''
+def bb6_30_4_6_code_two():
+    # One of the many [[30,4,6]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (1, 2), (2, 1)]
+    Bij = [(2, 0), (2, 2), (4, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_30_4_6_code_three'''
+def bb6_30_4_6_code_three():
+    # One of the many [[30,4,6]] codes found using a search in "find_codes" directory
+    l = 5
+    m = 3
+    Aij = [(0, 0), (2, 2), (3, 1)]
+    Bij = [(0, 0), (0, 2), (4, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_48_4_6_code_one'''
+def bb6_48_4_6_code_one():
+    ## One of the many [[48,4,6]] codes found using a search in "find_codes" directory
+    l = 6
+    m = 4 
+    Aij = [(0, 0), (1, 0), (2, 1)]
+    Bij = [(0, 1), (1, 0), (2, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+
+    return code
+
+'''bb6_48_4_6_code_two'''
+def bb6_48_4_6_code_two():
+    # One of the many [[48,4,6]] codes found using a search in "find_codes" directory
+    l = 6
+    m = 4
+    Aij = [(0, 0), (4, 2), (5, 0)]
+    Bij = [(0, 2), (4, 1), (5, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+'''bb6_48_4_6_code_three'''
+def bb6_48_4_6_code_three():
+    # One of the many [[48,4,6]] codes found using a search in "find_codes" directory
+    l = 6
+    m = 4
+    Aij = [(0, 0), (1, 1), (2, 1)]
+    Bij = [(2, 2), (3, 2), (4, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+''' BB5 codes from BB5 long chain paper [2503.22071] '''
+
 ''' bb5_30_4_5_code'''
 def bb5_30_4_5_code():
     
@@ -125,6 +228,7 @@ def bb6_90_8_10_code():
     Bij = [(0, 0), (2, 0), (7, 0)]
     code = get_code_params(l, m, Aij, Bij)
     return code
+
 
 
 '''bb6_108_code'''

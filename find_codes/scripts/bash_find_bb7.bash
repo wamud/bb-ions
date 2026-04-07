@@ -12,7 +12,7 @@ for ((l=1; l<=12; l++)); do
         min_k=2
         min_d=2
 
-        python3 find_bb7_codes.py "$l" "$m" "$min_k" "$min_d" &
+        python3.11 find_bb7_codes.py "$l" "$m" "$min_k" "$min_d" &
 
     done
 done

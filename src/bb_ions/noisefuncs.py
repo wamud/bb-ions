@@ -17,6 +17,64 @@ class Error:
 
 
 
+''' longchain_errors
+Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module 
+(Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)'''
+def longchain_errors(p):
+
+    errors = {
+
+        # Longchain [2503.22071] operations:
+        "RZ" : Error("DEPOLARIZE1", p / 10), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+        "RX" : Error("DEPOLARIZE1", p / 10), # as opposed to Z_ERROR
+        "H" : Error("DEPOLARIZE1", p / 10),
+        "CNOT" : Error("DEPOLARIZE2", p),
+        "CZ" : Error("DEPOLARIZE2", p),
+        "MZ" : Error("X_ERROR", p / 10),
+        "MX" : Error("Z_ERROR", p / 10),
+
+
+        # NO shuttling errors (everything below is zero)
+
+        
+        "shift" : Error("DEPOLARIZE1", 0),
+        "shift_prop_to" : None, # shift_prop_to is used to make errors proportional to the length of the shift. Tham et al. say the noise is independent of the length of the shift so set shift_prop_to to None. (This means circfuncs.update_shift_probs will not change the shift error, making it independent of the length of the shift).
+        "shuttle" : Error("DEPOLARIZE1", 0), # we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+
+    }
+    return errors
+
+
+''' longchain_idle_errors
+    Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) '''
+def longchain_idle_errors(p):
+
+    idle_during = {
+        
+        # Longchain [2503.22071] operations:
+        "RZ" : Error("DEPOLARIZE1", p / 100),
+        "RX" : Error("DEPOLARIZE1", p / 100), 
+        "H" : Error("DEPOLARIZE1", p / 100),
+        "CNOT" : Error("DEPOLARIZE1", p / 100),
+        "CZ" : Error("DEPOLARIZE1", p / 100),
+        "MZ" : Error("DEPOLARIZE1", 30 * p / 100),
+        "MX" : Error("DEPOLARIZE1", 30 * p / 100),
+
+        # NO shuttling errors: 
+        "shift" : Error("DEPOLARIZE1", 0), 
+        "shift_prop_to" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "pause" : Error("DEPOLARIZE1", 0), # this is an idling error applied at the beginning of each round of stabiliser measurements; simulates waiting before each round of stab. measurement
+    }
+
+    return idle_during
+
+
+
 ''' tham_modules_errors
 Defines noise values as per Tham ... Delfosse "qubit modules" [2508.01879] (page 4) which uses Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module (i.e. assuming each module is a long chain) plus a cyclic shift error rate of 30p/100 when shifting modules (to align them).
 (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)'''
@@ -75,6 +133,9 @@ def tham_modules_idle_errors(p):
     }
 
     return idle_during
+
+
+
 
 
 ''' helios_errors
