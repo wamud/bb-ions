@@ -80,7 +80,7 @@ def main():
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 100_000_000,
-        max_errors = 10,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
