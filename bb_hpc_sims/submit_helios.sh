@@ -21,9 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-## CURRENTLY WRITTEN JUST FOR 360 CODE:
-if [ -d "../circuits/helios/exclude_opp_basis_detectors/756_code/" ]; then
-    cp -r "../circuits/helios/exclude_opp_basis_detectors/756_code/" "${SCRATCH}"
+if [ -d "../circuits/helios/exclude_opp_basis_detectors/bigger_bb8/" ]; then
+    cp -r "../circuits/helios/exclude_opp_basis_detectors/bigger_bb8/" "${SCRATCH}"
 fi
 
 ###############

@@ -322,7 +322,8 @@ def bb8_288_14_20_code():
     m = 12
     Aij = [(6,10), (5,4), (3,6), (11,9)]
     Bij = [(0,5), (2,1), (11,5), (9,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d_max = 20
+    code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
 def bb8_288_14_24_code():
@@ -330,34 +331,38 @@ def bb8_288_14_24_code():
     m = 12
     Aij = [(0,10), (11,4), (3,0), (11,9)]
     Bij = [(0,11), (2,1), (11,5), (3,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d_max = 24
+    code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
 
 def bb8_288_14_26_code():
     l = 12
     m = 12
+    d_max = 26
     Aij = [(0,4), (11,4), (9,6), (11,9)]
     Bij = [(0,5), (8,7), (5,5), (3,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
 
 def bb8_360_14_30_code_one():
     l = 30
     m = 6
+    d_max = 30
     Aij = [(12,4), (5,4), (27,0), (23,3)]
     Bij = [(18,5), (26,1), (17,5), (27,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
 
 def bb8_360_14_30_code_two():
     l = 30
     m = 6
+    d_max = 30
     Aij = [(6,4), (29,4), (9,0), (5,3)]
     Bij = [(6,5), (20,1), (23,5), (21,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
 

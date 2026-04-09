@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"756_code/*.stim")
+    circuit_paths = glob.glob(f"bigger_bb8/*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -25,7 +25,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"helios_756_code_{job_number}.csv"
+    csv_path = f"helios_big_bb8_{job_number}.csv"
 
 
     tasks = [
@@ -100,7 +100,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000_000,
-        max_errors = 10,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -119,6 +119,27 @@ def main():
 
     samples = sinter.collect(
         num_workers = 32,
+        max_shots = 10_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                ## Long chains settings:
+                max_bp_iters = 10_000,
+                bp_method = "min_sum",
+                osd_order = 5,
+                osd_method = "osd_cs"
+                # (other settings left unspecified so they take the default values)
+                
+            )
+        },
+        print_progress = False
+        )
+
+    samples = sinter.collect(
+        num_workers = 32,
         max_shots = 1_000_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -126,14 +147,6 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                # # Rebecca's recommended settings:
-                # # max_bp_iters = 10, # default 30
-                # bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule="serial", 
-                # osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                # osd_order=9
-
                 ## Long chains settings:
                 max_bp_iters = 10_000,
                 bp_method = "min_sum",

@@ -452,11 +452,8 @@ def add_BT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
                 control = (Z, v, w)
                 target = (L, (v + i) % l , (w + j) % m) # LEFT qubits as we're doing matrix BT in Hz = [B^T|A^T]
 
-
                 myCZ(circuit, l, m, control, target, errors)
 
-
-                
               if sequential_gates: # if we are doing one CZ per timestep (per module) we need to add idling errors to qubits that weren't in the CZ, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
 
                 idle(circuit, qR, idle_during['CZ'])  # idle all the R data qubits
@@ -471,6 +468,43 @@ def add_BT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
             idle(circuit, qR, idle_during['CZ'])  # idle the R data qubits
             tick(circuit)
 
+
+
+''' add_BT_CNOTs
+This is called when ONLYCNOTs == True. I.e. we're doing Z-checks NOT with CZ gates and hadamards on the check qubit but instead with CNOT gates going from the data qubit TO the check qubit. (Can be thought of as a usual Z-parity check circuit becasue every X error on a data qubit will flip the check qubit).
+For B^T in Hz = [B^T|A^T], this function appends CNOTs from L-data qubits to Z-check qubits according the the value of j (indicating aligned modules) and the terms in matrix B^T which have y^j.
+As per Algo. 2 & lemma 1 of [2508.01879], this applies CNOTs between each Z check qubit (Z, v, w) and L data qubit (L, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
+def add_BT_CNOTs(circuit, jval, code, registers, errors, idle_during, sequential_gates):
+
+  BTij = code.BTij
+  l = code.l
+  m = code.m
+  Z = registers.Z
+  L = registers.L
+  qR = registers.qR
+  
+  for (i, j) in BTij:
+      if j == jval:  # i.e. this (i, j) appears in BTij
+          for v in range(l): # for each check qubit within a module
+              for w in range(m): # for each module
+                control = (L, (v + i) % l , (w + j) % m) # LEFT qubits as we're doing matrix BT in Hz = [B^T|A^T]
+                target = (Z, v, w)
+
+                myCNOT(circuit, l, m, control, target, errors)
+
+              if sequential_gates: # if we are doing one CNOT per timestep (per module) we need to add idling errors to qubits that weren't in the CNOT, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
+
+                idle(circuit, qR, idle_during['CNOT'])  # idle all the R data qubits
+                for w in range(m):
+                  for vprime in range(l): # idle L qubits not in CNOT:
+                    if vprime != (v + i) % l:
+                      qubit = convtok(l, m, L, vprime, w)
+                      idle(circuit, [qubit], idle_during['CNOT']) 
+                tick(circuit)
+
+          if not sequential_gates: # idle all the R data qubits only after all L data qubits had CNOTs in a single timestep
+            idle(circuit, qR, idle_during['CNOT'])  # idle the R data qubits
+            tick(circuit)
 
 
 
@@ -507,6 +541,43 @@ def add_AT_CZs(circuit, jval, code, registers, errors, idle_during, sequential_g
 
           if not sequential_gates: # idle all the L data qubits only after all R data qubits had CZs in a single timestep
             idle(circuit, qL, idle_during['CZ'])  # idle the L data qubits
+            tick(circuit)
+
+
+
+''' add_AT_CNOTs
+For A^T in Hz = [B^T|A^T], this function appends CNOTs between Z check qubits and R data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix A^T which have y^j. CNOTs go from data qubits (the controls) to check qubit (the target).
+As per Algo. 2 & lemma 1 of [2508.01879], this applies CNOTs between each Z check qubit (Z, v, w) and R data qubit (R, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
+def add_AT_CNOTs(circuit, jval, code, registers, errors, idle_during, sequential_gates):
+
+  ATij = code.ATij
+  l = code.l
+  m = code.m
+  Z = registers.Z
+  R = registers.R
+  qL = registers.qL
+  
+  for (i, j) in ATij:
+      if j == jval:  # i.e. this (i, j) appears in ATij
+          for v in range(l): # for each check qubit within a module
+              for w in range(m): # for each module
+                target = (Z, v, w)
+                control = (R, (v + i) % l , (w + j) % m) # RIGHT qubits as we're doing matrix A^T in Hz = [B^T|A^T]
+
+                myCNOT(circuit, l, m, control, target, errors)
+                
+              if sequential_gates: # if we are doing one CNOT per timestep (per module) we need to add idling errors to qubits that weren't in the CNOT, namely all the L data qubits and any R data qubits with v' ≠ v ⊕ i 
+
+                idle(circuit, qL, idle_during['CNOT'])  # idle all the L data qubits
+                for w in range(m):
+                  for vprime in range(l): # idle R qubits not in CNOT:
+                    if vprime != (v + i) % l:
+                      qubit = convtok(l, m, R, vprime, w)
+                      idle(circuit, [qubit], idle_during['CNOT']) 
+                tick(circuit)
+
+          if not sequential_gates: # idle all the L data qubits only after all R data qubits had CNOTs in a single timestep
+            idle(circuit, qL, idle_during['CNOT'])  # idle the L data qubits
             tick(circuit)
 
 
@@ -622,9 +693,14 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
             add_B_CZs(circ, jval, code, registers, errors, idle_during, sequential)
 
         elif check == 'Z':
-          # Apply CZs for Z-checks, i.e. Hz = [B^T|A^T]
-          add_BT_CZs(circ, jval, code, registers, errors, idle_during, sequential)
-          add_AT_CZs(circ, jval, code, registers, errors, idle_during, sequential)
+          if ONLYCNOTs == False:
+            # Apply CZs for Z-checks, i.e. Hz = [B^T|A^T]
+            add_BT_CZs(circ, jval, code, registers, errors, idle_during, sequential)
+            add_AT_CZs(circ, jval, code, registers, errors, idle_during, sequential)
+          elif ONLYCNOTs == True:
+            # Apply CZs for Z-checks, i.e. Hz = [B^T|A^T]
+            add_BT_CNOTs(circ, jval, code, registers, errors, idle_during, sequential)
+            add_AT_CNOTs(circ, jval, code, registers, errors, idle_during, sequential)
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
         if errors['split'].p > 0:
@@ -790,6 +866,7 @@ def make_BB_circuit(
   exclude_opposite_basis_detectors = False,
   reuse_check_qubits = False,
   only_CZs = False,
+  only_CNOTs = False,
   ):
 
 
@@ -804,14 +881,9 @@ def make_BB_circuit(
 
 
     global ONLYCZs # inelegantly using a macro here as it's a late addition (saves me putting it as a new argument in all the sub-functions)
-    if only_CZs is True:
-      ONLYCZs = only_CZs
-    elif only_CZs is False:
-      ONLYCZs = only_CZs
-    else:
-      raise ValueError("ONLYCZs should either be True or False")
-
-
+    ONLYCZs = only_CZs
+    global ONLYCNOTs
+    ONLYCNOTs = only_CNOTs
 
     circ = stim.Circuit()
 

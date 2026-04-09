@@ -13,15 +13,14 @@ seq_gates = True
 exclude_opposite_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 
 
-noise = 'helios'
-
 # Generate circuits:
-for code in [bb8_288_14_24_one_code(), bb8_288_14_24_two_code(), bb8_288_14_24_two_code(), bb8_360_14_30_code_one(), bb8_360_14_30_code_two()]:
+for code in [bb8_288_14_20_code(), bb8_288_14_24_code(), bb8_288_14_26_code(), bb8_360_14_30_code_one(), bb8_360_14_30_code_two()]:
 
 
-    num_syndrome_extraction_cycles = code.d_max
+    num_syndrome_extraction_cycles = 24 # JUST DOING 24 to be the same as the BB6 360 code and to reduce run time. 
     
     memory_basis = 'X'  # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
+    noise = 'helios'  # This is purely for the filename -- make sure the 'errors' and 'idle_during' correspond
 
     for p in ps:
 
@@ -34,7 +33,7 @@ for code in [bb8_288_14_24_one_code(), bb8_288_14_24_two_code(), bb8_288_14_24_t
             idle_during = helios_idle_errors(),
             sequential_gates = seq_gates, 
             exclude_opposite_basis_detectors = exclude_opposite_basis_detectors,
-            only_CZs = True, # NECESSARY FOR HELIOS
+            only_CZs = True,
             reuse_check_qubits = True
         )
 
@@ -45,5 +44,5 @@ for code in [bb8_288_14_24_one_code(), bb8_288_14_24_two_code(), bb8_288_14_24_t
         
         filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
-        circuit.to_file(f"../circuits/sep_obs/{noise}/{prefix}_opp_basis_detectors/{filename}.stim")
+        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/bigger_bb8/{filename}.stim")
 
