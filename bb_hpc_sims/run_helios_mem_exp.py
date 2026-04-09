@@ -39,7 +39,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000,
-        max_errors = 1_000,
+        max_errors = 1_00,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -59,7 +59,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 10_000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -79,7 +79,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 100_000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -100,7 +100,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000_000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -120,7 +120,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 10_000_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
