@@ -16,10 +16,7 @@ exclude_opposite_basis_detectors = True  # If set to false then it includes dete
 noise = 'helios'
 
 # Generate circuits:
-for code in [gross_code()]: # [bb6_72_12_6_code(), bb6_90_8_10_code(), bb6_108_code(), gross_code(), two_gross_code(), bb6_360_code(), bb6_756_code()]:
-
-# bb8 circuits: 
-# for code in [ bb8_72_14_8_code(), bb8_144_14_14_code(), bb8_216_14_20_code(), bb8_64_14_8_code(), bb8_128_14_12_code(), bb8_192_14_20_code()]:
+for code in [bb8_288_14_24_one_code(), bb8_288_14_24_two_code(), bb8_288_14_24_two_code(), bb8_360_14_30_code_one(), bb8_360_14_30_code_two()]:
 
 
     num_syndrome_extraction_cycles = code.d_max

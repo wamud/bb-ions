@@ -19,6 +19,7 @@ from autqec.utils.qec import *
 from .bbfuncs import *
 import os
 import sys
+import random
 
 class Code:
     def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
@@ -241,7 +242,7 @@ def bb6_756_code():
     return code
 
 
-'''Codes from Abhishek's paper 2511.13560'''
+'''Codes from Abhishek Rajput and Ben Symons' paper 2511.13560'''
 
 def bb8_64_14_8_code():
     # From 2511.13560
@@ -314,9 +315,50 @@ def bb8_216_14_20_code():
     return code
 
 
+'''Bigger BB8 codes found by Ben Symons'''
+
+def bb8_288_14_20_code():
+    l = 12
+    m = 12
+    Aij = [(6,10), (5,4), (3,6), (11,9)]
+    Bij = [(0,5), (2,1), (11,5), (9,4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+def bb8_288_14_24_code():
+    l = 12
+    m = 12
+    Aij = [(0,10), (11,4), (3,0), (11,9)]
+    Bij = [(0,11), (2,1), (11,5), (3,4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
 
 
+def bb8_288_14_26_code():
+    l = 12
+    m = 12
+    Aij = [(0,4), (11,4), (9,6), (11,9)]
+    Bij = [(0,5), (8,7), (5,5), (3,4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
 
+
+def bb8_360_14_30_code_one():
+    l = 30
+    m = 6
+    Aij = [(12,4), (5,4), (27,0), (23,3)]
+    Bij = [(18,5), (26,1), (17,5), (27,4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+
+def bb8_360_14_30_code_two():
+    l = 30
+    m = 6
+    Aij = [(6,4), (29,4), (9,0), (5,3)]
+    Bij = [(6,5), (20,1), (23,5), (21,4)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
 
 
 ''' suppress_stdout
@@ -339,7 +381,7 @@ Given the X and Z parity-check matrices of a css code, this function finds the m
 def find_d_max(Hx, Hz):
     
     osd_options={
-    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
+    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': random.seed(), 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
     }
 
     error_rate = 0.1
