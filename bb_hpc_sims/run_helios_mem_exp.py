@@ -140,8 +140,8 @@ def main():
 
     samples = sinter.collect(
         num_workers = 32,
-        max_shots = 1_000_000_000,
-        max_errors = 10,
+        max_shots = 100_000_000,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
