@@ -427,6 +427,7 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     IAT, JAT = findIJ(ATij)
     IBT, JBT = findIJ(BTij)
     JTunion = sorted(set(JAT + JBT))
+    JTunion.reverse() # put in reverse order (descending, so [-2, -1, 0] becomes [0, -1, -2]. Sometimes the last j value of X-checks would align with the first j value of the Z-checks and reduce shuttling. This makes this impossible unless there is only one j value - 0. However what it does do is (combined with the order of 2q gates in 'apply_cyclic_shift ... ' - A then B, AT then BT) guarantee that the X and Z checks have their last 2q gates interact with opposite type data qubits (i.e. L or R). 
 
 
     # Num qubits:

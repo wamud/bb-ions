@@ -291,9 +291,13 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 For matrix M (A, B, AT or BT) in Hx = [A|B] or Hz = [B^T|A^T], this adds the chosen two-qubit gate between check qubits and data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix M which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each check qubit (v, w) and data qubit (v ⊕ i, w ⊕ j) for one value of j. A (B) means X-checks to L(R)-data, BT (AT) means Z-check qubits to L(R)-data qubits. 
 We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
-If there are sequential gates then a shuttling time is added between each 2q gate'''
-def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_gates):
+If there are sequential gates then a shuttling time is added between each 2q gate.
+Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the CNOTs. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates)'''
+def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
 
+  if gate == 'CX':
+    gate = 'CNOT'
+  
   l = code.l
   m = code.m
   # Usually 0, 1, 2, 3:
@@ -306,6 +310,9 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
   qL = registers.qL
   qR = registers.qR
   qZ = registers.qZ
+
+  if swap_ctrl_target == True and gate == 'CZ':
+    raise ValueError("Swapping control and target only significant with CX gate")
 
 
   Mij = getattr(code, f"{matrix}ij")
@@ -336,6 +343,11 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
             if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT] 
               control= (D, (v + i) % l, (w + j) % m)
               target = (Z, v, w)
+
+            if swap_ctrl_target == True:
+              control_temp = control
+              control = target
+              target = control_temp
 
             myCP(circuit, gate, l, m, control, target, errors)
 
@@ -844,8 +856,6 @@ def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, 
 
     # Do cyclic shifts to required j-valued modules
 
-    last_j = False
-
     for jval in theunion:
 
         # # Cyclic shift the check qubits:
@@ -880,9 +890,49 @@ def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, 
             thegate = 'CNOT'
           elif ONLYCZs == True:
             thegate = 'CZ'
+          
+          if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... then also need to change measurements
             
-          add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
-          add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+            if ONLYCNOTs != True:
+              raise ValueError("SWAP-LRC currently only written for only_CNOTs = True")
+            
+            if jval == theunion[-1]:
+              # If both A and B have this final j then we will swap the direction of B's CNOTs. If only one of them then we swap the direction of that one. 
+              # To test we need to run through the values of j in Aij and Bij. Could optimise this by putting this outside here and avoiding nested for
+              
+              in_Aij = False
+              in_Bij = False
+              
+              for (i, j) in code.Aij:
+                if j == jval:
+                  in_Aij = True
+                  break
+              for (i, j) in code.Bij:
+                if j == jval:
+                  in_Bij = True
+                  break
+              
+              if in_Aij == True and in_Bij == True:  # this j value in both A and B so just do a swap of B's CNOTs then do B's CNOTs:
+                add_2q_gates('CX', 'A', circ, jval, code, registers, errors, idle_during, sequential)
+                add_2q_gates('CX', 'B', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'B', circ, jval, code, registers, errors, idle_during, sequential)
+              if in_Aij == True and in_Bij == False:
+                add_2q_gates('CX', 'A', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'A', circ, jval, code, registers, errors, idle_during, sequential)
+              if in_Bij == True and in_Aij == False:
+                add_2q_gates('CX', 'B', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'B', circ, jval, code, registers, errors, idle_during, sequential)
+                
+            else: # if not the last j value just add the gates as usal:
+              add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
+              add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+            
+
+          elif SWAPLRC == False:
+
+            add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
+            add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+
 
 
         elif check == 'Z': # Hz = [B^T|A^T]
@@ -891,9 +941,48 @@ def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, 
             thegate = 'CZ'
           elif ONLYCNOTs == True:
             thegate = 'CNOT'
+          
+          
+          if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... then also need to change measurements
             
-          add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
-          add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+            if ONLYCNOTs != True:
+              raise ValueError("SWAP-LRC currently only written for only_CNOTs = True")
+            
+            if jval == theunion[-1]:
+              # If both AT and BT have this final j then we will swap the direction of BT's CNOTs. If only one of them then we swap the direction of that one. 
+              
+              in_ATij = False
+              in_BTij = False
+              
+              for (i, j) in code.ATij:
+                if j == jval:
+                  in_ATij = True
+                  break
+              for (i, j) in code.BTij:
+                if j == jval:
+                  in_BTij = True
+                  break
+              
+              if in_ATij == True and in_BTij == True:  # this j value in both A and B so just do a swap of B's CNOTs then do B's CNOTs:
+                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+              if in_ATij == True and in_BTij == False:
+                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+              if in_BTij == True and in_ATij == False:
+                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+              
+            else: # if not the last j value just add the gates as usal:
+              add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+              add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+
+
+
+          elif SWAPLRC == False:
+            add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+            add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
 
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
@@ -1052,6 +1141,8 @@ Inputs are:
             If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))
     - only_CNOTs = False
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
+    - swap-LRC
+            "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round, preventing leakage from lasting the whole memory time.
     '''
 def make_BB_circuit(
   code = None,
@@ -1065,6 +1156,7 @@ def make_BB_circuit(
   reuse_check_qubits = False,
   only_CZs = False,
   only_CNOTs = False,
+  swap_LRC = False
   ):
 
 
@@ -1084,6 +1176,11 @@ def make_BB_circuit(
     ONLYCZs = only_CZs
     global ONLYCNOTs
     ONLYCNOTs = only_CNOTs
+    global SWAPLRC 
+    SWAPLRC = swap_LRC
+
+    if ONLYCNOTs == False and SWAPLRC == True:
+      raise ValueError("SWAPLRC currently only written for only_CNOTs = True")
 
 
 
