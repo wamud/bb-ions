@@ -265,6 +265,102 @@ def myCNOT(circuit, l, m, control, target, errors: dict):
     circuit.append(error_op, [kc, kt], p)
 
 
+
+''' myCP
+My 'controlled-Pauli' function. Adds a CX or CZ to a stim circuit between 
+- control qubit (uc, vc, wc)
+- target qubit  (ut, vt, wt)
+where control and target are tuples (see make_registers for index to tuple)'''
+def myCP(circuit, gate, l, m, control, target, errors: dict):
+  uc, vc, wc = control
+  ut, vt, wt = target
+  kc = convtok(l, m, uc, vc, wc)
+  kt = convtok(l, m, ut, vt, wt)
+  
+  circuit.append(gate, [kc, kt])
+
+  p = errors[gate].p
+
+  if p != 0: # using != to account for when p is a list of probs for PAULI_CHANNEL_2
+    
+    error_op = errors[gate].op
+
+    circuit.append(error_op, [kc, kt], p)
+
+'''add_2q_gates
+For matrix M (A, B, AT or BT) in Hx = [A|B] or Hz = [B^T|A^T], this adds the chosen two-qubit gate between check qubits and data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix M which have y^j.
+As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each check qubit (v, w) and data qubit (v ⊕ i, w ⊕ j) for one value of j. A (B) means X-checks to L(R)-data, BT (AT) means Z-check qubits to L(R)-data qubits. 
+We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
+If there are sequential gates then a shuttling time is added between each 2q gate'''
+def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_gates):
+
+  l = code.l
+  m = code.m
+  # Usually 0, 1, 2, 3:
+  X = registers.X
+  L = registers.L
+  R = registers.R
+  Z = registers.Z
+  # Qubits contained therein:
+  qX = registers.qX
+  qL = registers.qL
+  qR = registers.qR
+  qZ = registers.qZ
+
+
+  Mij = getattr(code, f"{matrix}ij")
+
+
+  # Hx = [A|B], Hz = [BT|AT]
+  
+  if matrix == 'A' or matrix == 'BT':
+    D = L
+    qDidle = qR
+
+  if matrix == 'B' or matrix == 'AT':
+    D = R
+    qDidle = qL
+
+  
+  for (i, j) in Mij:
+      if j == jval: # i.e. this (i, j) appears in Mij
+        for v in range(l): # for each check qubit within a module
+          for w in range(m): # for each module
+
+            # Target and control set as if doing all CNOT gates. For CZ gates which is target / control doesn't matter.
+            
+            if matrix == 'A' or matrix == 'B': # Hx = [A|B]
+              control =(X, v, w)
+              target = (D, (v + i) % l, (w + j) % m) 
+
+            if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT] 
+              control= (D, (v + i) % l, (w + j) % m)
+              target = (Z, v, w)
+
+            myCP(circuit, gate, l, m, control, target, errors)
+
+          if sequential_gates:  # if we are doing one 2q gate per timestep (per module) we need to add idling errors to qubits that weren't in the gate, namely all the data qubits not touched by this matrix at all (e.g. R-data if doing matrix A) and any data qubit not normally touched by this matrix but not in this timestep (i.e. v' ≠ v ⊕ i)
+            
+            idle(circuit, qDidle, idle_during[gate])
+            
+            for w in range(m):
+              for vprime in range(l):
+                if vprime != (v + i) % l:
+                  qubit = convtok(l, m, D, vprime, w)
+                  idle(circuit, [qubit], idle_during[gate])
+
+
+            tick(circuit)
+
+        if not sequential_gates: # idle all data qubits not in the 2q gates only after all the data qubits in the two qubit gates have had their gates done in their single timestep
+          idle(circuit, qDidle, idle_during[gate])
+          tick(circuit)
+
+
+
+
+
+
 ''' add_A_CNOTs
 For A in Hx = [A|B] CNOTs between X check and L data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix A which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies CNOTs between each X check qubit (X, v, w) and L data qubit (L, v ⊕ i, w ⊕ j) for one value of j. The required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), now within modules we do each v to v ⊕ i (modulo l)'''
@@ -321,7 +417,7 @@ def add_A_CZs(circuit, jval, code, registers, errors, idle_during, sequential_ga
                 target = (L, (v + i) % l , (w + j) % m) # LEFT qubits as we're doing matrix A in Hx = [A|B]
                 myCZ(circuit, l, m, control, target, errors)
                 
-              if sequential_gates: # if we are doing one CZ per timestep (per module) we need to add idling errors to qubits that weren't in the CZ, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
+              if sequential_gates: # if we are doing one CZ per timestep (per module1``) we need to add idling errors to qubits that weren't in the CZ, namely all the R data qubits and any L data qubits with v' ≠ v ⊕ i
 
                 idle(circuit, qR, idle_during['CZ']) # idle all the R data qubits
                 for w in range(m):
@@ -654,6 +750,8 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
     # Do cyclic shifts to required j-valued modules
 
+    last_j = False
+
     for jval in theunion:
 
         # # Cyclic shift the check qubits:
@@ -719,6 +817,105 @@ def apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, regi
 
 
 
+
+
+'''new_apply_cyclic_shifts_and_stab_interactions
+Append to a stim circuit for a BB code the required cyclic shifts and two-qubit gates to measure the stabilisers. This is according to Algorithm 2 of Ye ... Delfosse (2 × L array; 2508.01879). Accepts inputs
+- circ: the stim circuit to be appended to
+- jval_prev: the previous arrangement of modules. If jval_prev = j this implies that check qubit module M^a_0 was aligned with data qubit module M^d_((0 + j) % m)
+- check: whether we are performing the X-stabiliser or Z-stabiliser checks
+- code: class containing paramaters of the BB code, e.g. Hx = [A|B], Hz = [B^T|A^T] etc.
+- registers: indices for the stim circuit of check qubits, data qubits
+- errors: what errors and probabilities are on each operation
+- sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel'''
+def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, registers, errors, idle_during, sequential):
+
+    if check == 'X':
+      qC = registers.qX
+      theunion = code.Junion
+    elif check == 'Z':
+      qC = registers.qZ
+      theunion = code.JTunion
+    else:
+        raise ValueError("Parameter 'check' must be either 'X' or 'Z'.")
+
+    l = code.l
+    m = code.m 
+    qL = registers.qL
+    qR = registers.qR
+
+
+
+    # Do cyclic shifts to required j-valued modules
+
+    last_j = False
+
+    for jval in theunion:
+
+        # # Cyclic shift the check qubits:
+        if errors['shift'].p > 0:  
+  
+          j_dif = abs((jval % m) - (jval_prev % m))
+
+
+          if j_dif > 0: # i.e. if a shift needs to occur
+            
+            update_shift_probs(j_dif, errors, idle_during) # updates noise according to length of shift
+            
+            apply_shift_error(circ, qC, errors)
+            
+            idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
+            tick(circ)
+
+        # Shuttle check qubit modules from racetrack into leg:
+        if errors['shuttle'].p > 0:
+          apply_shuttle_error(circ, qC, errors)
+          idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
+          tick(circ)
+
+        # Merge check and data qubit modules Coulomb potentials:
+        if errors['merge'].p > 0:
+          apply_merge_error(circ, qC + qL + qR, errors)
+          tick(circ)
+
+        if check == 'X':  # Hx = [A|B]
+          
+          if ONLYCZs == False:
+            thegate = 'CNOT'
+          elif ONLYCZs == True:
+            thegate = 'CZ'
+            
+          add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
+          add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+
+
+        elif check == 'Z': # Hz = [B^T|A^T]
+
+          if ONLYCNOTs == False:
+            thegate = 'CZ'
+          elif ONLYCNOTs == True:
+            thegate = 'CNOT'
+            
+          add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+          add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+
+
+        # Split coulomb potentials of data qubit modules from check qubit modules:
+        if errors['split'].p > 0:
+          apply_split_error(circ, qC + qL + qR, errors)
+          tick(circ)
+
+        # # Shuttle check qubits from leg into racetrack:
+        if errors['shuttle'].p > 0:
+          apply_shuttle_error(circ, qC, errors)
+          idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
+          tick(circ)
+
+        jval_prev = jval
+
+    return jval_prev
+
+
 ''' make_loop_body
 Constructs the stabiliser extraction round of a memory experiment using a BB code. This round or 'loop_body' can be repeated arbitrarily. Returns the loop_body which is a stim circuit. Note this does not initialise data qubits as it is designed to follow an already-constructed round-0 of stabiliser measurements which is slightly different to the repeated rounds (namely round-0 initialises the data qubits and only has detectors on stabilisers in the same basis as the preserved logical state because the other ones are non-deterministic).
 - jval_prev: gives the previous arrangement of modules before starting this repeated / looped section. I.e. if jval_prev = j, this implies check module M^a_w was aligned with data module M^d_((w + j) % m)
@@ -759,7 +956,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     tick(loop_body)
 
     # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential)
+    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential)
     # Alrighty we've done the X-check CNOTs!
 
     # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
@@ -796,17 +993,19 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     tick(loop_body)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
-    hadamard(loop_body, qC, errors)
-    idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
-    tick(loop_body)
+    if ONLYCNOTs == False:
+      hadamard(loop_body, qC, errors)
+      idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
+      tick(loop_body)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential)
+    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
-    hadamard(loop_body, qC, errors)
-    idle(loop_body, qL + qR, idle_during['H'])  # idle data qubits
-    tick(loop_body)
+    if ONLYCNOTs == False:
+      hadamard(loop_body, qC, errors)
+      idle(loop_body, qL + qR, idle_during['H'])  # idle data qubits
+      tick(loop_body)
 
     # Now measure check qubits
     measure('Z', loop_body, qC, errors)
@@ -854,7 +1053,10 @@ Inputs are:
     - reuse_check_qubits = True
             If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements (algorithm 2 of 2508.01879) does X-checks then Z-checks
     - only_CZs = False
-            If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))'''
+            If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))
+    - only_CNOTs = False
+            If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
+    '''
 def make_BB_circuit(
   code = None,
   p = None,
@@ -879,11 +1081,15 @@ def make_BB_circuit(
     if idle_during == None:
       idle_during = uniform_idling(p)
 
+    if only_CZs and only_CNOTs:
+      raise ValueError("At most one of only_CZs and only_CNOTs can be True")
 
     global ONLYCZs # inelegantly using a macro here as it's a late addition (saves me putting it as a new argument in all the sub-functions)
     ONLYCZs = only_CZs
     global ONLYCNOTs
     ONLYCNOTs = only_CNOTs
+
+
 
     circ = stim.Circuit()
 
@@ -897,43 +1103,59 @@ def make_BB_circuit(
     add_qubit_coordinates(circ, code, registers, reuse_check_qubits)
 
     ## Round 0:
-    # - wait's a time step to initalise data qubits (we are assuming can't prepare |+⟩ state directly but need RZ then H)
-    # - only puts detectors on X (Z) -checks if preparing logical |+⟩ (|0⟩)
+    # - wait's a time step to initalise data qubits (we are assuming can't prepare |+⟩ state directly so need RZ then H)
+    # - in round 0 only puts detectors on X (Z) -checks if preparing logical |+⟩ (|0⟩)
 
 
-    # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ## INITIALISE QUBITS:
 
-    qC = qX
+    qC = qX # set the check-qubit register to be the X-check qubits (same indices as Z-check qubits if reuse_check_qubits == True)
 
     # Initialise X-check qubits
     init('Z', circ, qC, errors)
+
+    if memory_basis == 'Z': 
+      if ONLYCZs == True:
+        init('Z', circ, qL + qR, errors) # need to initialise a step earlier and then hadamard the data qubits
+    if memory_basis == 'X':
+      if ONLYCZs == False:
+        init('Z', circ, qL + qR, errors)
+
     tick(circ)
 
-    # Hadamard check qubits to |+⟩ and then initalise data qubits (to +1 eigenstate of 'memory_basis') -- waited a step to initialise data qubits to prevent unnecessary idling
+
+    # Hadamard check qubits to |+⟩
     hadamard(circ, qC, errors)
-    
+
+
+    # Deal with data qubits:
+    if ONLYCZs == True:
+      if memory_basis == 'Z':  
+        hadamard(circ, qL + qR, errors)
+
+      if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
+        init('Z', circ, qL + qR, errors)
+
     if ONLYCZs == False:
-      init(memory_basis, circ, qL + qR, errors) 
-    
-    elif ONLYCZs == True:  # will initialise to hadamarded memory basis and apply another hadamard after X-check CZ gates
       if memory_basis == 'Z':
-        hadamarded_memory_basis = 'X'
-      elif memory_basis == 'X':
-        hadamarded_memory_basis = 'Z'
-      
-      init(hadamarded_memory_basis, circ, qL + qR, errors)
+        init('Z', circ, qL + qR, errors) 
+      if memory_basis == 'X':
+        hadamard(circ, qL + qR, errors)
 
     tick(circ)
 
 
+
+    # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     Junion = code.Junion
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
 
     # Do cyclic shifts to required j-valued modules (and return last j position)
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates)
-    # Alrighty we've done the X-check CNOTs!
 
+    # TESTING:
+    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates)
+    
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
     hadamard(circ, qC, errors)
@@ -969,17 +1191,19 @@ def make_BB_circuit(
     tick(circ)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
-    hadamard(circ, qC, errors)
-    idle(circ, qL + qR, idle_during['H']) # idle data qubits
-    tick(circ)
+    if ONLYCNOTs == False:  # If we're doing Z-checks with CNOTs gates then don't need to Hadamard check qubits, just have reversed CNOTs
+      hadamard(circ, qC, errors)
+      idle(circ, qL + qR, idle_during['H']) # idle data qubits
+      tick(circ)
 
-    # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates)
+    # Apply required cyclic shifts and two-qubit interactions for Z-checks:
+    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
-    hadamard(circ, qC, errors)
-    idle(circ, qL + qR, idle_during['H'])
-    tick(circ)
+    if ONLYCNOTs == False:
+      hadamard(circ, qC, errors)
+      idle(circ, qL + qR, idle_during['H'])
+      tick(circ)
 
     # Now measure check qubits
     measure('Z', circ, qC, errors)
