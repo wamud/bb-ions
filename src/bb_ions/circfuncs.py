@@ -892,8 +892,8 @@ def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, 
           elif ONLYCNOTs == True:
             thegate = 'CNOT'
             
-          add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
           add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
+          add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
 
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
