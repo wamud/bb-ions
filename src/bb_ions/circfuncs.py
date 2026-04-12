@@ -827,7 +827,7 @@ def update_shift_probs(j_dif, errors, idle_during):
 
 
 
-'''new_apply_cyclic_shifts_and_stab_interactions
+'''apply_cyclic_shift_and_2q_gates
 Append to a stim circuit for a BB code the required cyclic shifts and two-qubit gates to measure the stabilisers. This is according to Algorithm 2 of Ye ... Delfosse (2 × L array; 2508.01879). Accepts inputs
 - circ: the stim circuit to be appended to
 - jval_prev: the previous arrangement of modules. If jval_prev = j this implies that check qubit module M^a_0 was aligned with data qubit module M^d_((0 + j) % m)
@@ -836,7 +836,7 @@ Append to a stim circuit for a BB code the required cyclic shifts and two-qubit 
 - registers: indices for the stim circuit of check qubits, data qubits
 - errors: what errors and probabilities are on each operation
 - sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel'''
-def new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, check, code, registers, errors, idle_during, sequential):
+def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential):
 
     if check == 'X':
       qC = registers.qX
@@ -1041,7 +1041,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     tick(loop_body)
 
     # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
-    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential)
     # Alrighty we've done the X-check CNOTs!
 
     # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
@@ -1084,7 +1084,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       tick(loop_body)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
@@ -1247,7 +1247,7 @@ def make_BB_circuit(
     # Do cyclic shifts to required j-valued modules (and return last j position)
 
     # TESTING:
-    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates)
+    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates)
     
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
@@ -1290,7 +1290,7 @@ def make_BB_circuit(
       tick(circ)
 
     # Apply required cyclic shifts and two-qubit interactions for Z-checks:
-    jval_prev = new_apply_cyclic_shifts_and_stab_interactions(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates)
+    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
