@@ -14,10 +14,10 @@ exclude_opposite_basis_detectors = True  # If set to false then it includes dete
 
 
 # Generate circuits:
-for code in [bb6_378_16_20_code()]:
+for code in [bb6_378_16_18_code()]:
 
 
-    num_syndrome_extraction_cycles = 24 # JUST DOING 24 to be the same as the BB6 360 code and to reduce run time. 
+    num_syndrome_extraction_cycles = 24 # doing 24 to be the same as the BB6 360 code 
     
     memory_basis = 'X'  # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
     noise = 'helios'  # This is purely for the filename -- make sure the 'errors' and 'idle_during' correspond

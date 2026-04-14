@@ -24,7 +24,7 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/bb8/undercover_bb6_stats.csv"
+    csv_path = f"../collected_stats/helios_noise/undercover_bb6_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -59,7 +59,7 @@ def main():
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 100000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -74,13 +74,13 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 1_000_000,
-        max_errors = 100,
+        max_errors = 5,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -101,7 +101,7 @@ def main():
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 10_000_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -123,7 +123,7 @@ def main():
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 100_000_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -144,7 +144,7 @@ def main():
     samples = sinter.collect(
         num_workers = 64,
         max_shots = 1_000_000_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,

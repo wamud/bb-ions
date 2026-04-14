@@ -13,7 +13,9 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"bigger_bb8/*.stim")
+    circuit_paths = glob.glob(f"undercover_bb6/*.stim")
+    csv_path = f"undercover_helios_{job_number}.csv"
+
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -25,7 +27,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"helios_big_bb8_{job_number}.csv"
+
 
 
     tasks = [
@@ -39,7 +41,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000,
-        max_errors = 1_00,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -79,7 +81,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 100_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -100,7 +102,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1_000_000,
-        max_errors = 10,
+        max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -141,6 +143,27 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 100_000_000,
+        max_errors = 1,
+        tasks = tasks,
+        decoders=['bposd'],
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                ## Long chains settings:
+                max_bp_iters = 10_000,
+                bp_method = "min_sum",
+                osd_order = 5,
+                osd_method = "osd_cs"
+                # (other settings left unspecified so they take the default values)
+                
+            )
+        },
+        print_progress = False
+        )
+
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 10_000_000_000,
         max_errors = 1,
         tasks = tasks,
         decoders=['bposd'],
