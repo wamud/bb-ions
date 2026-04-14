@@ -15,7 +15,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/bigger_bb8/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/undercover_bb6/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -24,7 +24,7 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/bb8/bigger_bb8_stats.csv"
+    csv_path = f"../collected_stats/helios_noise/bb8/undercover_bb6_stats.csv"
 
     tasks = [
         sinter.Task(
