@@ -14,7 +14,7 @@ exclude_opposite_basis_detectors = True  # If set to false then it includes dete
 
 
 # Generate circuits:
-for code in [bb8_288_14_20_code(), bb8_288_14_24_code(), bb8_288_14_26_code(), bb8_360_14_30_code_one(), bb8_360_14_30_code_two()]:
+for code in [bb6_378_16_20_code()]:
 
 
     num_syndrome_extraction_cycles = 24 # JUST DOING 24 to be the same as the BB6 360 code and to reduce run time. 
@@ -44,5 +44,5 @@ for code in [bb8_288_14_20_code(), bb8_288_14_24_code(), bb8_288_14_26_code(), b
         
         filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
-        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/bigger_bb8/{filename}.stim")
+        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/undercover_bb6/{filename}.stim")
 

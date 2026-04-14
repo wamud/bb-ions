@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for ((l=1; l<=6; l++)); do
+for ((l=21; l<=6; l++)); do
     for ((m=1; m<=6; m++)); do  # m <= l pour éviter les doublons symétriques
 
 

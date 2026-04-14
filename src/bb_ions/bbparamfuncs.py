@@ -364,6 +364,16 @@ def bb8_360_14_30_code_two():
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
+''' Instead of h-cover, my search for h-undercover from the 756 code gave'''
+def bb6_378_16_20_code():
+    l= 21
+    m = 9
+    Aij = [(3, 0), (0, 10), (0, 17)]
+    Bij = [(0, 5), (3, 0), (19, 0)]
+    d_max = 20
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
 
 ''' suppress_stdout
 For suprressing the output from css_decode_sim'''
