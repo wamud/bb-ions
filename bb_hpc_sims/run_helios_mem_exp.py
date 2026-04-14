@@ -14,20 +14,16 @@ def main():
     start_time = time.time()
     
     circuit_paths = glob.glob(f"undercover_bb6/*.stim")
-    csv_path = f"undercover_helios_{job_number}.csv"
-
-
     if len(circuit_paths) == 0:
         print("No circuits")
         sys.exit()
-
     for path in circuit_paths:
         print(path)
 
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-
+    csv_path = f"undercover_helios_{job_number}.csv"
 
 
     tasks = [
