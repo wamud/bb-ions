@@ -117,7 +117,6 @@ def bb5_30_4_5_code():
 
 '''bb5_48_4_7_code'''
 def bb5_48_4_7_code():
-
     # [[48, 4, 7]] BB5 code from Ye Delfosse long chain [2503.22071] Table II
     l = 8
     m = 3
