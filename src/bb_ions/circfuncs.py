@@ -328,9 +328,14 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
     D = R
     qDidle = qL
 
+  if matrix == 'A' or matrix == 'B':
+    checkqs = X
+  if matrix == 'AT' or matrix == 'BT':
+    checkqs = Z
+
   
-  for (i, j) in Mij:
-      if j == jval: # i.e. this (i, j) appears in Mij
+  for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
+      if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
         for v in range(l): # for each check qubit within a module
           for w in range(m): # for each module
 
@@ -356,15 +361,21 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
             idle(circuit, qDidle, idle_during[gate])
             
             for w in range(m):
+
               for vprime in range(l):
                 if vprime != (v + i) % l:
                   qubit = convtok(l, m, D, vprime, w)
                   idle(circuit, [qubit], idle_during[gate])
 
+              for otherv in range(l):                 
+                if otherv != v % l:  # For check qubits not used in this timestep -- comment out if want to compare to first simulations in thesis as I forgot these idling errors
+                  qubit = convtok(l, m, checkqs, otherv, w)
+                  idle(circuit, [qubit], idle_during[gate])
+
 
             tick(circuit)
 
-        if not sequential_gates: # idle all data qubits not in the 2q gates only after all the data qubits in the two qubit gates have had their gates done in their single timestep
+        if not sequential_gates: # idle all data qubits not in this matrix.
           idle(circuit, qDidle, idle_during[gate])
           tick(circuit)
 
@@ -381,7 +392,7 @@ We are imagingin that alignging the required w to w ⊕ j (modulo m) has already
 If there are sequential gates then a shuttling time is added between each 2q gate.
 
 Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the CNOTs. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates)'''
-def add_2q_gates_for_this_ij_value(gate, matrix, circuit, jval, ival, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
+def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
 
   if gate == 'CX':
     gate = 'CNOT'
@@ -401,7 +412,7 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, jval, ival, code, regi
   qZ = registers.qZ
 
   if swap_ctrl_target == True and gate == 'CZ':
-    raise ValueError("Swapping control and target only significant with CX gate")
+    print("Swapping control and target only significant with CX gate")
 
 
   Mij = getattr(code, f"{matrix}ij")
@@ -418,7 +429,7 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, jval, ival, code, regi
     qDidle = qL
 
   
-  for (i, j) in Mij:
+  for (i, j) in Mij: # only applies a specific i, j value. i.e. this for loop only executes once.
       if j == jval: # i.e. y^j appears in M, multiplied by any power of x
         if i == ival: # i.e. the specific term x^i y^j appears in M
           for v in range(l): # for each check qubit within a module
@@ -427,10 +438,12 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, jval, ival, code, regi
               # Target and control set as if doing all CNOT gates. For CZ gates target / control doesn't matter.
               
               if matrix == 'A' or matrix == 'B': # Hx = [A|B]
+                checkqs = X
                 control =(X, v, w)
                 target = (D, (v + i) % l, (w + j) % m) 
 
-              if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT] 
+              if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT]
+                checkqs = Z
                 control= (D, (v + i) % l, (w + j) % m)
                 target = (Z, v, w)
 
@@ -442,24 +455,31 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, jval, ival, code, regi
               myCP(circuit, gate, l, m, control, target, errors)
 
             # We now apply idling errors
-            # For a given term x^i⋅y^j the most we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only X gates can be done in a single time step, where X is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step.
+            # For a given term x^i⋅y^j the most we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only N_O gates can be done in a single time step, where N_O is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step. If sequential_gates is False, then all l gates in each module can be done in a single time step. The only idling errors in this case are on the data qubits not interacted with in this timestep.
 
-            if sequential_gates:  # if we are doing one 2q gate per timestep (per module), this means for any value of (i, j) we can only do one pair of qubits at a time in each module, so we need to add idling errors to qubits that weren't in the gate, namely all the data qubits not touched by this matrix at all (e.g. R-data if doing matrix A on L-data) and any data qubit that does not have this value of v. (i.e. v' ≠ v ⊕ i)
+            if sequential_gates:  # if we are doing one 2q gate per timestep (per module), this means for any value of (i, j) we can only do one pair of qubits at a time in each module, so we need to add idling errors to qubits that weren't in the gate, namely all the data qubits not touched by this matrix at all (e.g. R-data if doing matrix A on L-data), any data qubit that does not have this value of v' (so v' ≠ v ⊕ i), and any check qubit that does not have this value of v
               
               idle(circuit, qDidle, idle_during[gate])
               
               for w in range(m):
-                for vprime in range(l):
+                
+                for vprime in range(l): # For data qubits not touched in this timestep
                   if vprime != (v + i) % l:
                     qubit = convtok(l, m, D, vprime, w)
                     idle(circuit, [qubit], idle_during[gate])
-
+                
+                
+                for otherv in range(l): # For check qubits not used in this timestep -- comment out if want to compare to first simulations in thesis as I forgot these idling errors
+                  if otherv != v % l:
+                    qubit = convtok(l, m, checkqs, otherv, w)
+                    idle(circuit, [qubit], idle_during[gate])
 
               tick(circuit)
 
-        if not sequential_gates: # idle all data qubits not in the 2q gates of this i value only after all the data qubits in the two qubit gates have had their gates done in their single timestep
-          idle(circuit, qDidle, idle_during[gate])
-          tick(circuit)
+  if not sequential_gates: # The above for loop only excecutes one particule (i,j) value. This idling on the non-touched data qubits consequently happens outside the for loop (rather than within it as in add_2q_gates function which applies multiple i values - the for loop executes something for every i value)
+    idle(circuit, qDidle, idle_during[gate])
+    tick(circuit)
+
 
 
 ''' update_shift_probs
@@ -520,51 +540,73 @@ Optional reading:
   This guarantees that the final data qubits that the Z-checks interact with are of the opposite type to the final data qubits that the X-checks interact with.
 
   When a specific code is decided upon to be realised in hardware, the j_value order can be chosen in a more optimised fashion to reduce shuttling time, while still ensuring that the final data qubits each check interacts with (and is swapped with) is of an opposite type. For now, where we are simulating multiple codes, we use this method of applying ascending j's for X-checks then descending j's for Z-checks and within each j applying the i values for A then B (or A^T then B^T) implying L then R (or R then L) data qubit interactions.'''
-def add_reversed_CNOT_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check):
+def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check):
   if ONLYCNOTs != True:
     raise ValueError("SWAP-LRC currently only written for only_CNOTs = True")
+
+
+
+  # using lowercase a to be a variable for either A or A^T and similarly for lowercase b
+
 
   if check == 'X':
     a_ij = code.Aij
     b_ij = code.Bij
     a = 'A'
     b = 'B'
+    as_is = code.As_is
+    bs_is = code.Bs_is
+  
   elif check == 'Z':
     a_ij = code.ATij
     b_ij = code.BTij
     a = 'AT'
     b = 'BT'
+    as_is = code.ATs_is
+    bs_is = code.BTs_is
   
 
-  # To test which polynomials (A or B) have a term with this final j we need to run through the values of j in Aij and Bij. Could optimise this by putting this outside here and avoiding nested loops
-  
   in_a_ij = False
   in_b_ij = False
-  
-  # using lowercase a to be a variable for either A or A^T and similarly for lowercase b
+  if jval in as_is:
+    in_a_ij = True
+  if jval in bs_is:
+    in_b_ij = True
 
-  for (i, j) in a_ij:
-    if j == jval:
-      in_a_ij = True
-      break
-  for (i, j) in b_ij:
-    if j == jval:
-      in_b_ij = True
-      break
-  
-  if in_a_ij == True and in_b_ij == True:  # this j value in both A and B (or both AT and BT if doing Z-checks) so only apply reversed CNOT b4 b
-    # Also need to check how many i values have this value of j.
-    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential)
-    # I think I need to write a function that adds two qubit gates just for a particular i value ... need to break it down.
-    add_2q_gates('CX', b, circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-    add_2q_gates('CX', b, circ, jval, code, registers, errors, idle_during, sequential)
-  if in_a_ij == True and in_b_ij == False: # If just in a
-    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential)
-  if in_b_ij == True and in_a_ij == False: # If just in b
-    add_2q_gates('CX', b, circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-    add_2q_gates('CX', b, circ, jval, code, registers, errors, idle_during, sequential)
 
+
+  if in_a_ij == True and in_b_ij == True:
+
+    # Add a's 2q gates:
+    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential) # adds for all i value(s) in A or AT
+
+    # Add b's 2q gates, with a reversed one inserted before the last one
+
+    for idx, ival in enumerate(bs_is[jval]):
+      if idx == len(bs_is[jval]) - 1: # we're on the last i value:
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+      else:
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+
+  if in_a_ij == True and in_b_ij == False:
+
+    for idx, ival in enumerate(as_is[jval]):
+      if idx == len(as_is[jval]) - 1:
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
+      else:
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+  if in_a_ij == False and in_b_ij == True:
+
+    for idx, ival in enumerate(bs_is[jval]):
+      if idx == len(bs_is[jval]) - 1:
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+      else:
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
 
 
 '''apply_cyclic_shift_and_2q_gates
@@ -631,7 +673,7 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
             thegate = 'CZ'
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... todo: also need to change measurements
-            if jval == theunion[-1]: # If we're at the final j value add the reversed CNOT and the final CNOT for the final i value.
+            if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
               add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check)
             else:
               add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
@@ -653,44 +695,16 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
             thegate = 'CNOT'
           
           
-          if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... then also need to change measurements
-            
-            if ONLYCNOTs != True:
-              raise ValueError("SWAP-LRC currently only written for only_CNOTs = True")
-            
-            if jval == theunion[-1]:
-              # If both AT and BT have this final j then we will swap the direction of BT's CNOTs. If only one of them then we swap the direction of that one. 
-              
-              in_ATij = False
-              in_BTij = False
-              
-              for (i, j) in code.ATij:
-                if j == jval:
-                  in_ATij = True
-                  break
-              for (i, j) in code.BTij:
-                if j == jval:
-                  in_BTij = True
-                  break
-              
-              if in_ATij == True and in_BTij == True:  # this j value in both A and B so just do a swap of B's CNOTs then do B's CNOTs:
-                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential)
-                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential)
-              if in_ATij == True and in_BTij == False:
-                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-                add_2q_gates('CX', 'AT', circ, jval, code, registers, errors, idle_during, sequential)
-              if in_BTij == True and in_ATij == False:
-                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-                add_2q_gates('CX', 'BT', circ, jval, code, registers, errors, idle_during, sequential)
-              
-            else: # if not the last j value just add the gates as usal:
+          if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... todo: also need to change measurements
+            if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
+              add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check)
+            else:
               add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
               add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
 
 
-
           elif SWAPLRC == False:
+
             add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
             add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
 
@@ -1039,7 +1053,7 @@ def make_BB_circuit(
     add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)
 
 
-    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions 
+    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions  ## ATTENTION -- commented out for now because I need to change measurements when adding a swap lrc circuit
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")

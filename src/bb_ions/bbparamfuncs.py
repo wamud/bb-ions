@@ -20,9 +20,10 @@ from .bbfuncs import *
 import os
 import sys
 import random
+from collections import defaultdict
 
 class Code:
-    def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion):
+    def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is):
         self.l = l
         self.m = m
         self.Aij = Aij
@@ -38,6 +39,10 @@ class Code:
         self.k = k
         self.Junion = Junion
         self.JTunion = JTunion
+        self.As_is = As_is  # " A's i's -- i.e. a dictionary that you can put a jvalue into and it returns all the i values that go with that j value"
+        self.Bs_is = Bs_is
+        self.ATs_is = ATs_is
+        self.BTs_is = BTs_is
 
 
 
@@ -87,7 +92,7 @@ def bb6_30_4_4_code():
 
 '''bb6_48_4_6_code'''
 def bb6_48_4_6_code():
-    ## Best of three of the [[48,4,6]] codes found using a search in "find_codes" directory
+    ## Best of three of the [[48,4,6]] codes found using a search in "find_codes" directory 
     l = 6
     m = 4 
     Aij = [(0, 0), (1, 0), (2, 1)]
@@ -460,7 +465,13 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     if d_max == None:
         d_max = find_d_max(Hx, Hz) 
 
-    code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion)
+    As_is = group_by_j(Aij)
+    Bs_is = group_by_j(Bij)
+    ATs_is = group_by_j(ATij)
+    BTs_is = group_by_j(BTij)
+
+
+    code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is)
 
     return code
 
@@ -550,13 +561,21 @@ def autqec_logical_ops(Hx, Hz, n = None, k = None):
 Given a bivariate polynomial, for example 
 P = x^0 + y + x^2*y^2  
 And writing tuples (i, j) for each term x^i⋅y^j, for example
-P = [(0, 0), (0, 1), (2, 2)]
+P = [(0, 0), (0, 1), (2, 1)]
 This function returns
 I(P) = list of powers of x in P
-J(P) = list of powers of y in P
-'''
+J(P) = list of powers of y in P'''
 def findIJ(P):
     IP, JP = zip(*P)
     return IP, JP
 
-
+''' group_by_j
+Creates a dictionary containing all the i's for a particular j.
+E.g. Aij = [(0, 0), (0, 1), (2, 1)]
+As_is = group_by_j(Aij)    # "A's i's" 
+As_is[1] = [0, 2]'''
+def group_by_j(P):
+    j_to_i = defaultdict(list)
+    for i, j in P:
+        j_to_i[j].append(i)
+    return dict(j_to_i)
