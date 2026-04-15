@@ -8,13 +8,13 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-ps = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
-seq_gates = True
+ps = [0.001, 0.002]
+seq_gates = False # DOING PARALLEL GATES
 exclude_opposite_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 
 
 # Generate circuits:
-for code in [bb6_378_16_18_code()]:
+for code in [gross_code(), two_gross_code(), bb6_360_code(), fortnight_code(), bb8_288_14_20_code(), bb8_360_14_30_code()]:
 
 
     num_syndrome_extraction_cycles = 24 # doing 24 to be the same as the BB6 360 code 
@@ -44,5 +44,5 @@ for code in [bb6_378_16_18_code()]:
         
         filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
-        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/undercover_bb6/{filename}.stim")
+        circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/parallel_gates/{filename}.stim")
 
