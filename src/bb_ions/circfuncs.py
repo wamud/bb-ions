@@ -369,6 +369,8 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
   
   for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
       if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
+        for idx in range(l * m):
+          
         for v in range(l): # for each check qubit within a module
           for w in range(m): # for each module
 
@@ -616,9 +618,12 @@ def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, seq
     # Add b's 2q gates, with a reversed one inserted before the last one
 
     for idx, ival in enumerate(bs_is[jval]):
-      if idx == len(bs_is[jval]) - 1: # we're on the last i value:
+      if idx == len(bs_is[jval]) - 1: # we're on the last i value so do the swaperoo
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+        update_qubit_indices(code, registers, b, check, ival, jval)
+
       else:
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
 
@@ -626,27 +631,108 @@ def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, seq
   if in_a_ij == True and in_b_ij == False:
 
     for idx, ival in enumerate(as_is[jval]):
-      if idx == len(as_is[jval]) - 1:
+      if idx == len(as_is[jval]) - 1: # we're on the last ival so do the swaperoo
         add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
         add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+        update_qubit_indices(code, registers, a, check, ival, jval)
+
       else:
         add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
 
   if in_a_ij == False and in_b_ij == True:
 
     for idx, ival in enumerate(bs_is[jval]):
-      if idx == len(bs_is[jval]) - 1:
+      if idx == len(bs_is[jval]) - 1: # we're on the last ival so do the swaperoo
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+        update_qubit_indices(code, registers, b, check, ival, jval)
+
       else:
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
 
 
-'''swapped_measure
-The swap leakage reduction circuit of add_swap_lrc has swapped each check qubit with the last data qubit it interacted with. So when measuring between rounds we need to alternate our mesaurements between qubits which were originally data qubits and which were originally check qubits.
-# Note to self, could be good to do this by simply adding an integer to the index of the register. As in, if we were going to measure qZ but now would like to measure qL, then we just write Z + 1. We will also need to track whether the Z-checks or X-checks are swapping with L or R data qubits because in the following rounds we need to reverse the direction of the two-qubit gates.
 
-'''
+'''update_qubit_indices
+If implementing a swap-LRC, each check qubit is swapped with the last data qubit it interacts with before the new check qubits are measured. This implies the data qubits are now on the check register, however their indexes are shifted by whatever the last interaction was becuase check qubit (v,w) interacted with data qubit (v+i, w+j) for term x^i⋅y^j.
+So in subsequent checks interactions need to between what were the data qubits (now check qubits) with the correct data qubits. 
+
+The best way to do this is simply updating the integers X, L, R, Z and the qubit indices contained in qX, qL, qR, qZ. 
+So X, L, R, Z will take on different integer values, then the indices within qX, qL, qR, qZ will change according to the swap gate they went through.
+For example, if the last term in the X-checks is in A and is x^2 y^3  then this means check qubit (X, v, w) interacted with and was swapped with (L, (v + i) mod l, (w + j) mod m).
+
+This function does the required update and is used in the function add_swap_lrc
+
+matrix -- the matrix (A,B,AT or BT) that the term was in
+i, j -- the i and j of the term x^i⋅y^j 
+check -- are we doing'X' or 'Z' stabiliser check'''
+def update_qubit_indices(code, registers, matrix, check, i, j):
+
+  # Get current data qubits:
+  if matrix == 'A' or matrix == 'BT':
+    D = registers.L
+    qD = registers.qL
+  elif matrix == 'B' or matrix == 'AT':
+    D = registers.R
+    qD = registers.qR
+
+  # Get current check qubits:
+  if check == 'X':
+    C = registers.X
+    qC = registers.qX
+  elif check == 'Z':
+    C = registers.Z
+    qC = registers.qZ
+
+  # Get code paramaters
+  l = code.l
+  m = code.m 
+  
+  # Save current registers
+  temp_qC = qC.copy()
+  temp_qD = qD.copy()
+
+  # Start updating qubit registers
+  for idx in range(l * m):
+    this_qC_idx = temp_qC[idx]
+    u, v, w = convtouvw(l, m, this_qC_idx)
+    # Update the index:
+    qC[idx] = convtok(l, m, D, (v + i) % l, (w + j) % m)   # E.g. the 0-th check qubit (0, 0) swapped with D-data (L-data or R-data) qubit (v + i, w + j).
+    
+  for idx in range(l * m):
+    this_qD_idx = temp_qD[idx]
+    u, v, w = convtouvw(l, m, this_qD_idx)
+    qD[idx] = convtok(l, m, C, (v - i) % l, (w - j) % m)   # Conversely the 0-th D-data qubit swapped with C-check qubit (v - i, w - j)
+  
+  # Update register indices:
+  temp_C = C
+  C = D
+  D = temp_C
+
+  # So we now have an updated qC, qD, C and D. So now we want to replace what is in the registers object for qC, qD, C and D (with the exact C ∈ {X, Z} and D ∈ {L, R} depending on what matrix and check we did) with these update values:
+  if matrix == 'A' or matrix == 'BT':
+    registers.L = D
+    registers.qL = qD
+  elif matrix == 'B' or matrix == 'AT':
+    registers.R = D
+    registers.qR = qD
+  
+  if check == 'X':
+    registers.X = C
+    registers.qX = qC
+  elif check == 'Z':
+    registers.Z = C
+    registers.qZ = qC
+
+
+
+
+# Not sure I need to write the below function now ... if the registers are updating then the measures should just update too...
+# '''swapped_measure
+# The swap leakage reduction circuit of add_swap_lrc has swapped each check qubit with the last data qubit it interacted with. So when measuring between rounds we need to alternate our mesaurements between qubits which were originally data qubits and which were originally check qubits.
+# # Note to self, could be good to do this by simply adding an integer to the index of the register. As in, if we were going to measure qZ but now would like to measure qL, then we just write Z + 1. We will also need to track whether the Z-checks or X-checks are swapping with L or R data qubits because in the following rounds we need to reverse the direction of the two-qubit gates.
+# '''
 
 
 '''apply_cyclic_shift_and_2q_gates
@@ -1011,7 +1097,7 @@ def make_BB_circuit(
 
     # Do cyclic shifts to required j-valued modules (and return last j position)
 
-    # TESTING:
+
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates)
     
 
@@ -1026,10 +1112,9 @@ def make_BB_circuit(
     tick(circ)
 
     # Now measure the check qubits
-    if SWAPLRC == False:
-      measure('Z', circ, qC, errors)
-    if SWAPLRC == True:
-      swapped_measure('Z', circ, code, qC, errors) # the swap leakage reduction circuit has swapped the check qubits with the last data qubit they interacted with. So need to measure that one instead. 
+    
+    measure('Z', circ, qC, errors)
+    
 
     
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
@@ -1098,7 +1183,7 @@ def make_BB_circuit(
     add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)
 
 
-    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions  ## ATTENTION -- commented out for now because I need to change measurements when adding a swap lrc circuit
+    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")
