@@ -20,6 +20,39 @@ class Registers:
         self.qZ = qZ
 
 
+''' order_of_ops
+The syndrome extraction circuit we are following is as per Algorithm 2 in Edwin Tham et al.'s paper [2508.01879]. The polynomials in the BB code are A and B and made of sums of terms x^i⋅y^j. We go through each value of j and then apply any values of i that appear. This function prints that out.'''
+def order_of_ops(code):
+    print('X-checks')
+    for j in code.Junion:
+        print(f"j = {j}")
+        print("  A")
+        for (ival, jval) in code.Aij:
+            
+            if jval == j:
+                print(f"  i = {ival}")
+        
+        print("  B")
+        for (ival, jval) in code.Bij:
+            
+            if jval == j:
+                print(f"  i = {ival}")
+    
+    print('\nZ-checks')
+    for j in code.JTunion:
+        print(f"j = {j}")
+        print("  AT")
+        for (ival, jval) in code.ATij:
+            
+            if jval == j:
+                print(f"  i = {ival}")
+        
+        print("  BT")
+        for (ival, jval) in code.BTij:
+            
+            if jval == j:
+                print(f"  i = {ival}")
+
 
 ''' make_registers
 Makes lists of qubit indices dividing n = 2lm qubits evenly into qA, qB, qC, qD.
@@ -527,7 +560,7 @@ def update_shift_probs(j_dif, errors, idle_during):
 
 
 '''add_swap_lrc
-This adds a swap gate after the final 2q interaction for each stabiliser, swapping the data qubit and check qubit. This means every physical qubit gets measured every other round (while the data is preserved over rounds, unmeasured), providing a mechanism to detect leakage with a leakage-detecting measurement or at least to stop leakage propagating. As per Natalie Brown et al. (10.1088/1367-2630/ab3372) when working with CNOTs the circuit reduces to just adding a reversed-direction CNOT before the final CNOT. 
+This adds a swap gate after the final 2q interaction for each stabiliser, swapping each check qubit with the last data qubit it interacts with. This means every physical qubit gets measured every other round (while the data is preserved over rounds, unmeasured), providing a mechanism to detect leakage with a leakage-detecting measurement or at least to stop leakage propagating. As per Natalie Brown et al. (10.1088/1367-2630/ab3372) when working with CNOTs the circuit reduces to just adding a reversed-direction CNOT before the final CNOT. 
 
 Optional reading:
   We need to make sure we are inserting a reversed-direction CNOT before what is indeed the final CNOT of each check.
@@ -607,6 +640,13 @@ def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, seq
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
       else:
         add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+
+
+'''swapped_measure
+The swap leakage reduction circuit of add_swap_lrc has swapped each check qubit with the last data qubit it interacted with. So when measuring between rounds we need to alternate our mesaurements between qubits which were originally data qubits and which were originally check qubits.
+# Note to self, could be good to do this by simply adding an integer to the index of the register. As in, if we were going to measure qZ but now would like to measure qL, then we just write Z + 1. We will also need to track whether the Z-checks or X-checks are swapping with L or R data qubits because in the following rounds we need to reverse the direction of the two-qubit gates.
+
+'''
 
 
 '''apply_cyclic_shift_and_2q_gates
@@ -855,7 +895,7 @@ Inputs are:
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
     - memory_basis
             Either 'Z' or 'X' to preserve logical 0 or + respectively in all the logical qubits
-    - sequential_gates = True
+    - sequential_gates
             Whether disjoint two-qubit gates are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
             More explanation: For a given term x^i⋅y^j the most we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only X gates can be done in a single time step, where X is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step.
     - exclude_opposite_basis_detectors = False
@@ -986,7 +1026,12 @@ def make_BB_circuit(
     tick(circ)
 
     # Now measure the check qubits
-    measure('Z', circ, qC, errors)
+    if SWAPLRC == False:
+      measure('Z', circ, qC, errors)
+    if SWAPLRC == True:
+      swapped_measure('Z', circ, code, qC, errors) # the swap leakage reduction circuit has swapped the check qubits with the last data qubit they interacted with. So need to measure that one instead. 
+
+    
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
     if reuse_check_qubits == True:
       tick(circ)
@@ -1053,7 +1098,7 @@ def make_BB_circuit(
     add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)
 
 
-    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions  ## ATTENTION -- commented out for now because I need to change measurements when adding a swap lrc circuit
+    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions  ## ATTENTION -- commented out for now because I need to change measurements when adding a swap lrc circuit
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")
