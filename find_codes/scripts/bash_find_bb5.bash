@@ -1,29 +1,15 @@
 #!/bin/bash
 
-for ((l=6; l<=15; l++)); do
-    for ((m=3; m<=l; m++)); do  # m <= l pour éviter les doublons symétriques
+for ((l=1; l<=3; l++)); do
+    for ((m=1; m<=l; m++)); do  # m <= l pour éviter les doublons symétriques
         
         n=$((2 * l * m))
 
-        if (( n < 60 )); then
+        if (( n > 12 )); then
             continue  
-        elif (( n <= 80 )); then
-            min_k=5
-            min_d=9
-        elif (( n <= 100 )); then
-            min_k=6
-            min_d=9
-        elif (( n <= 120 )); then
-            min_k=8
-            min_d=9
-        elif (( n <= 150 )); then
-            min_k=9
-            min_d=9
-	elif (( n <= 300 )); then
-	    min_k=12
-	    min_d=12
-   	elif (( n > 300 )); then
-	       continue	
+        elif (( n <= 12 )); then
+            min_k=1
+            min_d=2
         fi
 
         python3.11 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &

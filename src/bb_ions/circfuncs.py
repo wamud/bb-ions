@@ -223,7 +223,7 @@ def add_final_detectors(circ, code, memory_basis):
           +
           [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # It's data qubits
           # Note it is j - n because if j is the last data qubit, j = n - 1, we need stim.target_rec(-1) (most recent measurement)
-          )
+          , [k, k]) # putting at coordinates k,k for readability in timeline.
 
   elif memory_basis == 'X':
       
@@ -235,7 +235,7 @@ def add_final_detectors(circ, code, memory_basis):
           [stim.target_rec(-2 * n + k)] # This X-check qubit
           +
           [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # Its data qubits
-          )
+          , [k, k])
   
   else:
     raise ValueError("Paramater 'memory_basis' must be either 'X' or 'Z' ")
@@ -919,7 +919,7 @@ Optional reading:
   This guarantees that the final data qubits that the Z-checks interact with are of the opposite type to the final data qubits that the X-checks interact with.
 
   When a specific code is decided upon to be realised in hardware, the j_value order can be chosen in a more optimised fashion to reduce shuttling time, while still ensuring that the final data qubits each check interacts with (and is swapped with) is of an opposite type. For now, where we are simulating multiple codes, we use this method of applying ascending j's for X-checks then descending j's for Z-checks and within each j applying the i values for A then B (or A^T then B^T) implying L then R (or R then L) data qubit interactions.'''
-def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check, reuse_check_qubits):
+def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits):
   if ONLYCNOTs != True:
     raise ValueError("SWAP-LRC currently only written for only_CNOTs = True")
 
@@ -957,44 +957,44 @@ def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, seq
   if in_a_ij == True and in_b_ij == True:
 
     # Add a's 2q gates:
-    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential) # adds for all i value(s) in A or AT
+    add_2q_gates('CX', a, circ, jval, code, registers, errors, idle_during, sequential_gates) # adds for all i value(s) in A or AT
 
     # Add b's 2q gates, with a reversed one inserted before the last one
 
     for idx, ival in enumerate(bs_is[jval]):
       if idx == len(bs_is[jval]) - 1: # we're on the last i value so do the swaperoo
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
 
   if in_a_ij == True and in_b_ij == False:
 
     for idx, ival in enumerate(as_is[jval]):
       if idx == len(as_is[jval]) - 1: # we're on the last ival so do the swaperoo
-        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
         update_qubit_indices(code, registers, a, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
   if in_a_ij == False and in_b_ij == True:
 
     for idx, ival in enumerate(bs_is[jval]):
       if idx == len(bs_is[jval]) - 1: # we're on the last ival so do the swaperoo
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential, swap_ctrl_target = True)
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential)
+        add_2q_gates_for_this_ij_value('CX', b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
 
 
 
@@ -1016,7 +1016,7 @@ Append to a stim circuit for a BB code the required cyclic shifts and two-qubit 
 - registers: indices for the stim circuit of check qubits, data qubits
 - errors: what errors and probabilities are on each operation
 - sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel'''
-def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential, reuse_check_qubits):
+def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential_gates, reuse_check_qubits):
 
     if check == 'X':
       qC = registers.qX
@@ -1072,16 +1072,16 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... todo: also need to change measurements
             if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check, reuse_check_qubits)
+              add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits)
             else:
-              add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
-              add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+              add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
+              add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_gates)
 
 
           elif SWAPLRC == False:
 
-            add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential)
-            add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential)
+            add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
+            add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_gates)
 
 
 
@@ -1095,16 +1095,16 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... todo: also need to change measurements
             if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential, check, reuse_check_qubits)
+              add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits)
             else:
-              add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
-              add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+              add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_gates)
+              add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_gates)
 
 
           elif SWAPLRC == False:
 
-            add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential)
-            add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential)
+            add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_gates)
+            add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_gates)
 
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
@@ -1132,7 +1132,7 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 - exclude_opposite_basis_detectors: if this is True, when preserving logical 0 (memory_basis = 'Z') then there are no detectors placed on the X-stabiliser measurments (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it by taking out unused nodes.
 - reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
 - sequential: whether or not the two-qubit gates within a leg are sequential or in parallel'''
-def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential, exclude_opposite_basis_detectors = False):
+def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors = False):
 
     loop_body = stim.Circuit()
 
@@ -1147,8 +1147,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     qC = qX
-
-    # Initialise check qubits
+   # Initialise check qubits
     init('Z', loop_body, qC, errors)
     idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
     tick(loop_body)
@@ -1163,7 +1162,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     tick(loop_body)
 
     # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
-    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
     # Alrighty we've done the X-check CNOTs!
 
     # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
@@ -1182,7 +1181,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       tick(loop_body)
 
 
-    # We now place detectors on these check qubit measurements which compare them and the previous round's X-check measurements
+    # We now place detectors on these check qubit measurements. They compare these measurements and the previous round's X-check measurements (even though the first round's measurements might not have detectors on them if we're in memory Z, these are comparing the *measurements* so do not need previous detectors)
     n = code.n
     if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
             # Append X-check stabiliser detectors:
@@ -1209,7 +1208,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       tick(loop_body)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
@@ -1224,7 +1223,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       tick(loop_body)
     
     
-    # We now place detectors on these check qubit measurements, comparing them and the previous round's X-check measurements
+    # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
     n = code.n
     if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
             # Append Z-check stabiliser detectors:
@@ -1371,10 +1370,13 @@ def make_BB_circuit(
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
 
     # Do cyclic shifts to required j-valued modules (and return last j position)
-
-
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
     
+    if swap_LRC: # registers have been updated:
+      qX = registers.qX
+      qL = registers.qL
+      qR = registers.qR
+      qZ = registers.qZ
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
     hadamard(circ, qX, errors)
@@ -1424,6 +1426,12 @@ def make_BB_circuit(
     # Apply required cyclic shifts and two-qubit interactions for Z-checks:
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
 
+    if swap_LRC: # registers have been updated:
+      qX = registers.qX
+      qL = registers.qL
+      qR = registers.qR
+      qZ = registers.qZ
+
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
       hadamard(circ, qZ, errors)
@@ -1444,26 +1452,134 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
     ## Make repeated / looped stabiliser measurement rounds:
-    if num_syndrome_extraction_cycles > 1:
-      loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors)
+    if swap_LRC == False:
+      if num_syndrome_extraction_cycles > 1:
+      
+        loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors)
     
-      # Append loop_body to circuit:
-      circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
+        # Append loop_body to circuit:
+        circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
 
+    elif swap_LRC == True: # Just manually tack on the extra rounds. Could improve this with a repeated loop_body, however if reusing check qubits = False (True) it requires 2 (3) rounds for qubits to be back in original position, so loop body would need to be 2 (3) rounds long. Could write code that just manually tacks on extra rounds, unless num_rounds is a multiple of 2 (3) + 1 (for the first round) then it can be made into a loop body ...
+      if num_syndrome_extraction_cycles > 1:
+        for rep in range(num_syndrome_extraction_cycles - 1):
+          
+          '''start'''
+          # Make sure we have most updated registers (may have been swapped by swap-LRC)
+          qX = registers.qX  
+          qL = registers.qL
+          qR = registers.qR
+
+          # Reset X-check qubits
+          init('Z', circ, qX, errors)
+          idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
+          tick(circ)
+
+          # Hadamard X-check qubits to |+⟩ (and Hadamard data qubits if doing only CZ gates)
+          hadamard(circ, qX, errors)
+          if ONLYCZs == True: # Only doing CZ gates, so also need to Hadamard data qubits (so that the CZs on them will act like CNOTs)
+            hadamard(circ, qL + qR, errors)
+          elif ONLYCZs == False:
+            idle(circ, qL + qR, idle_during['H']) # otherwise just idle data qubits
+          tick(circ)
+
+          # Do cyclic shifts and two-qubit gates (accepts previous j_val -- previous position of modules -- and updates it). Might also contain swap-LRC
+          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+
+          # Make sure we've updated:
+          qX = registers.qX # update because swap-LRC changed qubit registers ('registers' is updated within add_swap_lrc within apply_cyclic_shift_and_2q_gates)
+          qL = registers.qL
+          qR = registers.qR
+
+          # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
+          hadamard(circ, qX, errors)
+          if ONLYCZs == False:
+            idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
+          elif ONLYCZs == True:
+            hadamard(circ, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks. # Note this isn't working for swap-LRC yet 
+          tick(circ)
+
+          # Measure check qubits:
+          measure('Z', circ, qX, errors)
+          idle(circ, qL + qR, idle_during['MZ'])
+          if reuse_check_qubits: # if not will reset other check qubits in this same time step
+            tick(circ)
+
+          # Place detectors on these check qubit measurements which compare them and the previous round's C-check measurements
+          # However if we are doing memory Z then there won't be any first round X-detectors right???
+          n = code.n
+          if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
+                  # Append X-check stabiliser detectors:
+                  for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
+                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)]) ##### this might have to change ?? Though the measurements are supposed to have been appended in the correct order, just on qubits that are no longer in 'order' after you've done a swap-LRC. As the measurements are still in order then I believe it should be fine, the recording 'n' before this one is the corresponding check ...
+          
+
+          ## Z-checks:
+          
+          qZ = registers.qZ
+          qL = registers.qL
+          qR = registers.qR
+        
+          # Initialise Z-check qubits:
+          init('Z', circ, qZ, errors)
+          idle(circ, qL + qR, idle_during['RZ'])
+          tick(circ)
+
+          # Hadamard check qubits to |+⟩, unless using only CNOT gates then we leave them in |0⟩ and do reversed-direction CNOT gates for the Z parity check
+          if ONLYCNOTs == False: 
+            hadamard(circ, qZ, errors)
+            idle(circ, qL + qR, idle_during['H'])
+            tick(circ)
+
+          # Apply required cyclic shifts and CZ interactions for Z-checks, also update registers.
+          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+
+          qZ = registers.qZ
+          qL = registers.qL
+          qR = registers.qR
+
+          # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
+          if ONLYCNOTs == False:
+            hadamard(circ, qZ, errors)
+            idle(circ, qL + qR, idle_during['H'])  # idle data qubits
+            tick(circ)
+
+          # Now measure check qubits
+          measure('Z', circ, qZ, errors)
+          idle(circ, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
+          if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
+            tick(circ)
+          
+          
+          # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
+          n = code.n
+          if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
+                  # Append Z-check stabiliser detectors:
+                  for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
+                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+          '''end'''
+
+    if swap_LRC: # update registers
+      qX = registers.qX
+      qL = registers.qL
+      qR = registers.qR
+      qZ = registers.qZ
+
+    
     # Final measurement of all data qubits:
     measure(memory_basis, circ, qL + qR, errors)
 
 
     ### Add final detectors:
-    add_final_detectors(circ, code, memory_basis)
+    add_final_detectors(circ, code, memory_basis)   # FIX  for swap LRC ? It just based on rec orderings which should be updated? 
 
 
     # Add logical observables (the Lx's or Lz's if mem X or Z):
-    add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)
+    add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)  # FIX for swap LRC ? 
 
 
 
-    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions
+    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")

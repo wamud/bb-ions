@@ -45,8 +45,44 @@ class Code:
         self.BTs_is = BTs_is
 
 
+''' Functions defining BB codes'''
 
-''' First are functions for defining some common codes:'''
+
+''' Couple small codes'''
+def bb5_12_4_2():
+    l = 3
+    m = 2
+    Aij = [[0, 0], [0, 1]]
+    Bij = [[0, 0], [1, 1], [2, 0]]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+def bb6_12_4_2():
+    l= 3
+    m = 2
+    Aij= [(0, 0), (1, 0), (2, 0)]
+    Bij =[(0, 0), (1, 1), (2, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+'''Another couple small BB codes'''
+def bb6_6_4_2(): # This is like the iceberg [[4, 2, 2]] code. It's parity-check matrices are all 1's ... so you have three X-checks that are exactly the same.
+    l= 3
+    m = 1
+    Aij= [(0, 0), (1, 0), (2, 0)]
+    Bij =[(0, 0), (1, 0), (2, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+def bb6_12_8_2():
+    l= 3
+    m = 2
+    Aij= [(0, 0), (1, 0), (2, 0)]
+    Bij =[(0, 1), (1, 1), (2, 1)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
+''' Larger BB codes from papers'''
 
 def bb6_18_4_3_code():
     # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf

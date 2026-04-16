@@ -73,6 +73,7 @@ jvalues = range(m)
 jvectors = list(itertools.product(jvalues, repeat = 5))
 random.shuffle(jvectors)
 
+seen_structures = set()   # (Aij, Bij) normalisés
 
 # To test all the possible combinations but to do so in a random order (without loading the full list of combos and using random.shuffle() as its size is prohibitive) lets do this funky nested for loop:
 for loop in range(len(ivectors)):
@@ -112,6 +113,20 @@ for loop in range(len(ivectors)):
         Bij = [(i2, j2), (i3, j3), (i4, j4)]
 
 
+        # --- normalisation translation ---
+        imin, jmin = Aij[0]
+
+        Aij_norm = [((i - imin) % l, (j - jmin) % m) for (i, j) in Aij]
+        Bij_norm = [((i - imin) % l, (j - jmin) % m) for (i, j) in Bij]
+
+        Aij_norm = sorted(Aij_norm)
+        Bij_norm = sorted(Bij_norm)
+    
+        # --- skip structures déjà vues ---
+        key_struct = (tuple(Aij_norm), tuple(Bij_norm))
+        if key_struct in seen_structures:
+            continue
+        seen_structures.add(key_struct)
 
 
         # (Could make Aij have three terms and Bij have two but if searching all the terms anyway that will just swap the roles of the left and right data qubits).
