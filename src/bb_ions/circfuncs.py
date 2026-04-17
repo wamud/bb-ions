@@ -223,7 +223,8 @@ def add_final_detectors(circ, code, memory_basis):
           +
           [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # It's data qubits
           # Note it is j - n because if j is the last data qubit, j = n - 1, we need stim.target_rec(-1) (most recent measurement)
-          , [k, k]) # putting at coordinates k,k for readability in timeline.
+          , [k, k]
+          ) # putting at coordinates k,k to make slighty more compact timeline-svg. Not sure what it's doing for other diagrams.
 
   elif memory_basis == 'X':
       
@@ -235,7 +236,8 @@ def add_final_detectors(circ, code, memory_basis):
           [stim.target_rec(-2 * n + k)] # This X-check qubit
           +
           [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # Its data qubits
-          , [k, k])
+          ,[k, k]
+          )
   
   else:
     raise ValueError("Paramater 'memory_basis' must be either 'X' or 'Z' ")
@@ -459,11 +461,10 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
     qD = qR
     qDidle = qL
 
-  if matrix == 'A' or matrix == 'B':
-    qC = qX
   if matrix == 'AT' or matrix == 'BT':
     qC = qZ
-
+  if matrix == 'A' or matrix == 'B':
+    qC = qX 
   
   for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
       if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
@@ -473,51 +474,35 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
         
         for idx in range(l * m):
           
-
-          # Target and control set as if doing all CNOT gates. For CZ gates target / control doesn't matter.
-          
           if matrix == 'A' or matrix == 'B': # Hx = [A|B]
             
-            
-            ## Code from before there were updating registers because of swap gates:
-            # control = (X, v, w)
-            # target = (D, (v + i) % l, (w + j) % m) 
-
             ## Updated code which gets updated qubit indices:
-            k = qC[idx] # get updated qX 
-            u,v,w = convtouvw(l, m, k) 
-            control = (u, v, w)
+            check_qubit = convtouvw(l, m, qC[idx])
 
-            # Want to interact with the (v+i, w+j) data qubit
+            # Let's say we're dealing with index 0. If (i, j) = (0, 0) we will just interact with qD[0]. If (i,j) = (2, 1) we need to interact with qD[(2, 1)]
+            v, w = convtorowcol(m, idx)
+            # Shift the index to interact with the (v+i, w+j)-th data qubit
             a = conv_vw_to_k((v + i) % l, (w + j) % m, m)
             a_list.append(a)
+            data_qubit = convtouvw(l, m, qD[a])
 
-            new_k = qD[a]
-            u, v, w = convtouvw(l, m, new_k)
-            target = (u, v, w)
-
+            control = check_qubit
+            target = data_qubit
 
 
           if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT] 
 
-            k = qC[idx]
-            u,v,w = convtouvw(l, m, k)
-            
-            target = (u, v, w)
+            check_qubit = convtouvw(l, m, qC[idx]) # will be target
 
-            # Want to interact with the (v + i, w + j) data qubit:
+            # Let's say we're dealing with index 0. If (i, j) = (0, 0) we will just interact with qD[0]. If (i,j) = (2, 1) we need to interact with qD[(2, 1)]
+            v, w = convtorowcol(m, idx)
+            # Shift the index to interact with the (v+i, w+j)-th data qubit
             a = conv_vw_to_k((v + i) % l, (w + j) % m, m)
             a_list.append(a)
+            data_qubit = convtouvw(l, m, qD[a])
 
-            new_k = qD[a]
-            u, v, w = convtouvw(l, m, new_k)
-            
-            control = (u, v, w)
-
-
-            ## Code from before:
-            # control= (D, (v + i) % l, (w + j) % m)
-            # target = (Z, v, w)
+            control = data_qubit
+            target = check_qubit
 
           if swap_ctrl_target == True:
             control_temp = control
@@ -620,33 +605,32 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
             if matrix == 'A' or matrix == 'B': # Hx = [A|B]
 
               ## Updated code which gets updated qubit indices:
-              k = qC[idx] # get updated qX 
-              u,v,w = convtouvw(l, m, k) 
-              control = (u, v, w)
-              # Want to interact with the (v+i, w+j) data qubit
+              check_qubit = convtouvw(l, m, qC[idx])
+
+              # Let's say we're dealing with index 0. If (i, j) = (0, 0) we will just interact with qD[0]. If (i,j) = (2, 1) we need to interact with qD[(2, 1)]
+              v, w = convtorowcol(m, idx)
+              # Shift the index to interact with the (v+i, w+j)-th data qubit
               a = conv_vw_to_k((v + i) % l, (w + j) % m, m)
               a_list.append(a)
+              data_qubit = convtouvw(l, m, qD[a])
 
-              new_k = qD[a]
-              u, v, w = convtouvw(l, m, new_k)
-              target = (u, v, w)
+              control = check_qubit
+              target = data_qubit
 
 
             if matrix == 'BT' or matrix == 'AT': # Hz = [BT|AT] 
 
-              k = qC[idx]
-              u,v,w = convtouvw(l, m, k)
-              
-              target = (u, v, w)
+              check_qubit = convtouvw(l, m, qC[idx]) # will be target
 
-              # Want to interact with the (v + i, w + j) data qubit:
+              # Let's say we're dealing with index 0. If (i, j) = (0, 0) we will just interact with qD[0]. If (i,j) = (2, 1) we need to interact with qD[(2, 1)]
+              v, w = convtorowcol(m, idx)
+              # Shift the index to interact with the (v+i, w+j)-th data qubit
               a = conv_vw_to_k((v + i) % l, (w + j) % m, m)
               a_list.append(a)
+              data_qubit = convtouvw(l, m, qD[a])
 
-              new_k = qD[a]
-              u, v, w = convtouvw(l, m, new_k)
-              
-              control = (u, v, w)
+              control = data_qubit
+              target = check_qubit
 
 
             if swap_ctrl_target == True:
@@ -863,23 +847,24 @@ def update_qubit_indices(code, registers, matrix, check, i, j, reuse_check_qubit
   temp_qD = qD.copy()
 
   # Start updating qubit registers
-  for idx in range(l * m):
-    this_qC_idx = temp_qC[idx]
-    u, v, w = convtouvw(l, m, this_qC_idx)
-    # Update the index:
-    qC[idx] = convtok(l, m, D, (v + i) % l, (w + j) % m)   # E.g. the 0-th check qubit (0, 0) swapped with D-data (L-data or R-data) qubit (v + i, w + j).
-    
-  for idx in range(l * m):
-    this_qD_idx = temp_qD[idx]
-    u, v, w = convtouvw(l, m, this_qD_idx)
-    qD[idx] = convtok(l, m, C, (v - i) % l, (w - j) % m)   # Conversely the 0-th D-data qubit swapped with C-check qubit (v - i, w - j)
-  
+  for k in range(l * m):
+
+    # we want to swap qC[k], where k = (v, w), with data qubit qD[k'], where k' = (v + i , w + j)
+    v, w = convtorowcol(m, k)
+    vprime, wprime = (v + i) % l, (w + j) % m
+    kprime = conv_vw_to_k(vprime, wprime, m)
+    # update the registers:
+    qC[k] = temp_qD[kprime] # replacing check qubit k with data qubit k'
+    qD[kprime] = temp_qC[k]      # replacing data qubit k' with check qubit k
+
+  #### UP TO HERE
+
   # Update register indices:
   temp_C = C
   C = D
   D = temp_C
 
-  # So we now have an updated qC, qD, C and D. So now we want to replace what is in the registers object for qC, qD, C and D (with the exact C ∈ {X, Z} and D ∈ {L, R} depending on what matrix and check we did) with these update values:
+  # So we now have an updated qC, qD, C and D. So now we want to replace what is in the registers object for qC, qD, C and D (with the exact C ∈ {X, Z} and D ∈ {L, R} depending on what matrix and check we did) with these updated values:
   if matrix == 'A' or matrix == 'BT':
     registers.L = D
     registers.qL = qD
@@ -1008,14 +993,17 @@ def add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, seq
 
 
 '''apply_cyclic_shift_and_2q_gates
-Append to a stim circuit for a BB code the required cyclic shifts and two-qubit gates to measure the stabilisers. This is according to Algorithm 2 of Ye ... Delfosse (2 × L array; 2508.01879). Accepts inputs
+Append to a stim circuit for a BB code the required cyclic shifts and two-qubit gates to measure the stabilisers. This is according to Algorithm 2 of Ye ... Delfosse (2 × L array; 2508.01879).
+This will also add swap-LRC if global SWAPLRC == True and update the registers qX, qL, qR, qZ depending on which were swapped.
+Accepts inputs:
 - circ: the stim circuit to be appended to
 - jval_prev: the previous arrangement of modules. If jval_prev = j this implies that check qubit module M^a_0 was aligned with data qubit module M^d_((0 + j) % m)
 - check: whether we are performing the X-stabiliser or Z-stabiliser checks
 - code: class containing paramaters of the BB code, e.g. Hx = [A|B], Hz = [B^T|A^T] etc.
 - registers: indices for the stim circuit of check qubits, data qubits
 - errors: what errors and probabilities are on each operation
-- sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel'''
+- sequential (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel
+- reuse_check_qubits: whether the one set of check qubits are being reused (possible because we're doing non-interleaved syndrome extraction, i.e. X-checks THEN Z-checks)'''
 def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential_gates, reuse_check_qubits):
 
     if check == 'X':
@@ -1077,7 +1065,6 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
               add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
               add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_gates)
 
-
           elif SWAPLRC == False:
 
             add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
@@ -1094,7 +1081,7 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... todo: also need to change measurements
-            if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
+            if jval == theunion[-1]: #and check == 'X': # TESTING -- STOPPING THIS FROM FIRING # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
               add_swap_lrc(jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits)
             else:
               add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_gates)
@@ -1281,7 +1268,7 @@ def make_BB_circuit(
   reuse_check_qubits = False,
   only_CZs = False,
   only_CNOTs = False,
-  swap_LRC = False
+  swap_LRC = False,
   ):
 
 
@@ -1317,6 +1304,9 @@ def make_BB_circuit(
     qL = registers.qL
     qR = registers.qR
     qZ = registers.qZ  
+    
+    # print(f"Au début:")
+    # print(f"qX = {registers.qX}\nqL = {registers.qL}\nqR = {registers.qR}\nqZ = {registers.qZ}")
 
     add_qubit_coordinates(circ, code, registers, reuse_check_qubits)
 
@@ -1370,13 +1360,9 @@ def make_BB_circuit(
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
 
     # Do cyclic shifts to required j-valued modules (and return last j position)
+    # This will also add swap-LRC if swap_LRC == True and update the registers qX, qL, qR, qZ depending on which were swapped.
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
-    
-    if swap_LRC: # registers have been updated:
-      qX = registers.qX
-      qL = registers.qL
-      qR = registers.qR
-      qZ = registers.qZ
+
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
     hadamard(circ, qX, errors)
@@ -1406,11 +1392,15 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
 
+
+
+
+
     # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    qL = registers.qL  # Will have updated if swap_lrc circuit
+
+    qL = registers.qL  
     qR = registers.qR
-    qZ = registers.qZ  
+    qZ = registers.qZ   ### NEED THIS UPDATE
 
     # Initialise Z-check qubits
     init('Z', circ, qZ, errors) # (note qZ = qX if reuse_check_qubits == True)
@@ -1426,11 +1416,7 @@ def make_BB_circuit(
     # Apply required cyclic shifts and two-qubit interactions for Z-checks:
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
 
-    if swap_LRC: # registers have been updated:
-      qX = registers.qX
-      qL = registers.qL
-      qR = registers.qR
-      qZ = registers.qZ
+
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
@@ -1451,6 +1437,15 @@ def make_BB_circuit(
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
+
+
+
+
+
+
+    ## SUBSEQUENT ROUNDS:
+
+
     ## Make repeated / looped stabiliser measurement rounds:
     if swap_LRC == False:
       if num_syndrome_extraction_cycles > 1:
@@ -1466,9 +1461,7 @@ def make_BB_circuit(
           
           '''start'''
           # Make sure we have most updated registers (may have been swapped by swap-LRC)
-          qX = registers.qX  
-          qL = registers.qL
-          qR = registers.qR
+          # qX = registers.qX; qL = registers.qL; qR = registers.qR; qZ =registers.qZ
 
           # Reset X-check qubits
           init('Z', circ, qX, errors)
@@ -1486,10 +1479,6 @@ def make_BB_circuit(
           # Do cyclic shifts and two-qubit gates (accepts previous j_val -- previous position of modules -- and updates it). Might also contain swap-LRC
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
 
-          # Make sure we've updated:
-          qX = registers.qX # update because swap-LRC changed qubit registers ('registers' is updated within add_swap_lrc within apply_cyclic_shift_and_2q_gates)
-          qL = registers.qL
-          qR = registers.qR
 
           # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
           hadamard(circ, qX, errors)
@@ -1513,12 +1502,12 @@ def make_BB_circuit(
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)]) ##### this might have to change ?? Though the measurements are supposed to have been appended in the correct order, just on qubits that are no longer in 'order' after you've done a swap-LRC. As the measurements are still in order then I believe it should be fine, the recording 'n' before this one is the corresponding check ...
           
+          # print("After X-checks")
+          # print(f"qX = {registers.qX}\nqL = {registers.qL}\nqR = {registers.qR}\nqZ = {registers.qZ}")
 
           ## Z-checks:
           
-          qZ = registers.qZ
-          qL = registers.qL
-          qR = registers.qR
+          # qX = registers.qX; qL = registers.qL; qR = registers.qR; qZ =registers.qZ   # For some reason don't need this update
         
           # Initialise Z-check qubits:
           init('Z', circ, qZ, errors)
@@ -1534,9 +1523,7 @@ def make_BB_circuit(
           # Apply required cyclic shifts and CZ interactions for Z-checks, also update registers.
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
 
-          qZ = registers.qZ
-          qL = registers.qL
-          qR = registers.qR
+
 
           # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
           if ONLYCNOTs == False:
@@ -1557,29 +1544,23 @@ def make_BB_circuit(
                   # Append Z-check stabiliser detectors:
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+          
+          # print("After Z-checks")
+          # print(f"qX = {registers.qX}\nqL = {registers.qL}\nqR = {registers.qR}\nqZ = {registers.qZ}")
+          
           '''end'''
 
-    if swap_LRC: # update registers
-      qX = registers.qX
-      qL = registers.qL
-      qR = registers.qR
-      qZ = registers.qZ
 
-    
-    # Final measurement of all data qubits:
+    # # Final measurement of all data qubits:
     measure(memory_basis, circ, qL + qR, errors)
-
-
     ### Add final detectors:
-    add_final_detectors(circ, code, memory_basis)   # FIX  for swap LRC ? It just based on rec orderings which should be updated? 
-
-
-    # Add logical observables (the Lx's or Lz's if mem X or Z):
+    add_final_detectors(circ, code, memory_basis)
+    ## Annotate logical observables (the Lx's or Lz's if mem X or Z):
     add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)  # FIX for swap LRC ? 
 
 
 
-    # detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions
+    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions (deterministic in the absence of noise)
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")
