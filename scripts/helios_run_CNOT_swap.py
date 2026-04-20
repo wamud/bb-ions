@@ -36,7 +36,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = 32,
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
@@ -57,7 +57,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = 32,
         max_shots = 100000,
         max_errors = 10,
         tasks = tasks,
@@ -78,7 +78,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = 32,
         max_shots = 10_000_000,
         max_errors = 5,
         tasks = tasks,
