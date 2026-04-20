@@ -23,6 +23,10 @@ class Registers:
 ''' order_of_ops
 The syndrome extraction circuit we are following is as per Algorithm 2 in Edwin Tham et al.'s paper [2508.01879]. The polynomials in the BB code are A and B and made of sums of terms x^i⋅y^j. We go through each value of j and then apply any values of i that appear. This function prints that out.'''
 def order_of_ops(code):
+
+    l = code.l
+    m = code.m 
+
     print('X-checks')
     for j in code.Junion:
         print(f"j = {j}")
@@ -40,18 +44,18 @@ def order_of_ops(code):
     
     print('\nZ-checks')
     for j in code.JTunion:
-        print(f"j = {j}")
+        print(f"j = {j%m}")
         print("  AT")
         for (ival, jval) in code.ATij:
             
             if jval == j:
-                print(f"  i = {ival}")
+                print(f"  i = {ival%l}")
         
         print("  BT")
         for (ival, jval) in code.BTij:
             
             if jval == j:
-                print(f"  i = {ival}")
+                print(f"  i = {ival%l}")
 
 
 ''' make_registers
@@ -109,26 +113,49 @@ def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
   n = code.n
 
   
-
   # qX: top left of each block:
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qX[k], [2 * (k % m), 2 * math.floor(k/m)])
+    qubit = qX[k]
+    v, w = convtorowcol(m, k)
+    x_coord = 2 * w
+    y_coord = 2 * v
+    # x_coord =  2 * math.floor(k/m)
+    # y_coord =  2 * (k % m)
+    circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
   
   # qL: top right of each block.
   # Will be same row as qX, then to the right by 1 for each column.
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qL[k], [(2 * (k % m)) + 1, 2 * math.floor(k/m)])
+    qubit = qL[k]
+    v, w = convtorowcol(m, k)
+    x_coord = 2 * w + 1
+    y_coord = 2 * v
+    # x_coord =    2 * math.floor(k/m)  
+    # y_coord =  (2 * (k % m)) + 1
+    circ.append("QUBIT_COORDS", qubit, [x_coord,y_coord])
 
   # qR: bottom left of each block.
-  # Can just add 1 to each qX row. Same column.
+  # Same x_coord of qX, one higher row
   for k in range(n//2):
-    circ.append("QUBIT_COORDS", qR[k], [2 * (k % m), (2 * math.floor(k/m)) + 1])
+    qubit = qR[k]
+    v, w = convtorowcol(m, k)
+    x_coord = 2 * w
+    y_coord = 2 * v + 1
+    # x_coord =    (2 * math.floor(k/m)) + 1
+    # y_coord =  2 * (k % m)
+    circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
 
   # qZ: if reusing one set of check qubits we don't have separate qZ and will just draw qX. If NOT reusing then qZ is bottom right of each block.
   # Same as L-data, but add 1 to each of its rows.
   if reuse_check_qubits == False:
     for k in range(n//2):
-      circ.append("QUBIT_COORDS", qZ[k], [(2 * (k % m)) + 1, (2 * math.floor(k/m)) + 1])
+      qubit = qZ[k]
+      v, w = convtorowcol(m, k)
+      x_coord = 2 * w + 1
+      y_coord = 2 * v + 1
+      # x_coord =    (2 * math.floor(k/m)) + 1
+      # y_coord =  (2 * (k % m)) + 1
+      circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
 
   return 
 
@@ -322,7 +349,7 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 
     circuit.append(error_op, [kc, kt], p)
 
-'''add_2q_gates
+'''old_add_2q_gates
 For matrix M (A, B, AT or BT) in Hx = [A|B] or Hz = [B^T|A^T], this adds the chosen two-qubit gate between check qubits and data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix M which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each check qubit (v, w) and data qubit (v ⊕ i, w ⊕ j) for one value of j. A (B) means X-checks to L(R)-data, BT (AT) means Z-check qubits to L(R)-data qubits. 
 We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
@@ -466,9 +493,11 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
   if matrix == 'A' or matrix == 'B':
     qC = qX 
   
-  for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
-      if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
-        
+  
+
+  for (i, j) in Mij: 
+      if j == jval: 
+
         idx_list = []
         a_list = []
         
@@ -509,7 +538,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
             control = target
             target = control_temp
 
-          # print(f"(i, j) = ({i}, {j})")
+          # 
           # print(f"Control = {control}")
           # print(f"Target = {target}")
 
@@ -518,7 +547,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
           idx_list.append(idx)
 
           if sequential_gates:
-            if (idx + 1) % m == 0: # This is assuming we can do m gates per time step (replace m for more or less gates). For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
+            if (idx + 1) % m == 0: # We can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
               idle(circuit, qDidle, idle_during[gate]) # all the data qubits not in this term at all
               
               for g in range(l * m):
@@ -548,7 +577,7 @@ We are imagingin that alignging the required w to w ⊕ j (modulo m) has already
 If there are sequential gates then a shuttling time is added between each 2q gate.
 Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the CNOTs. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates)'''
 def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
-
+  
   if gate == 'CX':
     gate = 'CNOT'
   
@@ -1132,7 +1161,6 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
 
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     qC = qX
    # Initialise check qubits
     init('Z', loop_body, qC, errors)
@@ -1177,7 +1205,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
 
     # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    
     qZ = registers.qZ
     qL = registers.qL
     qR = registers.qR
@@ -1317,17 +1345,22 @@ def make_BB_circuit(
 
     ## INITIALISE QUBITS:
 
-    # qC = qX # set the check-qubit register to be the X-check qubits (same indices as Z-check qubits if reuse_check_qubits == True)
+    # # For diagram (get the data qubit resets and measures out of the picture)
+    init('Z', circ, qL + qR, errors)
+    tick(circ)
+
 
     # Initialise X-check qubits
     init('Z', circ, qX, errors)
 
     if memory_basis == 'Z': 
       if ONLYCZs == True:
-        init('Z', circ, qL + qR, errors) # need to initialise a step earlier and then hadamard the data qubits
+        print(end = '') # for diagram
+        # init('Z', circ, qL + qR, errors) # need to initialise a step earlier and then hadamard the data qubits  # comment out this line for diagram
     if memory_basis == 'X':
       if ONLYCZs == False:
-        init('Z', circ, qL + qR, errors)
+        print(end = '') # for diagram
+        # init('Z', circ, qL + qR, errors)  # comment out this line for diagram
 
     tick(circ)
 
@@ -1342,11 +1375,13 @@ def make_BB_circuit(
         hadamard(circ, qL + qR, errors)
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
-        init('Z', circ, qL + qR, errors)
+        print(end = '') # for diagram
+        # init('Z', circ, qL + qR, errors)  # comment out this line for diagram
 
     if ONLYCZs == False:
       if memory_basis == 'Z':
-        init('Z', circ, qL + qR, errors) 
+        print(end = '') # for diagram
+        # init('Z', circ, qL + qR, errors)   # comment out this line for diagram
       if memory_basis == 'X':
         hadamard(circ, qL + qR, errors)
 
@@ -1354,7 +1389,8 @@ def make_BB_circuit(
 
 
 
-    # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ######## X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
     Junion = code.Junion
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
@@ -1397,7 +1433,7 @@ def make_BB_circuit(
 
 
     # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    
     qL = registers.qL  
     qR = registers.qR
     qZ = registers.qZ   ### NEED THIS UPDATE
@@ -1438,7 +1474,11 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
 
+    
 
+
+    # # for diagram:
+    tick(circ)
 
 
 
@@ -1460,6 +1500,8 @@ def make_BB_circuit(
         for rep in range(num_syndrome_extraction_cycles - 1):
           
           '''start'''
+
+    
           # Make sure we have most updated registers (may have been swapped by swap-LRC)
           # qX = registers.qX; qL = registers.qL; qR = registers.qR; qZ =registers.qZ
 
