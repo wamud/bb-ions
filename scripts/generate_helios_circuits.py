@@ -14,7 +14,11 @@ exclude_opposite_basis_detectors = True  # If set to false then it includes dete
 swap_LRC = False
 
 
-for code in [bb5_48_4_7_code()]:
+for code in [bb6_60_8_6_one(), bb6_60_8_6_two(), bb6_60_8_6_three(), bb6_60_8_6_four(), bb6_60_8_6_five(), bb6_60_8_6_six(), 
+            bb6_56_6_8_one(), bb6_56_6_8_two(), bb6_56_6_8_three(), bb6_56_6_8_four(), bb6_56_6_8_five(), bb6_56_6_8_six(), bb6_56_6_8_seven()
+            ]:
+    print(f"{code.n}, {code.k}, {code.d_max}")
+    
     for memory_basis in 'X':
 
         num_syndrome_extraction_cycles = code.d_max # was also doing 24 to compare a lot of them ....
@@ -32,7 +36,7 @@ for code in [bb5_48_4_7_code()]:
                 idle_during = helios_idle_errors(),
                 sequential_gates = seq_gates, 
                 exclude_opposite_basis_detectors = exclude_opposite_basis_detectors,
-                only_CNOTs = True,
+                only_CZs = True,
                 reuse_check_qubits = True,
                 swap_LRC = swap_LRC
             )
@@ -43,7 +47,7 @@ for code in [bb5_48_4_7_code()]:
 
             filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
             
-            circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/bb5/{filename}.stim")
+            circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/around_60/{filename}.stim")
 
 
 

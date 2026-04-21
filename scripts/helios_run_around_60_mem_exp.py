@@ -15,7 +15,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/bb5/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/around_60/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -24,7 +24,7 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/bb5_stats.csv"
+    csv_path = f"../collected_stats/helios_noise/around_60_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -36,7 +36,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
@@ -57,9 +57,9 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 100000,
-        max_errors = 10,
+        max_errors = 20,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -78,9 +78,9 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 1_000_000,
-        max_errors = 5,
+        max_errors = 20,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -95,11 +95,11 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 10_000_000,
         max_errors = 1,
         tasks = tasks,
@@ -116,12 +116,12 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 100_000_000,
         max_errors = 1,
         tasks = tasks,
@@ -138,11 +138,11 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = 4,
         max_shots = 1_000_000_000,
         max_errors = 1,
         tasks = tasks,
@@ -159,7 +159,7 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     end_time = time.time()

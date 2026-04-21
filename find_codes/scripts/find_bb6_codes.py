@@ -233,7 +233,7 @@ osd_options = {
     'osd_method': "osd_cs", 
     'osd_order': 4, 
     'channel_update': None, 
-    'seed': 42, 
+    'seed': random.seed(), 
     'max_iter': 100, 
     'tqdm_disable': 1, 
     'error_bar_precision_cutoff': 1e-6
@@ -253,12 +253,12 @@ print(f"l = {l}, m = {m}")
 
 filename = f"bb6_l{l}_m{m}_k{min_k}_d{min_d_max}"
 
-temp_file = f"../found_codes/{filename}_partial.jsonl"
-results_file = f"../found_codes/{filename}.jsonl"
-progress_file = f"../found_codes/l{l}_m{m}_progress.txt"
+temp_file = f"../found_codes/around_60/{filename}_partial.jsonl"
+results_file = f"../found_codes/around_60/{filename}.jsonl"
+progress_file = f"../found_codes/around_60/l{l}_m{m}_progress.txt"
 
 
-random.seed(42)
+random.seed()
 
 ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat=6))
