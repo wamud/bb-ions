@@ -8,14 +8,14 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-ps = [0.001, 0.002]
+ps = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 seq_gates = True 
 exclude_opposite_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 swap_LRC = False
 
 
-for code in [bb6_72_12_6_code(), gross_code()]:
-    for memory_basis in 'XZ':
+for code in [bb5_48_4_7_code()]:
+    for memory_basis in 'X':
 
         num_syndrome_extraction_cycles = code.d_max # was also doing 24 to compare a lot of them ....
         # memory_basis = 'X'  # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
@@ -43,7 +43,7 @@ for code in [bb6_72_12_6_code(), gross_code()]:
 
             filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
             
-            circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/compare_CNOT_swap_LRC/{filename}.stim")
+            circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/bb5/{filename}.stim")
 
 
 

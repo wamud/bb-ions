@@ -15,7 +15,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/BB5_comparison/*.stim")  
+    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/bb5/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -24,7 +24,7 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/BB5_comparison.csv"
+    csv_path = f"../collected_stats/helios_noise/bb5_stats.csv"
 
     tasks = [
         sinter.Task(
@@ -36,7 +36,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = 32,
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
@@ -57,9 +57,9 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = 32,
         max_shots = 100000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -78,9 +78,9 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 100_000_000,
-        max_errors = 100,
+        num_workers = 32,
+        max_shots = 1_000_000,
+        max_errors = 5,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -95,9 +95,72 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = True
+        print_progress = False
         )
 
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 10_000_000,
+        max_errors = 1,
+        tasks = tasks,
+        decoders=['bposd'],
+        # existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                max_bp_iters = 10_000, # default 30
+                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule = "serial", 
+                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order = 5 
+            )
+        },
+        print_progress = False
+        )
+
+
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 100_000_000,
+        max_errors = 1,
+        tasks = tasks,
+        decoders=['bposd'],
+        # existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                max_bp_iters = 10_000, # default 30
+                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule = "serial", 
+                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order = 5 
+            )
+        },
+        print_progress = False
+        )
+
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 1_000_000_000,
+        max_errors = 1,
+        tasks = tasks,
+        decoders=['bposd'],
+        # existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                max_bp_iters = 10_000, # default 30
+                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule = "serial", 
+                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order = 5 
+            )
+        },
+        print_progress = False
+        )
 
     end_time = time.time()
     print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
