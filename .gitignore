@@ -16,3 +16,5 @@ find_circuit_level_distance/problem.wcnf
 find_circuit_level_distance/*.svg
 output.pdf
 *output*
+find_codes/found_codes/*progress*
+find_codes/found_codes/around_60/*progress*
