@@ -17,8 +17,9 @@ for ((l=2; l<=16; l++)); do
 
         min_k=6
         min_d=8
-
-        python3.11 find_bb7_codes.py "$l" "$m" "$min_k" "$min_d" &
+	source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
+	conda activate base
+        python3 find_bb7_codes.py "$l" "$m" "$min_k" "$min_d" &
 
     done
 done

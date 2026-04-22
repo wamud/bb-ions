@@ -68,11 +68,11 @@ progress_file = f"../found_codes/l{l}_m{m}_progress.txt"
 random.seed(42)
 
 ivalues = range(l)
-ivectors = list(itertools.product(ivalues, repeat = {weight}))
+ivectors = list(itertools.product(ivalues, repeat = weight))
 random.shuffle(ivectors)
 
 jvalues = range(m)
-jvectors = list(itertools.product(jvalues, repeat = {weight}))
+jvectors = list(itertools.product(jvalues, repeat = weight))
 random.shuffle(jvectors)
 
 seen_structures = set() 
@@ -108,10 +108,7 @@ for loop in range(len(ivectors)):
         # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
         if (i0, j0) == (i1, j1) or (i0, j0) == (i2, j2) or (i1, j1) == (i2, j2):
             continue
-        if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i3, j3) == (i6, j6) 
-            or (i4, j4) == (i5, j5) or (i4, j4) == (i6, j6)
-            or (i5, j5) == (i6, j6):
-            
+        if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i3, j3) == (i6, j6)  or (i4, j4) == (i5, j5) or (i4, j4) == (i6, j6) or (i5, j5) == (i6, j6):
             continue
 
         # Also equivalent polynomials with reordered terms need not be repeated. I.e. x^1y^2 + x^3 is equivalent to x^3 + x^1y^2.

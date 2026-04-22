@@ -68,11 +68,11 @@ progress_file = f"../found_codes/l{l}_m{m}_progress.txt"
 random.seed(42)
 
 ivalues = range(l)
-ivectors = list(itertools.product(ivalues, repeat = {weight}))
+ivectors = list(itertools.product(ivalues, repeat = weight))
 random.shuffle(ivectors)
 
 jvalues = range(m)
-jvectors = list(itertools.product(jvalues, repeat = {weight}))
+jvectors = list(itertools.product(jvalues, repeat = weight))
 random.shuffle(jvectors)
 
 seen_structures = set() 
