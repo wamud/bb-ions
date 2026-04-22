@@ -48,7 +48,15 @@ class Code:
 ''' Functions defining BB codes'''
 
 
-''' Couple small codes'''
+''' Small codes'''
+def bb6_6_4_2(): # This is like the iceberg [[4, 2, 2]] code. It's parity-check matrices are all 1's ... so you have three X-checks that are exactly the same.
+    l= 3
+    m = 1
+    Aij= [(0, 0), (1, 0), (2, 0)]
+    Bij =[(0, 0), (1, 0), (2, 0)]
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
 def bb5_12_4_2():
     l = 3
     m = 2
@@ -62,15 +70,6 @@ def bb6_12_4_2():
     m = 2
     Aij= [(0, 0), (1, 0), (2, 0)]
     Bij =[(0, 0), (1, 1), (2, 0)]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-
-'''Another couple small BB codes'''
-def bb6_6_4_2(): # This is like the iceberg [[4, 2, 2]] code. It's parity-check matrices are all 1's ... so you have three X-checks that are exactly the same.
-    l= 3
-    m = 1
-    Aij= [(0, 0), (1, 0), (2, 0)]
-    Bij =[(0, 0), (1, 0), (2, 0)]
     code = get_code_params(l, m, Aij, Bij)
     return code
 
@@ -94,13 +93,11 @@ def bb6_18_4_3_code():
     Bij = [(1,0), (0,0), (1,2)]
     d=3
     code = get_code_params(l, m, Aij, Bij, d)
-
     return code
 
 
-
 def bb6_18_4_4_code():
-    # [[18, 4, 4]] BB6 (weight-6 stabilisers) code from Wang et al. [2503.22071]
+    # [[18, 4, 4]] BB6 (weight-6 stabilisers) code from Wang et al. [2505.09684]
     l = 3
     m = 3
     # A = x + y^0 + y^2
