@@ -1,16 +1,22 @@
 #!/bin/bash
 
-for ((l=1; l<=12; l++)); do
-    for ((m=1; m<=l; m++)); do  # m <= l pour éviter les doublons symétriques
+for ((l=2; l<=16; l++)); do
+    for ((m=2; m<=4; m++)); do  # m <= l pour éviter les doublons symétriques
+
+        n=2*l*m
 
 
-        if [[ $l -eq 1 && $m -eq 1 ]]; then # continue if m = l = 1
+
+        if (( n > 65 )); then
             continue
-
+        elif (( n < 48)); then
+            continue
+        # elif (( m > l )); then # feel like there should be a symmetry argument that searching both (l=a, m=b) and (l=b, m=a) should be equivalent ? 
+            # continue
         fi
 
-        min_k=2
-        min_d=2
+        min_k=6
+        min_d=8
 
         python3.11 find_bb7_codes.py "$l" "$m" "$min_k" "$min_d" &
 

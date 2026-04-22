@@ -106,6 +106,7 @@ for loop in range(len(ivectors)):
         j6 = jvec[6]
         j7 = jvec[7]
 
+
         # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
         Aij = [(i0, j0), (i1, j1), (i2, j2), (i3, j3)]
         Bij = [(i4, j4), (i5, j5), (i6, j6), (i7, j7)]

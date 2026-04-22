@@ -18,7 +18,7 @@ for ((l=2; l<=16; l++)); do
         min_k=6
         min_d=8
 
-        python3.11 find_bb6_codes.py "$l" "$m" "$min_k" "$min_d" &
+        python3.11 find_bb8_codes.py "$l" "$m" "$min_k" "$min_d" &
 
     done
 done
