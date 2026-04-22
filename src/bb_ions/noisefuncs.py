@@ -200,12 +200,14 @@ def helios_errors(p):
 
 
 ''' helios_idle_errors
-    Defines noise values as per Quantinuum's Helios quantum computer [2511.05465].
-    This calculation uses that the idling error is depolarising noise. It is also identical to the cyclic shift error so probably an overestimate as these idling errors will sometimes apply to qubits that aren't moving (however this opens up the simulation possibility of equivalently just saying they're being shuttled around and cooled whenever they're idling).
+    Defines noise values as per Quantinuum's Helios quantum computer [2511.05465]. When input p = 1e-3 it is exactly as per Helios. 2e-3 is double etc.
+    The idling calculation uses that the idling error is dephasing noise and is based on when qubits are idling during their cyclic shift.It is consequently likely an overestimate as these idling errors will sometimes apply to qubits that aren't moving (however this opens up the simulation possibility of equivalently just saying they're being shuttled around and cooled whenever they're idling).
     For more details on the calculation see https://docs.google.com/spreadsheets/d/1WdbadMM03gGbK52di-t6eae_xXPnevyxqVAySLAWTwM/edit?usp=sharing
-    but basically they did an experiment where they randomly pair 98 qubits which are found in a loop. They then have to cyclically shift the loop back and forth until they have the correct pairings in the legs (which can only fit eight qubits at a time and there are two legs) and then perform four two-qubit gates, then intrazone shift, then the other four two-qubit gates after some cooling. They did all the required Coulomb potential split/merge, shifts, shuttles, cooling, junction exit / enter etc. as if they were performing these two-qubit gates but without actually performing the gates and found that the average infidelity on the qubits was 1.6 × 10^-4. They say this is due to spatiotemporal inhomogeneities in the magnetic field, implying it is dephasing noise as this changing B field would slightly change the energy levels of the hyperfine qubit that they're using and thus cause a mismatch between their phase tracking and the natural time evolution of the state under the schrodinger equation (which causes it to precess around the Bloch sphere with a relative phase e^-it(E_0 - E_1)/ℏ). With a calculation as shown in the link we can get p_z of 2.4 × 10^-4 from this average infidelity. We can then reverse calculate an effective T_2 (making the assumption that even un-moving qubits suffer from the same level of dephasing -- an overestimate) using the p_z from a dephasing channel p_z = (1/2)(1 - e^(-t/T_2)) and get T2 = 115s.'''
-def helios_idle_errors():
+    Basically, Quantinuum did an experiment where they randomly pair 98 qubits which are found in a loop. They then have to cyclically shift the loop back and forth until they have the correct pairings in the legs (which can only fit eight qubits at a time and there are two legs) and then perform four two-qubit gates, then intrazone shift, then the other four two-qubit gates after some cooling. They did all the required Coulomb potential split/merge, shifts, shuttles, cooling, junction exit / enter etc. as if they were performing these two-qubit gates but without actually performing the gates and found that the average infidelity on the qubits was 1.6 × 10^-4. They say this is due to spatiotemporal inhomogeneities in the magnetic field, implying it is dephasing noise as this changing B field would slightly change the energy levels of the hyperfine qubit that they're using and thus cause a mismatch between their phase tracking and the natural time evolution of the state under the schrodinger equation (which causes it to precess around the Bloch sphere with a relative phase e^-it(E_0 - E_1)/ℏ). With a calculation as shown in the link we can get p_z of 2.4 × 10^-4 from this average infidelity. We can then reverse calculate an effective T_2 (making the assumption that even un-moving qubits suffer from the same level of dephasing -- an overestimate) using the p_z from a dephasing channel p_z = (1/2)(1 - e^(-t/T_2)) and get T2 = 115s.'''
+def helios_idle_errors(p):
 
+
+    multiple = p/(1e-3)
     T2 = 115 # see note above
 
     # t_2q = 70e-6  # from paper. It's ≈ 70μs
@@ -222,26 +224,26 @@ def helios_idle_errors():
 
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
         
-        "H" : Error("Z_ERROR", p_idle_dephasing(t_1q, T2)),    
-        "CNOT" : Error("Z_ERROR", p_idle_dephasing(t_2q, T2)), 
-        "CZ" : Error("Z_ERROR", p_idle_dephasing(t_2q, T2)),   
+        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2)),    
+        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2)), 
+        "CZ" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2)),   
         
         # Crosstalk errors
-        "RZ" : Error("DEPOLARIZE1", 6e-5),
-        "RX" : Error("DEPOLARIZE1", 6e-5), 
-        "MZ" : Error("DEPOLARIZE1", 6e-5),
-        "MX" : Error("DEPOLARIZE1", 6e-5),
+        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5),
+        "RX" : Error("DEPOLARIZE1", multiple * 6e-5), 
+        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5),
+        "MX" : Error("DEPOLARIZE1", multiple * 6e-5),
 
-        "shuttle" : Error("Z_ERROR", 1.2e-4), 
+        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4), 
 
 
         # All the below are accounted for in shuttle
-        "merge" : Error("Z_ERROR", 0),
-        "split" : Error("Z_ERROR", 0),
-        "shift" : Error("Z_ERROR", 0), 
+        "merge" : Error("Z_ERROR", multiple * 0),
+        "split" : Error("Z_ERROR", multiple * 0),
+        "shift" : Error("Z_ERROR", multiple * 0), 
         "shift_prop_to" : None,
 
-        "pause" : Error("Z_ERROR", 0),
+        "pause" : Error("Z_ERROR", multiple * 0),
     }
 
     return helios_idle_during
