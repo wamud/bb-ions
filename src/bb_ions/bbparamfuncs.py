@@ -183,36 +183,8 @@ def bb6_60_8_6_one():
 def bb6_60_8_6_two():
     l = 6
     m = 5
-    Aij = [[0, 0], [2, 2], [3, 4]]
-    Bij = [[0, 0], [2, 1], [5, 4]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_60_8_6_three():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [2, 0], [4, 4]]
-    Bij = [[1, 0], [3, 2], [5, 3]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_60_8_6_four():
-    l = 6
-    m = 5
     Aij = [[0, 0], [0, 4], [1, 2]]
     Bij = [[1, 1], [3, 0], [4, 4]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_60_8_6_five():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [2, 4], [4, 1]]
-    Bij = [[0, 0], [2, 2], [4, 0]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_60_8_6_six():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [2, 4], [4, 4]]
-    Bij = [[0, 1], [2, 3], [4, 0]]
     code = get_code_params(l, m, Aij, Bij)
     return code
 
@@ -223,46 +195,12 @@ def bb6_56_6_8_one():
     Bij = [[3, 0], [5, 3], [6, 2]]
     code = get_code_params(l, m, Aij, Bij)
     return code
+
 def bb6_56_6_8_two():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 0], [5, 3]]
-    Bij = [[1, 0], [2, 2], [6, 2]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_56_6_8_three():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 3], [5, 1]]
-    Bij = [[1, 1], [2, 2], [6, 3]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_56_6_8_four():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 3], [5, 2]]
-    Bij = [[1, 1], [2, 2], [6, 0]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_56_6_8_five():
     l = 7
     m = 4
     Aij = [[0, 0], [1, 2], [5, 2]]
     Bij = [[1, 3], [2, 3], [6, 2]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_56_6_8_six():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 2], [5, 0]]
-    Bij = [[1, 1], [2, 2], [6, 2]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_56_6_8_seven():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 1], [5, 1]]
-    Bij = [[1, 3], [2, 1], [6, 3]]
     code = get_code_params(l, m, Aij, Bij)
     return code
 

@@ -46,7 +46,7 @@ min_k = int(sys.argv[3])
 min_d_max = int(sys.argv[4])
 
 
-weight = 7
+weight = 8
 
 print(f"l = {l}, m = {m}")
 
@@ -95,7 +95,7 @@ for loop in range(len(ivectors)):
         i4 = ivec[4]
         i5 = ivec[5]
         i6 = ivec[6]
-
+        i7 = ivec[7]
         
         j0 = jvec[0]
         j1 = jvec[1]
@@ -104,25 +104,26 @@ for loop in range(len(ivectors)):
         j4 = jvec[4]
         j5 = jvec[5]
         j6 = jvec[6]
+        j7 = jvec[7]
 
         # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
-        if (i0, j0) == (i1, j1) or (i0, j0) == (i2, j2) or (i1, j1) == (i2, j2):
+        Aij = [(i0, j0), (i1, j1), (i2, j2), (i3, j3)]
+        Bij = [(i4, j4), (i5, j5), (i6, j6), (i7, j7)]
+
+        if len(set(Aij)) != len(Aij):
             continue
-        if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i3, j3) == (i6, j6) 
-            or (i4, j4) == (i5, j5) or (i4, j4) == (i6, j6)
-            or (i5, j5) == (i6, j6):
-            
+
+        if len(set(Bij)) != len(Bij):
             continue
 
         # Also equivalent polynomials with reordered terms need not be repeated. I.e. x^1y^2 + x^3 is equivalent to x^3 + x^1y^2.
         # To avoid repeats let's just search terms that are in ascending order lexicographically (compare first element of tuple, if equal then compare second element of tuple)
-        if not ((i0, j0) < (i1, j1) < (i2, j2)):
+        if not ((i0, j0) < (i1, j1) < (i2, j2) < (i3, j3)):
             continue 
-        if not ((i3, j3) < (i4, j4) < (i5, j5) < (i6, j6)):
+        if not ((i4, j4) < (i5, j5) < (i6, j6) < (i7, j7)):
             continue 
 
-        Aij = [(i0, j0), (i1, j1), (i2, j2)]
-        Bij = [(i3, j3), (i4, j4), (i5, j5), (i6, j6)]
+
 
 
         # Normalisation translation to check for equivalent codes:

@@ -233,7 +233,7 @@ osd_options = {
     'osd_method': "osd_cs", 
     'osd_order': 4, 
     'channel_update': None, 
-    'seed': random.seed(), 
+    'seed': 42, 
     'max_iter': 100, 
     'tqdm_disable': 1, 
     'error_bar_precision_cutoff': 1e-6
@@ -258,7 +258,6 @@ results_file = f"../found_codes/around_60/{filename}.jsonl"
 progress_file = f"../found_codes/around_60/l{l}_m{m}_progress.txt"
 
 
-random.seed()
 
 ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat=6))
