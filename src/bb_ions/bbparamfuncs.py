@@ -49,12 +49,13 @@ class Code:
 
 
 ''' Small codes'''
-def bb6_6_4_2(): # This is like the iceberg [[4, 2, 2]] code. It's parity-check matrices are all 1's ... so you have three X-checks that are exactly the same.
-    l= 3
+def iceberg_code(): # Iceberg [[2m, 2m - 2, 2]] code. It's parity-check matrices are all 1's. Can be expressed as a BB code with the following parameters:
+    l = 3
     m = 1
     Aij= [(0, 0), (1, 0), (2, 0)]
     Bij =[(0, 0), (1, 0), (2, 0)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 2
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 def bb5_12_4_2():
@@ -62,7 +63,8 @@ def bb5_12_4_2():
     m = 2
     Aij = [[0, 0], [0, 1]]
     Bij = [[0, 0], [1, 1], [2, 0]]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 2
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 def bb6_12_4_2():
@@ -70,7 +72,8 @@ def bb6_12_4_2():
     m = 2
     Aij= [(0, 0), (1, 0), (2, 0)]
     Bij =[(0, 0), (1, 1), (2, 0)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 2
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 def bb6_12_8_2():
@@ -78,22 +81,23 @@ def bb6_12_8_2():
     m = 2
     Aij= [(0, 0), (1, 0), (2, 0)]
     Bij =[(0, 1), (1, 1), (2, 1)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 2
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 ''' Larger BB codes from papers'''
 
-def bb6_18_4_3_code():
-    # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf
-    l = 3 # assumed
-    m = 3 # assumed
-    # A = x + 1 + y
-    # B = x + 1 + xy^2
-    Aij = [(1,0), (0,0), (0,1)]
-    Bij = [(1,0), (0,0), (1,2)]
-    d=3
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
+# def bb6_18_4_3_code():
+#     # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf
+#     l = 3 # assumed
+#     m = 3 # assumed
+#     # A = x + 1 + y
+#     # B = x + 1 + xy^2
+#     Aij = [(1,0), (0,0), (0,1)]
+#     Bij = [(1,0), (0,0), (1,2)]
+#     d=3
+#     code = get_code_params(l, m, Aij, Bij, d)
+#     return code
 
 
 def bb6_18_4_4_code():
@@ -118,7 +122,8 @@ def bb6_30_4_4_code():
     m = 3
     Aij = [(0, 0), (0, 1), (1, 2)]
     Bij = [(0, 1), (0, 2), (2, 0)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 4
+    code = get_code_params(l, m, Aij, Bij, 4)
     return code
 
 
@@ -130,7 +135,8 @@ def bb6_48_4_6_code():
     m = 4 
     Aij = [(0, 0), (1, 0), (2, 1)]
     Bij = [(0, 1), (1, 0), (2, 1)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 6
+    code = get_code_params(l, m, Aij, Bij, d)
 
     return code
 
@@ -170,27 +176,13 @@ def bb5_48_4_7_code():
 
 ''' some found n≈60 BB6 codes that could be run on Helios'''
 
-def bb6_60_8_6_one():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [0, 2], [1, 1]]
-    Bij = [[0, 1], [2, 4], [3, 2]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-def bb6_60_8_6_two():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [0, 4], [1, 2]]
-    Bij = [[1, 1], [3, 0], [4, 4]]
-    code = get_code_params(l, m, Aij, Bij)
-    return code
-
 def bb6_56_6_8_one():
     l = 7
     m = 4
     Aij = [[0, 0], [2, 0], [3, 1]]
     Bij = [[3, 0], [5, 3], [6, 2]]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 def bb6_56_6_8_two():
@@ -198,10 +190,37 @@ def bb6_56_6_8_two():
     m = 4
     Aij = [[0, 0], [1, 2], [5, 2]]
     Bij = [[1, 3], [2, 3], [6, 2]]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-''' end of found around n=60'''
+def bb6_60_8_6_one():
+    l = 6
+    m = 5
+    Aij = [[0, 0], [0, 2], [1, 1]]
+    Bij = [[0, 1], [2, 4], [3, 2]]
+    d = 6
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+def bb6_60_8_6_two():
+    l = 6
+    m = 5
+    Aij = [[0, 0], [0, 4], [1, 2]]
+    Bij = [[1, 1], [3, 0], [4, 4]]
+    d = 6
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+def bb8_64_12_8():
+    l = 8
+    m = 4
+    Aij = [(0, 3), (2, 1), (7, 0), (7, 2)]
+    Bij = [(0, 1), (3, 3), (6, 3), (7, 1)]
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+''' End of some found around n=60'''
 
 
 
@@ -216,7 +235,8 @@ def bb6_72_12_6_code():
     # B = y^3 + x + x^2
     Aij = [(3, 0), (0, 1), (0, 2)]
     Bij = [(0, 3), (1, 0), (2, 0)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 6
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 '''bb6_90_8_10_code'''
@@ -228,7 +248,8 @@ def bb6_90_8_10_code():
     # B = x^0 + x^2 + x^7
     Aij = [(9, 0), (0, 1), (0, 2)]
     Bij = [(0, 0), (2, 0), (7, 0)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 10
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -254,7 +275,8 @@ def bb5_120_8_8_code():
     m = 10
     Aij = [(0, 0), (0, 1)]
     Bij = [(0, 0), (2, 0), (4, 4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -328,7 +350,8 @@ def bb8_64_14_8_code():
     Aij = [(1,3),(0,0),(6,0),(3,2)]
     # B = x^6 y + x^4 y + x^3 + x^5 y
     Bij = [(6,1),(4,1),(3,0),(5,1)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -340,7 +363,8 @@ def bb8_72_14_8_code():
     Aij = [(0,4),(5,4),(3,0),(5,3)]
     # B = y^5 + x^2 y + x^5 y^5 + x^3 y^4
     Bij = [(0,5),(2,1),(5,5),(3,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -352,7 +376,8 @@ def bb8_128_14_12_code():
     Aij = [(1,3),(0,4),(6,4),(3,6)]
     # B = x^6 y + x^4 y^5 + x^3 + x^5 y^5
     Bij = [(6,1),(4,5),(3,0),(5,5)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 12
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 def fortnight_code():
@@ -363,7 +388,8 @@ def fortnight_code():
     Aij = [(6,4),(5,4),(3,0),(11,3)]
     # B = y^5 + x^8 y + x^5 y^5 + x^9 y^4
     Bij = [(0,5),(8,1),(5,5),(9,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 14
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -375,7 +401,8 @@ def bb8_192_14_16_code():
     Aij = [(1,3),(0,8),(6,4),(3,2)]
     # B = x^6 y + x^4 y^5 + x^3 + x^5 y
     Bij = [(6,1),(4,5),(3,0),(5,1)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 16
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -387,7 +414,8 @@ def bb8_216_14_20_code():
     Aij = [(6,4),(5,4),(15,0),(11,3)]
     # B = y^5 + x^8 y + x^11 y^5 + x^9 y^4
     Bij = [(0,5),(8,1),(11,5),(9,4)]
-    code = get_code_params(l, m, Aij, Bij)
+    d = 20
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
@@ -442,7 +470,7 @@ Given the X and Z parity-check matrices of a css code, this function finds the m
 def find_d_max(Hx, Hz):
     
     osd_options={
-    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': random.seed(), 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
+    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': int(round(100*random.random())), 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
     }
 
     error_rate = 0.1
