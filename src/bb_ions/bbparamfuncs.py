@@ -22,6 +22,13 @@ import sys
 import random
 from collections import defaultdict
 
+# bbq for tanner graph (which is not always the best layout (can have unnecessarily long connections) and not the same qubit coordinates as my stim circuits - just adding now for a quick visualisation of BB codes, though circuit.diagram("timeslice-svg") is also good)
+import bbq # install by changing to bbqudit directory and pip install e . (the pip install bbqudit version does not have Monomial etc.)
+from bbq.polynomial import Monomial
+from bbq.bbq_code import BivariateBicycle
+from bbq.field import Field
+import matplotlib.pyplot as plt
+
 class Code:
     def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is):
         self.l = l
@@ -43,6 +50,24 @@ class Code:
         self.Bs_is = Bs_is
         self.ATs_is = ATs_is
         self.BTs_is = BTs_is
+
+    @property
+    def tanner_graph(self):
+        if hasattr(self, "_tanner_graph_done"):
+            return
+
+        field = Field(2)
+        x = Monomial(field, 'x')
+        y = Monomial(field, 'y')
+
+        A = sum((x**i * y**j for (i, j) in self.Aij))
+        B = sum((x**i * y**j for (i, j) in self.Bij))
+
+        bb = BivariateBicycle(A, B, self.l, self.m, 1)
+        bb.draw()
+        plt.title(r"Tanner graph (dif. coords. to stim circuit)")
+
+        self._tanner_graph_done = True
 
 
 ''' Functions defining BB codes'''
@@ -111,6 +136,16 @@ def bb6_18_4_4_code():
     d = 4
     code = get_code_params(l, m, Aij, Bij, d)
 
+    return code
+
+def bb4_18_2_3():
+    # Small code example from Tripier ... Delfosse IonQ [2604.19481], Fig. 13
+    l = 3 
+    m = 3
+    Aij = [(0,0), (1,0)]
+    Bij = [(0,0), (1,1)]
+    d = 3
+    code = get_code_params(l,m,Aij,Bij,d)
     return code
 
 '''BB6 codes I can find that might have been those compared to in the long chain paper [2503.22071] (found using code in find_codes folder)'''
