@@ -6,6 +6,9 @@ from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 import time
 import sys
 import os
+import multiprocessing
+
+MAX_RUNTIME = 30 # in seconds
 
 
 def main():
@@ -38,8 +41,8 @@ def main():
 
     samples = sinter.collect(
         num_workers = 4,
-        max_shots = 10,
-        max_errors = 10,
+        max_shots = 1000,
+        max_errors = 1000,
 
 
         tasks = tasks,
@@ -71,7 +74,28 @@ def main():
     print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
 
 
-if __name__ == "__main__":
-    import multiprocessing
-    multiprocessing.freeze_support()   # utile sous Windows/macOS
+# if __name__ == "__main__":
+#     import multiprocessing
+#     multiprocessing.freeze_support()   # utile sous Windows/macOS
+#     main()
+
+
+
+# Trying to get it to self-terminate:
+
+def run_main():
     main()
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+
+    p = multiprocessing.Process(target=run_main)
+    p.start()
+
+    p.join(timeout=MAX_RUNTIME)
+
+    if p.is_alive():
+        print("My own imposed time limit reached. Terminating...")
+        p.terminate()
+        p.join()
