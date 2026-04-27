@@ -16,7 +16,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"bb8/*.stim")
+    circuit_paths = glob.glob(f"little_test/*.stim")
 
     if len(circuit_paths) == 0:
         print("No circuits")
@@ -28,7 +28,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"little_bb8_helios_stats_{job_number}.csv"
+    csv_path = f"little_helios_stats_{job_number}.csv"
 
 
     tasks = [
@@ -40,7 +40,7 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 4,
+        num_workers = 1,
         max_shots = 1000,
         max_errors = 1000,
 
