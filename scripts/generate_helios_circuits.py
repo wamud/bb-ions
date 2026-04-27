@@ -10,7 +10,7 @@ from bb_ions import *
 
 ps = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]
 seq_gates = True 
-exclude_opposite_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
+exclude_opp_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 swap_LRC = False
 
 
@@ -35,7 +35,7 @@ for code in [bb6_60_8_6_one(), bb6_60_8_6_two(), bb6_60_8_6_three(), bb6_60_8_6_
                 errors = helios_errors(p),
                 idle_during = helios_idle_errors(),
                 sequential_gates = seq_gates, 
-                exclude_opposite_basis_detectors = exclude_opposite_basis_detectors,
+                exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
                 only_CZs = True,
                 reuse_check_qubits = True,
                 swap_LRC = swap_LRC
@@ -43,11 +43,9 @@ for code in [bb6_60_8_6_one(), bb6_60_8_6_two(), bb6_60_8_6_three(), bb6_60_8_6_
 
             # Save circuit:
 
-            prefix = "include" if exclude_opposite_basis_detectors == False else "exclude"
-
-            filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+            filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
             
-            circuit.to_file(f"../circuits/{noise}/{prefix}_opp_basis_detectors/around_60/{filename}.stim")
+            circuit.to_file(f"../circuits/{noise}/{filename}.stim")
 
 
 

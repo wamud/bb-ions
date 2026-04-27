@@ -15,7 +15,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/exclude_opp_basis_detectors/undercover_bb6/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/helios/undercover_bb6/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:

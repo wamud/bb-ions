@@ -209,7 +209,7 @@ def bb5_48_4_7_code():
 
     return code
 
-''' some found n≈60 BB6 codes that could be run on Helios'''
+''' Some found n≈60 BB6 codes that could be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 it can be run on Helios.'''
 
 def bb6_56_6_8_one():
     l = 7
@@ -255,7 +255,7 @@ def bb8_64_12_8():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-''' End of some found around n=60'''
+''' End of some found cocdes around n=60'''
 
 
 
