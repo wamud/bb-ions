@@ -1,25 +1,22 @@
 #!/bin/bash
 
-for ((l=2; l<=16; l++)); do
-    for ((m=2; m<=4; m++)); do  # m <= l pour éviter les doublons symétriques
+for ((l=3; l<=3; l++)); do
+    for ((m=3; m<=l; m++)); do  # m <= l pour éviter les doublons symétriques
 
         n=2*l*m
 
 
 
-        if (( n > 65 )); then
+        if (( n != 18 )); then
             continue
-        elif (( n < 48)); then
-            continue
-        # elif (( m > l )); then # feel like there should be a symmetry argument that searching both (l=a, m=b) and (l=b, m=a) should be equivalent ? 
-            # continue
         fi
 
-        min_k=6
-        min_d=8
-
-	source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
-	conda activate base
+        min_k=4
+        min_d=2
+        
+        # source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
+        #conda activate base
+        # source ~/bb_env/bin/activate # for use on loan laptop
 
         python3 find_bb8_codes.py "$l" "$m" "$min_k" "$min_d" &
 
