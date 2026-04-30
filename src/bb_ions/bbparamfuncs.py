@@ -74,7 +74,7 @@ class Code:
 
 
 ''' Small codes'''
-def six_qubit_iceberg(): # Iceberg [[2m, 2m - 2, 2]] code. It's parity-check matrices are all 1's. Can be expressed as a BB code with the following parameters:
+def bb6_6_4_2(): # Iceberg [[2m, 2m - 2, 2]] code. [[6, 4, 2]]. Its parity-check matrices are all 1's. Can be expressed as a BB code with the following parameters:
     l = 3
     m = 1
     Aij= [(0, 0), (1, 0), (2, 0)]
@@ -83,7 +83,7 @@ def six_qubit_iceberg(): # Iceberg [[2m, 2m - 2, 2]] code. It's parity-check mat
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def eight_qubit_iceberg(): #[8, 6, 2]
+def bb8_8_6_2(): #[8, 6, 2]
     l = 2
     m = 2
     Aij = [[0, 0], [0, 1], [1, 0], [1, 1]]
@@ -117,23 +117,25 @@ def bb8_12_4_2():
     Bij = [[0, 0], [0, 1], [1, 0], [1, 1]]
     return get_code_params(l, m, Aij, Bij)
 
-def bb6_12_8_2():
-    l= 3
-    m = 2
-    Aij= [(0, 0), (1, 0), (2, 0)]
-    Bij =[(0, 1), (1, 1), (2, 1)]
-    d = 2
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
+# def bb6_12_8_2():  ## Actually this is just three copies of the [[4, 2, 2]] code.
+#     l= 3
+#     m = 2
+#     Aij= [(0, 0), (1, 0), (2, 0)]
+#     Bij =[(0, 1), (1, 1), (2, 1)]
+#     d = 2
+#     code = get_code_params(l, m, Aij, Bij, d)
+#     return code
 
-def bb8_12_8_2():
-    l = 3
-    m = 2
-    Aij = [[0, 0], [0, 1], [2, 0], [2, 1]]
-    Bij = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    d = 2
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
+# def bb8_12_8_2(): # Is just two copies of a BB8 [[6, 4, 2]] code
+#     l = 3
+#     m = 2
+#     Aij = [[0, 0], [0, 1], [2, 0], [2, 1]]
+#     Bij = [[0, 0], [0, 1], [1, 0], [1, 1]]
+#     d = 2
+#     code = get_code_params(l, m, Aij, Bij, d)
+#     return code
+
+
 ''' Larger BB codes from papers'''
 
 # def bb6_18_4_3_code():

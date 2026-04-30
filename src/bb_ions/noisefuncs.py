@@ -180,7 +180,7 @@ def helios_errors(p):
         "RX" : Error("Z_ERROR", p),  
         "H" : Error("DEPOLARIZE1", 1.4e-2  * p), # Helios value is 1.4e-5, so add a power of 3 to it to account for p = 1e-3
         "CNOT" : Error("DEPOLARIZE2", 7e-1 * p), 
-        "CZ" : Error("PAULI_CHANNEL_2", [1e3* p * prob for prob in rzzprobs]),
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs]),
         "MZ" : Error("X_ERROR", p),
         "MX" : Error("Z_ERROR", p),
 

@@ -1123,9 +1123,6 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     measure('Z', loop_body, qC, errors)
     idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
     
-    if reuse_check_qubits == True: ## If not re-using, then can reset the Z-check qubits in this same time step.
-      tick(loop_body)
-
 
     # We now place detectors on these check qubit measurements. They compare these measurements and the previous round's X-check measurements (even though the first round's measurements might not have detectors on them if we're in memory Z, these are comparing the *measurements* so do not need previous detectors)
     n = code.n
@@ -1133,6 +1130,9 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
             # Append X-check stabiliser detectors:
             for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                 loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+
+    if reuse_check_qubits == True: ## If not re-using, then can reset the Z-check qubits in this same time step.
+      tick(loop_body)
 
 
     # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1165,8 +1165,6 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # Now measure check qubits
     measure('Z', loop_body, qC, errors)
     idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
-    if reuse_check_qubits == True:
-      tick(loop_body)
     
     
     # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
@@ -1175,6 +1173,9 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
             # Append Z-check stabiliser detectors:
             for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                 loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+
+    if reuse_check_qubits == True:
+      tick(loop_body)
 
     return loop_body
 
@@ -1217,10 +1218,10 @@ Inputs are:
     '''
 def make_BB_circuit(
   code = None,
-  p = None,
-  errors = None,
-  idle_during = None,
-  num_syndrome_extraction_cycles = None,
+  p = 0,
+  errors = zero_errors(),
+  idle_during = zero_idling(),
+  num_syndrome_extraction_cycles = 2,
   memory_basis = 'Z',
   sequential_gates = False,
   exclude_opposite_basis_detectors = False,
@@ -1355,8 +1356,6 @@ def make_BB_circuit(
 
     
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
-    if reuse_check_qubits == True:
-      tick(circ)
 
 
     # If preserving logical plus we put detectors on these measurements in the first round:
@@ -1365,7 +1364,8 @@ def make_BB_circuit(
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
-
+    if reuse_check_qubits == True:
+      tick(circ)
 
 
 
@@ -1415,8 +1415,7 @@ def make_BB_circuit(
     measure('Z', circ, qZ, errors)
 
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
-    if reuse_check_qubits == True:
-      tick(circ)
+
 
     # If preserving logical zero we put detectors on these (Z) check measurements in the first round:
     n = code.n
@@ -1424,7 +1423,8 @@ def make_BB_circuit(
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
-
+    if reuse_check_qubits == True:
+      tick(circ)
     
 
 
@@ -1492,8 +1492,7 @@ def make_BB_circuit(
           # Measure check qubits:
           measure('Z', circ, qX, errors)
           idle(circ, qL + qR, idle_during['MZ'])
-          if reuse_check_qubits: # if not will reset other check qubits in this same time step
-            tick(circ)
+
 
           # Place detectors on these check qubit measurements which compare them and the previous round's C-check measurements
           # However if we are doing memory Z then there won't be any first round X-detectors right???
@@ -1502,7 +1501,9 @@ def make_BB_circuit(
                   # Append X-check stabiliser detectors:
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)]) ##### this might have to change ?? Though the measurements are supposed to have been appended in the correct order, just on qubits that are no longer in 'order' after you've done a swap-LRC. As the measurements are still in order then I believe it should be fine, the recording 'n' before this one is the corresponding check ...
-          
+
+          if reuse_check_qubits: # if not will reset other check qubits in this same time step
+            tick(circ)
 
           ## Z-checks:
           
@@ -1543,8 +1544,6 @@ def make_BB_circuit(
           # Now measure check qubits
           measure('Z', circ, qZ, errors)
           idle(circ, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
-          if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
-            tick(circ)
           
           
           # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
@@ -1554,8 +1553,8 @@ def make_BB_circuit(
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
           
-          # print("After Z-checks")
-          # print(f"qX = {registers.qX}\nqL = {registers.qL}\nqR = {registers.qR}\nqZ = {registers.qZ}")
+          if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
+            tick(circ)
           
           '''end'''
 
