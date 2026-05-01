@@ -83,6 +83,8 @@ def bb6_6_4_2(): # Iceberg [[2m, 2m - 2, 2]] code. [[6, 4, 2]]. Its parity-check
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
+iceberg_code = bb6_6_4_2
+
 def bb8_8_6_2(): #[8, 6, 2]
     l = 2
     m = 2

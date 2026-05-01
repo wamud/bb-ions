@@ -253,9 +253,9 @@ print(f"l = {l}, m = {m}")
 
 filename = f"bb6_l{l}_m{m}_k{min_k}_d{min_d_max}"
 
-temp_file = f"../found_codes/around_60/{filename}_partial.jsonl"
-results_file = f"../found_codes/around_60/{filename}.jsonl"
-progress_file = f"../found_codes/around_60/l{l}_m{m}_progress.txt"
+temp_file = f"../found_codes/not_multivariate/{filename}_partial.jsonl"
+results_file = f"../found_codes/not_multivariate/{filename}.jsonl"
+progress_file = f"../found_codes/not_multivariate/l{l}_m{m}_progress.txt"
 
 
 
@@ -298,6 +298,10 @@ for loop in range(len(ivectors)):
             continue 
         if not ((i3, j3) < (i4, j4) < (i5, j5)):
             continue 
+
+        # BB6 codes of the form of original BB paper (not multivariate, A is x,y,y B is y,x,x)    
+        if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
+            continue
 
 
         Aij = [(i0, j0), (i1, j1), (i2, j2)]
@@ -367,10 +371,6 @@ for loop in range(len(ivectors)):
 
         n = 2 * l * m
 
-        if (n, k, d_max) in [(18,4,2), (18,4,4), (18,12,2)]:
-            del bb6
-            gc.collect()
-            continue
 
 
         entry = {
