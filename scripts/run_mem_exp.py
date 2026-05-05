@@ -23,9 +23,9 @@ def main():
     #     if "288_12_18" not in path and "p=0.0005" not in path
     # ]
 
-    circuit_paths = glob.glob(f"../circuits/tham_modules_noise/normal/exclude_opp_basis_detectors/288_12_18/*.stim")
+    circuit_paths = glob.glob(f"../circuits/uniform/*.stim")
 
-    csv_path = f"../collected_stats/288_12_18_code_tham_modules_noise_long_chain_BPOSD_settings.csv"
+    csv_path = f"../collected_stats/uniform/uniform.csv"
 
     tasks = [
         sinter.Task(
@@ -36,23 +36,87 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 64,
-        max_shots = 10_000_000_000,
-        max_errors = 50,
+        num_workers = 32,
+        max_shots = 1000,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
                 # max_bp_iters = 10, # default 30
-                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
-                ms_scaling_factor = 0.625, # normalisation
-                schedule="serial", 
-                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order=9
+                # bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule="serial", 
+                # osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order=9
+                max_bp_iters = 10_000, 
+                bp_method = "min_sum", 
+                osd_method = "osd_cs", 
+                osd_order = 5 
             )
         },
         print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 10000,
+        max_errors = 100,
+        tasks = tasks,
+        decoders=['bposd'],
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                max_bp_iters = 10_000, 
+                bp_method = "min_sum", 
+                osd_method = "osd_cs", 
+                osd_order = 5 
+            )
+        },
+        print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 10000,
+        max_errors = 100,
+        tasks = tasks,
+        decoders=['bposd'],
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                max_bp_iters = 10_000, 
+                bp_method = "min_sum", 
+                osd_method = "osd_cs", 
+                osd_order = 5 
+            )
+        },
+        print_progress = True
+        )
+    print("Now running to see a million shots or two errors...")
+    samples = sinter.collect(
+        num_workers = 32,
+        max_shots = 1000000,
+        max_errors = 2,
+        tasks = tasks,
+        decoders=['bposd'],
+        save_resume_filepath = csv_path,
+        custom_decoders = {
+            "bposd": SinterDecoder_BPOSD(
+                # max_bp_iters = 10, # default 30
+                # bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                # ms_scaling_factor = 0.625, # normalisation
+                # schedule="serial", 
+                # osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order=9
+                max_bp_iters = 10_000, 
+                bp_method = "min_sum", 
+                osd_method = "osd_cs", 
+                osd_order = 5 
+            )
+        },
+        print_progress = False
         )
 
     end_time = time.time()
