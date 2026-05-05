@@ -22,12 +22,12 @@ import sys
 import random
 from collections import defaultdict
 
-# bbq for tanner graph (which is not always the best layout (can have unnecessarily long connections) and not the same qubit coordinates as my stim circuits - just adding now for a quick visualisation of BB codes, though circuit.diagram("timeslice-svg") is also good)
-import bbq # install by changing to bbqudit directory and pip install e . (the pip install bbqudit version does not have Monomial etc.)
-from bbq.polynomial import Monomial
-from bbq.bbq_code import BivariateBicycle
-from bbq.field import Field
-import matplotlib.pyplot as plt
+# # bbq for tanner graph (which is not always the best layout (can have unnecessarily long connections) and not the same qubit coordinates as my stim circuits - just adding now for a quick visualisation of BB codes, though circuit.diagram("timeslice-svg") is also good)
+# import bbq # install by changing to bbqudit directory and pip install e . (the pip install bbqudit version does not have Monomial etc.)
+# from bbq.polynomial import Monomial
+# from bbq.bbq_code import BivariateBicycle
+# from bbq.field import Field
+# import matplotlib.pyplot as plt
 
 class Code:
     def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is):
@@ -51,23 +51,23 @@ class Code:
         self.ATs_is = ATs_is
         self.BTs_is = BTs_is
 
-    @property
-    def tanner_graph(self):
-        if hasattr(self, "_tanner_graph_done"):
-            return
+    # @property
+    # def tanner_graph(self):
+    #     if hasattr(self, "_tanner_graph_done"):
+    #         return
 
-        field = Field(2)
-        x = Monomial(field, 'x')
-        y = Monomial(field, 'y')
+    #     field = Field(2)
+    #     x = Monomial(field, 'x')
+    #     y = Monomial(field, 'y')
 
-        A = sum((x**i * y**j for (i, j) in self.Aij))
-        B = sum((x**i * y**j for (i, j) in self.Bij))
+    #     A = sum((x**i * y**j for (i, j) in self.Aij))
+    #     B = sum((x**i * y**j for (i, j) in self.Bij))
 
-        bb = BivariateBicycle(A, B, self.l, self.m, 1)
-        bb.draw()
-        plt.title(r"Tanner graph (dif. coords. to stim circuit)")
+    #     bb = BivariateBicycle(A, B, self.l, self.m, 1)
+    #     bb.draw()
+    #     plt.title(r"Tanner graph (dif. coords. to stim circuit)")
 
-        self._tanner_graph_done = True
+    #     self._tanner_graph_done = True
 
 
 ''' Functions defining BB codes'''
