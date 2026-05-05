@@ -15,7 +15,7 @@ exclude_opposite_basis_detectors = False  # If set to false then it includes det
 swapLRC = False
 
 # Generate circuits:
-for code in [bb6_72_12_6_code(), gross_code()]:
+for code in [two_gross_code()]:
     
     num_syndrome_extraction_cycles = code.d_max
 
