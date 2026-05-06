@@ -98,7 +98,7 @@ def main():
     samples = sinter.collect(
         num_workers = 32,
         max_shots = 1000000,
-        max_errors = 2,
+        max_errors = 5,
         tasks = tasks,
         decoders=['bposd'],
         save_resume_filepath = csv_path,
@@ -116,7 +116,7 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     end_time = time.time()
