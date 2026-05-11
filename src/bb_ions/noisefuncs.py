@@ -175,7 +175,7 @@ def helios_errors(p):
     ]
 
 
-    helioserrors = {
+    helios_errors = {
 
         # We are using the Error class: Error_operation, p_error, p_leak, p_relax
         # These values are equal to Helios values when input p is 0.001:
@@ -195,8 +195,9 @@ def helios_errors(p):
         # Additional for our architecture (all accounted for in shuttle error)
         
         
-        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, ## UP TO HERE (fill leak and relax s.t. P(at least one leak is equal to 4.4e-4 when two shuttles right after eachother))
-        ), # we usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
+        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, 2.2e-1 * p), # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
+        # Next comment:
+        # we usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
         # Shuttle qubits into leg, merge their coulomb potentials, perform required two qubit gates (all powers of i for that power of j in the BB code's polynomial Σ_{i,j}(x^iy^j) ), split their coulomb potentials, shuttle, cyclic shift to next power of j, repeat. 
         # However the error from Helios incoporates all of that plus cooling! (In fact it incorporates more than all of that as it is the transport error from randomly pairing 98 qubits and perforing two qubit gates on them, whereas our circuit is simpler as the qubits do not require as much rearrangement, so in reality this is an overestimate).
         # So to incorporate that we'll just make two shuttle errors equivalent to all their "depth-1" transport (so as to let the code do its thing at the very beginning and end, saying there is half a depth-1 transport when just shuttling out at the very end before measurement)
@@ -207,45 +208,56 @@ def helios_errors(p):
         "shift_prop_to" : None, # shift_prop_to is used to make errors proportional to the length of the shift. We are OVERESTIMATING the shift error by using Helios' combined value for shift, merge/split/ junction enter exit and cooling operations from a 98 qubit program that had to randomly sort all the qubits because our program is more organised and just shifts a module of qubits to another module. Interestingly, this Helios overestimate comes out as only slightly less than the Tham et al. estimate of 30p/100
         
     }
-    return helioserrors
+    return helios_errors
 
 
 ''' helios_idle_errors
     Defines noise values as per Quantinuum's Helios quantum computer [2511.05465]. When input p = 1e-3 it is exactly as per Helios. 2e-3 is double etc.
     The idling calculation uses that the idling error is dephasing noise and is based on when qubits are idling during their cyclic shift.It is consequently likely an overestimate as these idling errors will sometimes apply to qubits that aren't moving (however this opens up the simulation possibility of equivalently just saying they're being shuttled around and cooled whenever they're idling).
     For more details on the calculation see https://docs.google.com/spreadsheets/d/1WdbadMM03gGbK52di-t6eae_xXPnevyxqVAySLAWTwM/edit?usp=sharing
-    Basically, Quantinuum did an experiment where they randomly pair 98 qubits which are found in a loop. They then have to cyclically shift the loop back and forth until they have the correct pairings in the legs (which can only fit eight qubits at a time and there are two legs) and then perform four two-qubit gates, then intrazone shift, then the other four two-qubit gates after some cooling. They did all the required Coulomb potential split/merge, shifts, shuttles, cooling, junction exit / enter etc. as if they were performing these two-qubit gates but without actually performing the gates and found that the average infidelity on the qubits was 1.6 × 10^-4. They say this is due to spatiotemporal inhomogeneities in the magnetic field, implying it is dephasing noise as this changing B field would slightly change the energy levels of the hyperfine qubit that they're using and thus cause a mismatch between their phase tracking and the natural time evolution of the state under the schrodinger equation (which causes it to precess around the Bloch sphere with a relative phase e^-it(E_0 - E_1)/ℏ). With a calculation as shown in the link we can get p_z of 2.4 × 10^-4 from this average infidelity. We can then reverse calculate an effective T_2 (making the assumption that even un-moving qubits suffer from the same level of dephasing -- an overestimate) using the p_z from a dephasing channel p_z = (1/2)(1 - e^(-t/T_2)) and get T2 = 115s.'''
+    Basically, Quantinuum did an experiment where they randomly pair 98 qubits which are found in a loop. They then have to cyclically shift the loop back and forth until they have the correct pairings in the legs (which can only fit eight qubits at a time and there are two legs) and then perform four two-qubit gates, then intrazone shift, then the other four two-qubit gates after some cooling. They did all the required Coulomb potential split/merge, shifts, shuttles, cooling, junction exit / enter etc. as if they were performing these two-qubit gates but without actually performing the gates and found that the average infidelity on the qubits was 1.6 × 10^-4. They say this is due to spatiotemporal inhomogeneities in the magnetic field, implying it is dephasing noise as this changing B field would slightly change the energy levels of the hyperfine qubit that they're using and thus cause a mismatch between their phase tracking and the natural time evolution of the state under the schrodinger equation (which causes the qubit state to precess around the Bloch sphere with a relative phase e^-it(E_0 - E_1)/ℏ). With a calculation as shown in the link we can get p_z of 2.4 × 10^-4 from this average infidelity. We can then reverse calculate an effective T_2 (making the assumption that even un-moving qubits suffer from the same level of dephasing -- an overestimate) using the p_z from a dephasing channel p_z = (1/2)(1 - e^(-t/T_2)) and get T2 = 115s.
+    
+    LEAKAGE:
+    Fig. 5 b) (1QRB), Fig. 6 b) (2QRB) and Fig. 8 b) and c) (Depth-1 Transport) of the Helios paper all show a linear leakage function in sequence length / transport depth so I'll do a linear function in time for leakage on idling qubits. We will assume a non-moving idling qubit suffers the same leakage as the idling transported qubits.
+    Calculation:
+
+    - Leakage after 55ms is 4.4e-4  (Table A5)  (Depth-1 Transport)
+    ⇒  p_l =  4.4e-4  when t = 0.055s 
+    ⇒  m   =  4.4e-4 / 0.055 = 8e-3   
+	⇒  p_l =  8e-3 * t                                       <----  idling leakage function'''
 def helios_idle_errors(p):
 
 
-    multiple = p/(1e-3)
+    multiple = p/(1e-3) # When input p = 1e-3 you get exactly the Helios errors. p = 2e-3 would be double etc.
     T2 = 115 # see note above
+
+    m = 8e-3 # from p_l = mt -- the linear leakage function in comments above
 
     # t_2q = 70e-6  # from paper. It's ≈ 70μs
     t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and 300μs of cooling and the 70μs two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates (i.e. simulating just one operation zone when sequential_gates = True in the circuit! (Also it's still an order of magnitude lower than tham_modules idling errors)).
     t_1q = 70e-6    # assuing same as two-qubit gate (overestimate. Usually is at least an order of magnitude faster)
     
     
-    ## Actually doesn't matter about measure and reset times for idling as they're dominated by crosstalk errors (which are over an order of magnitude larger)
-    # t_m  = 240e-6    # double the H1 quantinuum quantum computer (https://doi.org/10.1038/s41586-021-03318-4) in their extended data Fig. 1. c) (there was no reported time in Helios)
-    # t_r  = 310e-6   # reset is measurement + single qubit X
+    
+    t_m  = 240e-6    # double the H1 quantinuum quantum computer (https://doi.org/10.1038/s41586-021-03318-4) in their extended data Fig. 1. c) (there was no reported time in Helios)
+    t_r  = 310e-6   # reset is measurement + single qubit X
     
     
     helios_idle_during = {
 
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
         
-        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2)),    
-        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2)), 
-        "CZ" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2)),   
+        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, multiple * m * t_1q),    
+        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, multiple * m * t_2q), 
+        "CZ" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, multiple * m * t_2q),   
         
-        # Crosstalk errors
-        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5),
-        "RX" : Error("DEPOLARIZE1", multiple * 6e-5), 
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5),
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5),
+        # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
+        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, multiple * m * t_r),
+        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, multiple * m * t_r), 
+        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, multiple * m * t_m),
+        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, multiple * m * t_m),
 
-        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4), 
+        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, multiple * 2.2e-4), 
 
 
         # All the below are accounted for in shuttle
@@ -254,6 +266,7 @@ def helios_idle_errors(p):
         "shift" : Error("Z_ERROR", multiple * 0), 
         "shift_prop_to" : None,
 
+        # Opetional when we were considering just pausing the syndrome extraction.
         "pause" : Error("Z_ERROR", multiple * 0),
     }
 
