@@ -11,9 +11,11 @@ SHUTTLE_SPEED = 1 # [m/s]
 
 
 class Error:
-    def __init__(self, operation, p):
+    def __init__(self, operation, p, p_leakage = None, p_relax = None):
         self.op = operation # the error operation
         self.p = p # its probability
+        self.p_relax = p_relax # the propability of a previously-leaked qubit relaxing during this operation
+        self.p_leakage = p_leakage # the probability of a qubit leaking during this operations
 
 
 
@@ -249,13 +251,9 @@ def helios_idle_errors(p):
     return helios_idle_during
 
 
-
 ''' zero_errors
     Set all errors to zero'''
 def zero_errors():
-    """
-    Defines zero error rates.
-    """
     errors = {
 
         "RZ" : Error("DEPOLARIZE1", 0), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
@@ -279,11 +277,10 @@ def zero_errors():
     return errors
 
 
-
+''' zero_idling
+    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation'''
 def zero_idling():
-    """
-    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation.
-    """
+
     idle_during = {
         "RZ" : Error("DEPOLARIZE1", 0),
         "RX" : Error("DEPOLARIZE1", 0), 

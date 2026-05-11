@@ -306,25 +306,6 @@ def add_logical_observables(circuit, n, Lx, Lz, memory):
 
     circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in recordings], i)
 
-# ''' myCNOT
-# Appends a CNOT to a stim circuit between 
-# - control qubit (uc, vc, wc)
-# - target qubit  (ut, vt, wt)
-# where control and target are tuples'''
-# def myCNOT(circuit, l, m, control, target, errors: dict):
-#   uc, vc, wc = control
-#   ut, vt, wt = target
-#   kc = convtok(l, m, uc, vc, wc)
-#   kt = convtok(l, m, ut, vt, wt)
-  
-#   circuit.append("CNOT", [kc, kt])
-
-#   p = errors['CNOT'].p
-  
-#   if p > 0:
-  
-#     error_op = errors['CNOT'].op
-#     circuit.append(error_op, [kc, kt], p)
 
 
 
@@ -348,6 +329,11 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
     error_op = errors[gate].op
 
     circuit.append(error_op, [kc, kt], p)
+  
+
+    
+  # circuit.append("LEAKAGE", 0, 0.1)
+
 
 '''add_2q_gates
 Works when the qubit registers are updating due to SWAP gates. Apart from that it's the same as add_2q_gates.
@@ -1213,11 +1199,13 @@ Inputs are:
             If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))
     - only_CNOTs = False
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
+    - leakage_rates = None
+            Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually None, meaning no leakage will be introduced. Otherwise, a dictionary containing the leakage rates during different operations can be input. For example, leakage_dic = { "H" : 0.001 } means during a Hadamard gate the qubit has a 0.1% chance of leaking to another state, meaning the gates RELAX(0.001) and LEAKAGE(0.001) are appended after the hadamard and its usual noise. These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a 0.001 chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a 0.001 chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it subsequently interacts with also maximally depolarises.
     - swap-LRC
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round, preventing leakage from lasting the whole memory time.
     '''
 def make_BB_circuit(
-  code = None,
+  code,
   p = 0,
   errors = zero_errors(),
   idle_during = zero_idling(),
@@ -1228,18 +1216,10 @@ def make_BB_circuit(
   reuse_check_qubits = False,
   only_CZs = False,
   only_CNOTs = False,
-  swap_LRC = False,
+  leakage_rates = None,
+  swap_LRC = False
   ):
 
-
-    if num_syndrome_extraction_cycles == None:
-      num_syndrome_extraction_cycles = code.d_max
-
-    if errors == None:
-      errors = uniform_errors(p)
-
-    if idle_during == None:
-      idle_during = uniform_idling(p)
 
     if only_CZs and only_CNOTs:
       raise ValueError("Only ONE of only_CZs and only_CNOTs can be True")
@@ -1251,26 +1231,20 @@ def make_BB_circuit(
     global SWAPLRC 
     SWAPLRC = swap_LRC
 
-    # if ONLYCNOTs == False and SWAPLRC == True:
-    #   raise ValueError("SWAPLRC currently only written for only_CNOTs = True")
-
-
 
     circ = stim.Circuit()
-
 
     registers = make_registers(code.l, code.m, reuse_check_qubits = reuse_check_qubits)
     qX = registers.qX
     qL = registers.qL
     qR = registers.qR
     qZ = registers.qZ  
-    
-    # print(f"Au début:")
-    # print(f"qX = {registers.qX}\nqL = {registers.qL}\nqR = {registers.qR}\nqZ = {registers.qZ}")
+
 
     add_qubit_coordinates(circ, code, registers, reuse_check_qubits)
 
-    ## Round 0:
+   ####### Round 0:  ###############
+
     # - wait's a time step to initalise data qubits (we are assuming can't prepare |+⟩ state directly so need RZ then H)
     # - in round 0 only puts detectors on X (Z) -checks if preparing logical |+⟩ (|0⟩)
 
@@ -1366,7 +1340,6 @@ def make_BB_circuit(
 
     if reuse_check_qubits == True:
       tick(circ)
-
 
 
 
