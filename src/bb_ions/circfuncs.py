@@ -1247,6 +1247,7 @@ def make_BB_circuit(
 
    ####### Round 0:  ###############
 
+    # Is different to other rounds in that it:
     # - wait's a time step to initalise data qubits (we are assuming can't prepare |+⟩ state directly so need RZ then H)
     # - in round 0 only puts detectors on X (Z) -checks if preparing logical |+⟩ (|0⟩)
 

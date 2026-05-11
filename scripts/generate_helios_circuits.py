@@ -17,19 +17,18 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-ps = [0.001]
-seq_gates = True 
+ps = [0.001, 0.002]
+seq_gates = False 
 exclude_opp_basis_detectors = True  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
 swap_LRC = False
 
 
-for code in [bb6_60_8_6_one()]:
+for code in [bb6_248_10_14()]:
     print(f"[[{code.n}, {code.k}, {code.d_max}]]")
     
-    for memory_basis in 'X':
+    for memory_basis in 'X': # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
 
-        num_syndrome_extraction_cycles = code.d_max # was also doing 24 to compare a lot of them ....
-        # memory_basis = 'X'  # Helios suffers dephasing idling and the CZ gates are dominated by IZ and ZI errors so do mem X to see worst-case.
+        num_syndrome_extraction_cycles = code.d_max 
         noise = 'helios'  # This is purely for the filename -- make sure the 'errors' and 'idle_during' correspond
 
         for p in ps:
@@ -52,7 +51,7 @@ for code in [bb6_60_8_6_one()]:
 
             filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
             
-            circuit.to_file(f"../examples/example_circuits/{filename}.stim")
+            circuit.to_file(f"../circuits/helios/parallel_gates/{filename}.stim")
 
 
 

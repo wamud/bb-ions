@@ -6,6 +6,7 @@ from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 import time
 import sys
 import os
+import multiprocessing
 
 def main():
 
@@ -15,7 +16,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/undercover_bb6/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/helios/parallel_gates/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -24,7 +25,9 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/undercover_bb6_stats.csv"
+    csv_path = f"../collected_stats/helios_noise/other_investigations/248_parallel.csv"
+
+    existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/*parallel*.stim") 
 
     tasks = [
         sinter.Task(
@@ -36,12 +39,12 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
-        # existing_data_filepaths = existing,
+        existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
@@ -57,7 +60,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 100000,
         max_errors = 10,
         tasks = tasks,
@@ -78,7 +81,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 1_000_000,
         max_errors = 5,
         tasks = tasks,
@@ -95,11 +98,11 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 10_000_000,
         max_errors = 1,
         tasks = tasks,
@@ -116,12 +119,12 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 100_000_000,
         max_errors = 1,
         tasks = tasks,
@@ -138,11 +141,11 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     samples = sinter.collect(
-        num_workers = 64,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 1_000_000_000,
         max_errors =1,
         tasks = tasks,
@@ -159,7 +162,7 @@ def main():
                 osd_order = 5 
             )
         },
-        print_progress = False
+        print_progress = True
         )
 
     end_time = time.time()

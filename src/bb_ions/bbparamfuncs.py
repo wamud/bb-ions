@@ -493,6 +493,16 @@ def bb8_216_14_20_code():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
+def bb6_248_10_14():
+    # From 2511.13560 -- had d = 18 in paper but actually returns code distance of d_max ≤ 14.
+    l = 31
+    m = 4
+    Aij = [(0,0),  (6,0), (27,0)]
+    Bij = [(0,2), (15,3), (24,0)]
+    d = 14
+    code = get_code_params(l, m, Aij, Bij)
+    return code
+
 
 '''Bigger BB8 codes found by Ben Symons'''
 
