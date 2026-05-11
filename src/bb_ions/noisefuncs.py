@@ -11,11 +11,12 @@ SHUTTLE_SPEED = 1 # [m/s]
 
 
 class Error:
-    def __init__(self, operation, p, p_leakage = None, p_relax = None):
+    def __init__(self, operation, p, p_leak = None, p_relax = None):
         self.op = operation # the error operation
         self.p = p # its probability
+        self.p_leak = p_leak # the probability of a qubit leaking during this operations
         self.p_relax = p_relax # the propability of a previously-leaked qubit relaxing during this operation
-        self.p_leakage = p_leakage # the probability of a qubit leaking during this operations
+
 
 
 
@@ -176,18 +177,26 @@ def helios_errors(p):
 
     helioserrors = {
 
-        # These values are equal to Helios values when p = 0.001:
+        # We are using the Error class: Error_operation, p_error, p_leak, p_relax
+        # These values are equal to Helios values when input p is 0.001:
 
-        "RZ" : Error("X_ERROR", p), 
-        "RX" : Error("Z_ERROR", p),  
-        "H" : Error("DEPOLARIZE1", 1.4e-2  * p), # Helios value is 1.4e-5, so add a power of 3 to it to account for p = 1e-3
-        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p), 
-        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs]),
-        "MZ" : Error("X_ERROR", p),
-        "MX" : Error("Z_ERROR", p),
+        "RZ" : Error("X_ERROR", p, 0, 0), # p_leak = p_relax = 0 because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+        "RX" : Error("Z_ERROR", p, 0, 0),  
+
+        # To make these values equal the Helios values (we have constants multiplied by 10^3 so that when input p is 1e-3 they equal the Helios values)
+        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  1.1e-2 * p ), 
+
+        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.5e-2 * p, 5.5e-2 * p ), 
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.5e-2 * p, 5.5e-2 * p),
+        
+        "MZ" : Error("X_ERROR", p, 4.2 * p ),
+        "MX" : Error("Z_ERROR", p, 4.2 * p),
 
         # Additional for our architecture (all accounted for in shuttle error)
-        "shuttle" : Error("Z_ERROR", 12 * p / 100), # we usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
+        
+        
+        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, ## UP TO HERE (fill leak and relax s.t. P(at least one leak is equal to 4.4e-4 when two shuttles right after eachother))
+        ), # we usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
         # Shuttle qubits into leg, merge their coulomb potentials, perform required two qubit gates (all powers of i for that power of j in the BB code's polynomial Σ_{i,j}(x^iy^j) ), split their coulomb potentials, shuttle, cyclic shift to next power of j, repeat. 
         # However the error from Helios incoporates all of that plus cooling! (In fact it incorporates more than all of that as it is the transport error from randomly pairing 98 qubits and perforing two qubit gates on them, whereas our circuit is simpler as the qubits do not require as much rearrangement, so in reality this is an overestimate).
         # So to incorporate that we'll just make two shuttle errors equivalent to all their "depth-1" transport (so as to let the code do its thing at the very beginning and end, saying there is half a depth-1 transport when just shuttling out at the very end before measurement)
@@ -435,8 +444,6 @@ def our_uniform_plus_shift_and_shuttle(p, T2):
     }
     
     return errors
-
-
 
 
 

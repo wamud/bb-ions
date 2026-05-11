@@ -331,7 +331,7 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
     circuit.append(error_op, [kc, kt], p)
   
 
-    
+
   # circuit.append("LEAKAGE", 0, 0.1)
 
 
@@ -1199,10 +1199,10 @@ Inputs are:
             If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))
     - only_CNOTs = False
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
-    - leakage_rates = None
-            Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually None, meaning no leakage will be introduced. Otherwise, a dictionary containing the leakage rates during different operations can be input. For example, leakage_dic = { "H" : 0.001 } means during a Hadamard gate the qubit has a 0.1% chance of leaking to another state, meaning the gates RELAX(0.001) and LEAKAGE(0.001) are appended after the hadamard and its usual noise. These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a 0.001 chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a 0.001 chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it subsequently interacts with also maximally depolarises.
+    - leakage = False
+            Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
     - swap-LRC
-            "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round, preventing leakage from lasting the whole memory time.
+            "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
     '''
 def make_BB_circuit(
   code,
@@ -1216,7 +1216,7 @@ def make_BB_circuit(
   reuse_check_qubits = False,
   only_CZs = False,
   only_CNOTs = False,
-  leakage_rates = None,
+  leakage = False,
   swap_LRC = False
   ):
 
@@ -1230,6 +1230,8 @@ def make_BB_circuit(
     ONLYCNOTs = only_CNOTs
     global SWAPLRC 
     SWAPLRC = swap_LRC
+    global LEAKAGE
+    LEAKAGE = leakage
 
 
     circ = stim.Circuit()
