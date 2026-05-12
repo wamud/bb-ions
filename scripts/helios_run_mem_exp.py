@@ -61,7 +61,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
-        max_shots = 100000,
+        max_shots = 100_000,
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
@@ -83,7 +83,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 1_000_000,
-        max_errors = 5,
+        max_errors = 2,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -104,7 +104,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 10_000_000,
-        max_errors = 1,
+        max_errors = 2,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -126,7 +126,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 100_000_000,
-        max_errors = 1,
+        max_errors = 2,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -147,7 +147,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 1_000_000_000,
-        max_errors =1,
+        max_errors =2,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
