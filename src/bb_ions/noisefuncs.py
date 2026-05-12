@@ -184,20 +184,30 @@ def helios_errors(p):
         "RX" : Error("Z_ERROR", p, 0, 0),  
 
         # To make these values equal the Helios values (we have constants multiplied by 10^3 so that when input p is 1e-3 they equal the Helios values)
-        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  1.1e-2 * p ), 
-
-        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.5e-2 * p, 5.5e-2 * p ), 
-        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.5e-2 * p, 5.5e-2 * p),
         
-        "MZ" : Error("X_ERROR", p, 4.2 * p ),
-        "MX" : Error("Z_ERROR", p, 4.2 * p),
+        
+        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 6)), 
+        # Make p_relax = p_leak / (1 - p_leak) so when you apply relax(p_relax) then leakage(p_leak) and find the joint probabilities, you actually have P(leaked qubit relaxes) = p_leak and P(a qubit leaks) = p_leak
 
+        # For 2q gates leakage from 2QCB (what we use to get the partial pauli error model) is 1.14×10^(−4) (page 8 of Helios paper v1)
+        # ⇒ P(at least one leakage) =  1.14 × 10^(−4) = p_l^2+2p_n p_l = p_l^2 + 2(1 - p_l)p_l
+        # or 1 − p_n^2 = 1.14 × 10^−4 
+        # ⇒ p_l = 5.7 × 10^(−5)  where p_l is the probability of a single qubit leaking so will be applied to each qubit in the gate.
+        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 6)), 
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 6)), 
+        
+        
+        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 6), round_sig_fig(4.2 * p / (1 - 4.2 * p), 6)), 
+        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 6), round_sig_fig(4.2 * p / (1 - 4.2 * p), 6)), 
+
+        
         # Additional for our architecture (all accounted for in shuttle error)
         
-        
-        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, 2.2e-1 * p), # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
-        # Next comment:
-        # we usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
+         
+
+        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 6)), 
+        # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
+        # We usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
         # Shuttle qubits into leg, merge their coulomb potentials, perform required two qubit gates (all powers of i for that power of j in the BB code's polynomial Σ_{i,j}(x^iy^j) ), split their coulomb potentials, shuttle, cyclic shift to next power of j, repeat. 
         # However the error from Helios incoporates all of that plus cooling! (In fact it incorporates more than all of that as it is the transport error from randomly pairing 98 qubits and perforing two qubit gates on them, whereas our circuit is simpler as the qubits do not require as much rearrangement, so in reality this is an overestimate).
         # So to incorporate that we'll just make two shuttle errors equivalent to all their "depth-1" transport (so as to let the code do its thing at the very beginning and end, saying there is half a depth-1 transport when just shuttling out at the very end before measurement)
@@ -247,17 +257,23 @@ def helios_idle_errors(p):
 
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
         
-        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, multiple * m * t_1q),    
-        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, multiple * m * t_2q), 
-        "CZ" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, multiple * m * t_2q),   
+        
+        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 6)),  
+
+        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 6)),
+        "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 6)),   
         
         # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
-        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, multiple * m * t_r),
-        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, multiple * m * t_r), 
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, multiple * m * t_m),
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, multiple * m * t_m),
+        
+        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 6) ), 
+        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 6) ),  
 
-        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, multiple * 2.2e-4), 
+        
+        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 6) ), 
+        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 6) ), 
+
+        
+        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 6) ), 
 
 
         # All the below are accounted for in shuttle
@@ -378,9 +394,9 @@ def uniform_idling(p):
 
 
 
-''' round_sig
+''' round_sig_fig
 Rounds a number to the given amount of significant figures'''
-def round_sig(x, sig):
+def round_sig_fig(x, sig):
     if x == 0:
         return 0
     else:
@@ -392,7 +408,7 @@ def round_sig(x, sig):
 If a qubit is idling for time t, this function returns what the probability of a Z-error occurring on it will be. It takes as inputs t, the time the qubit is idling for, and T2, the characteristic time for dephasing of an idling qubit. For example p_idle(t = 100e-6, T2 = 50s) = 1e-6 , indicating that if a qubit is idling for 100μs it will experience a Z-error with probability 1e-6. This function assumes idling is a dephasing noise channel with p = 0.5(1 - e^(-t/T_2))'''
 def p_idle_dephasing(t, T2):
     p = 0.5 * (1 - np.exp(-t / T2))
-    p_rounded = round_sig(p, 3) # round to 3 sig fig
+    p_rounded = round_sig_fig(p, 3) # round to 3 sig fig
     return p_rounded
 
 ''' dephasing_idle_errors
@@ -458,51 +474,3 @@ def our_uniform_plus_shift_and_shuttle(p, T2):
     
     return errors
 
-
-
-
-''' idle
-Adds an idling error to qubits in register. The idling error is of class Error.
-E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
-def idle(circuit, register, error: Error):
-
-  p = error.p
-  
-  if p > 0:
-    circuit.append(error.op, register, p)
-
-
-''' apply_shuttle_error
-Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
-def apply_shuttle_error(circuit, register, errors: dict):
-
-    p = errors['shuttle'].p
-
-    if p > 0:
-
-        circuit.append(errors['shuttle'].op, register, p)
-
-
-
-''' apply_shift_error
-Applies an error to qubits to simulate them undergoing the cyclic shift required to align check and data qubit modules. Contained in errors is the shift constant. The actual value of p can be fed in to represent longer or shorter cyclic shifts'''
-def apply_shift_error(circuit, register, errors):
-    
-    p = errors['shift'].p
-    if p > 0:
-        circuit.append(errors['shift'].op, register, p) 
-
-
-''' apply_merge_error
-Once check modules have been cyclically shifted to the data qubit module they need to interact with, we simulate merging their coulomb potentials'''
-def apply_merge_error(circuit, register, errors: dict):
-    p = errors['merge'].p
-    if p > 0:
-        circuit.append(errors['merge'].op, register, p)
-
-''' apply_split_error
-Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them.'''
-def apply_split_error(circuit, register, errors: dict):
-    p = errors['split'].p
-    if p > 0:
-        circuit.append(errors['split'].op, register, p)

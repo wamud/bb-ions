@@ -168,6 +168,12 @@ def init(basis, circuit, register, errors: dict):
   
   reset = f"R{basis}"
   circuit.append(reset, register) # append RZ or RX
+  
+  if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
+    add_relax_then_leak(reset, circuit, register, errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+
+
+
   p = errors[reset].p
 
   if p > 0:
@@ -181,7 +187,11 @@ Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
 After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)'''
 def hadamard(circuit, register, errors: dict):
 
+  if LEAKAGE:
+    add_relax_then_leak("H", circuit, register, errors)
+
   circuit.append("H", register)
+
   
   p = errors['H'].p
   
@@ -196,6 +206,10 @@ def measure(basis: str, circuit, register, errors: dict):
   measure_string = f"M{basis}"
   
   p = errors[measure_string].p
+
+  # Append leakage:
+  if LEAKAGE:
+    add_relax_then_leak(measure_string, circuit, register, errors)
   
   # Append error before measurement
   if p > 0: 
@@ -315,11 +329,18 @@ My 'controlled-Pauli' function. Adds a CX or CZ to a stim circuit between
 - target qubit  (ut, vt, wt)
 where control and target are tuples (see make_registers for index to tuple)'''
 def myCP(circuit, gate, l, m, control, target, errors: dict):
+
+  
+  
   uc, vc, wc = control
   ut, vt, wt = target
   kc = convtok(l, m, uc, vc, wc)
   kt = convtok(l, m, ut, vt, wt)
   
+  if LEAKAGE:
+    add_relax_then_leak(gate, circuit, [kc, kt], errors)
+
+
   circuit.append(gate, [kc, kt])
 
   p = errors[gate].p
@@ -329,10 +350,11 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
     error_op = errors[gate].op
 
     circuit.append(error_op, [kc, kt], p)
+
   
 
 
-  # circuit.append("LEAKAGE", 0, 0.1)
+  
 
 
 '''add_2q_gates
@@ -761,7 +783,6 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       hadamard(circ, qC + qD, errors)
       idle(circ, qD_idle, idle_during['H'])
       tick(circ)
-
 
 
 def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors, idle_during):
@@ -1554,3 +1575,90 @@ def make_BB_circuit(
     # with open("output.svg", "w", encoding="utf-8") as f: f.write(svg)
 
     return circ
+
+
+
+
+'''add_relax_then_leak
+   Appends to a deltakit_stim circuit a RELAX gate then a LEAKAGE gate (interpretable by deltakit_stim) to the given register as per the p_relax and p_leak contained in the dictionary errors for the given operation.
+   E.g. add_relax_then_leakage('CNOT', circuit, [0, 1, 2], helios_errors(p))
+
+   We append relax THEN leakage. Note that in your errors dictionary, to have P(a qubit leaks) = P(a leaked qubit relaxes) requires p_relax = p_leak / (1 - p_leak) in the error dictionary so when you draw the tree diagram you get P(a qubit leaks) = p_l and P(a qubit relaxes and does not subsequently leak) = p_l'''
+def add_relax_then_leak(operation, circ, register, errors: dict):
+
+  p_relax = errors[operation].p_relax
+  
+  p_leak = errors[operation].p_leak
+
+  if p_relax is not None and p_relax > 0:
+    circ.append("RELAX", register, p_relax)
+  if p_leak is not None and p_leak > 0:
+    circ.append("LEAKAGE", register, p_leak)
+
+
+
+
+''' idle
+Adds an idling error to qubits in register. The idling error is of class Error.
+E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
+def idle(circuit, register, error: Error):
+
+  p = error.p
+  
+  if p > 0:
+    circuit.append(error.op, register, p)
+
+  if LEAKAGE:
+    
+    p_relax = error.p_relax
+    p_leak = error.p_leak
+
+    if p_relax is not None and p_relax > 0:
+      circuit.append("RELAX", register, p_relax)
+    if p_leak is not None and p_leak > 0:
+      circuit.append("LEAKAGE", register, p_leak)
+
+
+
+
+''' apply_shuttle_error
+Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
+def apply_shuttle_error(circuit, register, errors: dict):
+
+    p = errors['shuttle'].p
+
+    if p > 0:
+
+        circuit.append(errors['shuttle'].op, register, p)
+      
+    if LEAKAGE:
+      add_relax_then_leak('shuttle', circuit, register, errors)
+
+    
+    
+
+
+
+
+''' apply_shift_error
+Applies an error to qubits to simulate them undergoing the cyclic shift required to align check and data qubit modules. Contained in errors is the shift constant. The actual value of p can be fed in to represent longer or shorter cyclic shifts'''
+def apply_shift_error(circuit, register, errors):
+    
+    p = errors['shift'].p
+    if p > 0:
+        circuit.append(errors['shift'].op, register, p) 
+
+
+''' apply_merge_error
+Once check modules have been cyclically shifted to the data qubit module they need to interact with, we simulate merging their coulomb potentials'''
+def apply_merge_error(circuit, register, errors: dict):
+    p = errors['merge'].p
+    if p > 0:
+        circuit.append(errors['merge'].op, register, p)
+
+''' apply_split_error
+Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them.'''
+def apply_split_error(circuit, register, errors: dict):
+    p = errors['split'].p
+    if p > 0:
+        circuit.append(errors['split'].op, register, p)
