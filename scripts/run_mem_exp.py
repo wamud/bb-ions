@@ -1,3 +1,4 @@
+import multiprocessing
 import stim
 import sinter
 import numpy as np
@@ -36,7 +37,7 @@ def main():
     ]
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 1000,
         max_errors = 100,
         tasks = tasks,
@@ -60,7 +61,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
@@ -78,7 +79,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = 32,
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 10000,
         max_errors = 100,
         tasks = tasks,
@@ -96,8 +97,8 @@ def main():
         )
     print("Now running to see a million shots or two errors...")
     samples = sinter.collect(
-        num_workers = 32,
-        max_shots = 1000000,
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 10000000,
         max_errors = 5,
         tasks = tasks,
         decoders=['bposd'],
