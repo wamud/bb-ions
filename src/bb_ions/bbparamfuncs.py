@@ -524,7 +524,8 @@ def bb8_360_14_30_code():
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
-''' Instead of h-cover, me searching for an undercover of the 756 code gave'''
+
+''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
 def bb6_378_16_18_code():
     l= 21
     m = 9

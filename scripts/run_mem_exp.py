@@ -45,6 +45,7 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
+                ## Rebecca's settings:
                 # max_bp_iters = 10, # default 30
                 # bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
                 # ms_scaling_factor = 0.625, # normalisation
