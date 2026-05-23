@@ -1227,9 +1227,9 @@ Inputs are:
     '''
 def make_BB_circuit(
   code,
-  p = 0,
-  errors = zero_errors(),
-  idle_during = zero_idling(),
+  p = 1e-3,
+  errors = uniform_errors(1e-3),
+  idle_during = uniform_idling(1e-3),
   num_syndrome_extraction_cycles = 2,
   memory_basis = 'Z',
   sequential_gates = False,
