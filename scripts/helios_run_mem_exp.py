@@ -5,7 +5,7 @@ import sys
 #     sys.modules[namespace] = sys.modules[f"deltakit_{namespace}"] # setting the stim one equal to the deltakit_stim one
 
 
-sys.modules["stim"] = sys.modules[__name__]
+sys.modules["stim"] = deltakit_stim
 
 
 import sinter
