@@ -6,7 +6,7 @@ import stim
 from .kfuncs import *
 from .noisefuncs import *
 import math
-
+from typing import Any
 
 class Registers:
     def __init__(self, C = None, L = None, R = None, X = None, Z = None, qL = None, qR = None, qC = None, qX = None, qZ = None):
@@ -1226,20 +1226,22 @@ Inputs are:
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
     '''
 def make_BB_circuit(
-  code,
-  p = 1e-3,
-  errors = uniform_errors(1e-3),
-  idle_during = uniform_idling(1e-3),
-  num_syndrome_extraction_cycles = 2,
-  memory_basis = 'Z',
-  sequential_gates = False,
-  exclude_opposite_basis_detectors = False,
-  reuse_check_qubits = False,
-  only_CZs = False,
-  only_CNOTs = False,
-  leakage = False,
-  swap_LRC = False
-  ):
+    code: Any,
+    p: float = 1e-3,
+    errors: Any = uniform_errors(1e-3),
+    idle_during: Any = uniform_idling(1e-3),
+    num_syndrome_extraction_cycles: int = 2,
+    memory_basis: str = "Z",
+    sequential_gates: bool = False,
+    exclude_opposite_basis_detectors: bool = False,
+    reuse_check_qubits: bool = False,
+    only_CZs: bool = False,
+    only_CNOTs: bool = False,
+    leakage: bool = False,
+    swap_LRC: bool = False,
+    loss: bool = False,
+):
+    pass
 
 
     if only_CZs and only_CNOTs:

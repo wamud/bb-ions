@@ -184,5 +184,5 @@ def main():
 
 if __name__ == "__main__":
     import multiprocessing
-    multiprocessing.freeze_support()   # utile sous Windows/macOS
+    multiprocessing.freeze_support()   # utile sur Windows/macOS
     main()
