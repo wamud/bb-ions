@@ -1,8 +1,11 @@
 import deltakit_stim as stim
-injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
-import sys
-for namespace in injections:
-    sys.modules[namespace] = sys.modules[f"deltakit_{namespace}"] # setting the stim one equal to the deltakit_stim one
+# injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
+# import sys
+# for namespace in injections:
+#     sys.modules[namespace] = sys.modules[f"deltakit_{namespace}"] # setting the stim one equal to the deltakit_stim one
+
+
+sys.modules["stim"] = sys.modules[__name__]
 
 
 import sinter
