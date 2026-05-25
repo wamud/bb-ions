@@ -1,10 +1,5 @@
 import deltakit_stim
-# injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
 import sys
-# for namespace in injections:
-#     sys.modules[namespace] = sys.modules[f"deltakit_{namespace}"] # setting the stim one equal to the deltakit_stim one
-
-
 sys.modules["stim"] = deltakit_stim
 
 
@@ -16,6 +11,7 @@ import time
 import sys
 import os
 import multiprocessing
+
 
 def main():
 

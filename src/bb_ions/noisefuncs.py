@@ -343,16 +343,19 @@ def zero_idling():
 ''' uniform_errors
 Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).'''
 def uniform_errors(p):
+    
+    p_relax = round_sig_fig(( p / (1 - p)), 6)
+    p_leak = p
 
     errors = {
 
-        "RZ" : Error("X_ERROR", p), 
-        "RX" : Error("Z_ERROR", p),
-        "H" : Error("DEPOLARIZE1", p),
-        "CNOT" : Error("DEPOLARIZE2", p),
-        "CZ" : Error("DEPOLARIZE2", p),
-        "MZ" : Error("X_ERROR", p),
-        "MX" : Error("Z_ERROR", p),
+        "RZ" : Error("X_ERROR", p, p_leak, p_relax), 
+        "RX" : Error("Z_ERROR", p, p_leak, p_relax),
+        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CNOT" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+        "MZ" : Error("X_ERROR", p, p_leak, p_relax),
+        "MX" : Error("Z_ERROR", p, p_leak, p_relax),
 
 
         # Qubit module errors -- None
@@ -370,14 +373,18 @@ def uniform_errors(p):
 
 def uniform_idling(p):
 
+
+    p_relax = round_sig_fig(( p / (1 - p)), 6)
+    p_leak = p
+
     idle_during = {
-        "RZ" : Error("DEPOLARIZE1", p),
-        "RX" : Error("DEPOLARIZE1", p), 
-        "H" : Error("DEPOLARIZE1", p),
-        "CNOT" : Error("DEPOLARIZE1", p),
-        "CZ" : Error("DEPOLARIZE1", p),
-        "MZ" : Error("DEPOLARIZE1", p),
-        "MX" : Error("DEPOLARIZE1", p),
+        "RZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "RX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CNOT" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "MZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "MX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
 
         "shuttle" : Error("DEPOLARIZE1", 0),
         "merge" : Error("DEPOLARIZE1", 0),
