@@ -16,7 +16,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/helios/parallel_gates/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -25,9 +25,9 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/other_investigations/248_parallel.csv"
+    csv_path = f"../collected_stats/helios_noise/other_investigations/gross_w_leakage.csv"
 
-    existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/*parallel*.stim") 
+    # existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/*parallel*.stim") 
 
     tasks = [
         sinter.Task(
@@ -44,7 +44,7 @@ def main():
         max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
-        existing_data_filepaths = existing,
+        # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
