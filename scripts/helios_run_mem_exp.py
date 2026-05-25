@@ -1,4 +1,4 @@
-import deltakit_stim as stim
+import deltakit_stim
 # injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
 import sys
 # for namespace in injections:
