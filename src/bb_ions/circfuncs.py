@@ -1212,16 +1212,18 @@ Inputs are:
     - sequential_gates
             Whether disjoint two-qubit gates are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
             More explanation: For a given term x^i⋅y^j the most we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only X gates can be done in a single time step, where X is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step.
-    - exclude_opposite_basis_detectors = False
+    - exclude_opposite_basis_detectors
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
-    - reuse_check_qubits = True
+    - reuse_check_qubits
             If true we have one check register of size l * m rather than two, which is reused for X-checks then Z-checks. This is advised and possible because the algorithm this code implements (algorithm 2 of 2508.01879) does X-checks then Z-checks
-    - only_CZs = False
+    - only_CZs
             If set to true, this creates a circuit that only uses CZs rather than CXs for X-checks and CZs for Z-checks (it does this by Hadamarding all data qubits at the beginning and end of the X-checks (which now feature CZ gates only as well as the errors for cyclically shifting the modules around))
-    - only_CNOTs = False
+    - only_CNOTs
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
-    - leakage = False
+    - leakage
             Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
+    - leakage_detecting_measurements 
+            If true, the measurements of qubits are also able to return the result 'leaked'. This is simulated by appending the Deltakit Stim gate 'HERALD_LEAKAGE_EVENT()' after each measurement.
     - swap-LRC
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
     '''
@@ -1238,6 +1240,7 @@ def make_BB_circuit(
     only_CZs: bool = False,
     only_CNOTs: bool = False,
     leakage: bool = False,
+    leakage_detecting_measurements: bool = False,
     swap_LRC: bool = False,
     loss: bool = False,
 ):
@@ -1255,6 +1258,8 @@ def make_BB_circuit(
     SWAPLRC = swap_LRC
     global LEAKAGE
     LEAKAGE = leakage
+    global LEAKAGE_DETECTING_MEASUREMENTS
+    LEAKAGE_DETECTING_MEASUREMENTS = leakage_detecting_measurements
 
 
     circ = stim.Circuit()
@@ -1352,9 +1357,7 @@ def make_BB_circuit(
     # Now measure the check qubits
     
     measure('Z', circ, qX, errors)
-    
 
-    
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
 
@@ -1364,8 +1367,20 @@ def make_BB_circuit(
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
+
+    # if LEAKAGE_DETECTING_MEASUREMENTS:  # UP TO HERE: these are appending correctly, just need to set subsequent detectors to account for if they are here or not 
+
+    #   circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      
+    #   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+    #     circ.append("DETECTOR", [stim.target_rec(-i)])
+
+
+
     if reuse_check_qubits == True:
       tick(circ)
+
+    
 
 
 
@@ -1421,6 +1436,15 @@ def make_BB_circuit(
     if memory_basis == 'Z':
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
+
+
+    # if LEAKAGE_DETECTING_MEASUREMENTS:
+
+    #   circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      
+    #   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+    #     circ.append("DETECTOR", [stim.target_rec(-i)])
+
 
     if reuse_check_qubits == True:
       tick(circ)
