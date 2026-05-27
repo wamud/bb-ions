@@ -1597,12 +1597,13 @@ def make_BB_circuit(
         # Append loop_body to circuit:
         circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
 
-    elif swap_LRC == True: # Just manually tack on the extra rounds. Could improve this with a repeated loop_body, however if reusing check qubits = False (True) it requires different numbers of rounds to be back in original position, so loop body would need to be the correct number of rounds long. Could write code that just manually tacks on extra rounds, unless num_rounds is a multiple of the correct number, then it could be made into a loop body ... but most of the time apart from specific choices of loops the rounds will just be tacked on anyway. Or there could be a repeated number of rounds in loop body with the extra ones added at the end. Anyway ... not sure if having a repeat instruction actually speeds up stim or not.
+    elif swap_LRC == True: # Just manually tack on the extra rounds rather than making a 'repeat' section. Could potentially improve this with a repeated loop_body, however depending on whether we reuse_check_qubits or not it requires different numbers of rounds to be back in original position, so chosen number of stabiliser extraction rounds would need to be the correct number of rounds long. Could write code that just manually tacks on extra rounds, unless num_rounds is a multiple of the correct number, then it could be made into a loop body ... but most of the time apart from specific choices of loops the rounds will just be tacked on anyway. Or there could be a repeated number of rounds in loop body with the extra ones added at the end. Anyway ... having a repeat instruction probably doesn't speed up stim anyway.
       if num_syndrome_extraction_cycles > 1:
         for rep in range(num_syndrome_extraction_cycles - 1):
           
           '''start'''
 
+          offset = n if LEAKAGE_HERALDS else 0
 
           # Reset X-check qubits
           init('Z', circ, qX, errors)
@@ -1619,7 +1620,6 @@ def make_BB_circuit(
 
           # Do cyclic shifts and two-qubit gates (accepts previous j_val -- previous position of modules -- and updates it). Might also contain swap-LRC
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
-
 
           # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
           if SWAPLRC == False:
@@ -1645,12 +1645,17 @@ def make_BB_circuit(
 
 
           # Place detectors on these check qubit measurements which compare them and the previous round's C-check measurements
-          # However if we are doing memory Z then there won't be any first round X-detectors right???
           n = code.n
           if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
                   # Append X-check stabiliser detectors:
-                  for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
-                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)]) ##### this might have to change ?? Though the measurements are supposed to have been appended in the correct order, just on qubits that are no longer in 'order' after you've done a swap-LRC. As the measurements are still in order then I believe it should be fine, the recording 'n' before this one is the corresponding check ...
+                  for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the same measurement performed in the round before it: n measurements before it if no leakage heralds, 2n measurements before it if there are (leakage herald adds to measurement record)
+                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n - offset)]) 
+
+          if LEAKAGE_HERALDS: # append leakage heralds to the X-check qubits just measured
+            circ.append("HERALD_LEAKAGE_EVENT", qX, 0) 
+            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+              circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
 
           if reuse_check_qubits: # if not will reset other check qubits in this same time step
             tick(circ)
@@ -1701,8 +1706,14 @@ def make_BB_circuit(
           if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
                   # Append Z-check stabiliser detectors:
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
-                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
-          
+                      circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n - offset)])
+
+          if LEAKAGE_HERALDS: # append leakage heralds to the Z-check qubits just measured
+            circ.append("HERALD_LEAKAGE_EVENT", qZ, 0) 
+            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+              circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
+
           if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
             tick(circ)
           
