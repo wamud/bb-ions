@@ -226,7 +226,6 @@ def tick(circuit):
   circuit.append("TICK")
 
 
-
 ''' add_final_detectors
 After measuring all the data qubits in the X-basis (memory X) or Z-basis (memory Z) we want to check that each check qubit
 has correctly reported the parity of the data qubits it was supposed to have measured.
@@ -238,20 +237,36 @@ Conversely for memory X we only add these detectors to the X-checks.
 Optional further reading on inner workings of the function: figuring out each stim.target_rec[]:
 
 In the final round, we performed X-check measurements, then Z-check measurements and finally all the data qubit measurements.
-So the most recent rec (rec[-1]) is the n-th data qubit. It was the last measured. This is the last data qubit in qR. The zeroth data qubit, also the
-zeroth data qubit in qL, is rec[-n]. Before this is qX then qZ check qubits.
+We optionally also appended a leakage herald to each of these measurements, which would double the number of check-qubit measurements from n to 2n.
 
-So rec[ ]:
--1 to -n is data qubit measurements
--(n + 1) to - (n + n//2) is qZ measurements
--(n + n//2 + 1) to -2n is qX measurements
+if leakage_heralds == False:
+  
+  The most recent rec (rec[-1]) is the n-th data qubit. It was the last measured. This is the last data qubit in qR. The zeroth data qubit, also the zeroth data qubit in qL, is rec[-n]. Before this is qX then qZ check qubits.
+  
+  So rec[ ]:
+    -1 to -n is data qubit measurements
+    -(n + 1) to -(n + n//2) is qZ measurements
+    -(n + n//2 + 1) to -2n is qX measurements
 
-For each check qubit we want the detector to include its parity multiplied with the parity of all the data qubits it checked. These are contained in Hz and Hz, except the j-th data qubit will be rec[j - n] (so the 0-th data qubit was measured n measurements ago, the last / (n - 1)th data qubit was measured one measurement ago etc.'''
+elif leakage_heralds == True:
+
+    rec[ ]:
+      -1 to -n                        # n leakage heralds on the n data qubit measurements
+      -(n + 1) to -2n                 # n data qubit measurements
+      -(2n + 1) to -(2n + n//2)       # n/2 leakage heralds on the n/2 qZ measurements
+      -(2n + n//2 + 1) to -3n         # n/2 qZ measurements
+      -(3n + 1) to (-3n + n//2)       # n/2 leakage heralds on the n/2 qX measurements
+      -(3n + n//2 + 1) to -4n         # n/2 qX measurements
+
+
+For each check qubit we want the detector to include its parity multiplied with the parity of all the data qubits it checked. These are contained in Hz and Hz, but note that the j-th data qubit will be rec[j - n] without leakage heralds or rec[j - 2n] with leakage heralds (so the 0-th data qubit was measured n or 2n measurements ago, the last data qubit, i.e. the (n - 1)th data qubit, was measured one / (1 + n) measurement(s) ago etc.'''
 def add_final_detectors(circ, code, memory_basis):
 
   Hx = code.Hx
   Hz = code.Hz
   n = code.n
+
+  offset_to_first_data_qubit_measurement_recording = 2 * n if LEAKAGE_HERALDS else n
 
   if memory_basis == 'Z':
       
@@ -259,13 +274,15 @@ def add_final_detectors(circ, code, memory_basis):
           
           this_check_qubits_data_qubits = np.nonzero(Hz[k])[0] # extract the 1 positions (data qubit indices) in this check qubit's row of Hz
 
+          this_z_check_qubit_rec = -(n + n//2) + k if not LEAKAGE_HERALDS else -3 * n + k     # See above for explanation. Also note we start from the most negative recording and approach the most recent (-1) by adding k each iteration
+
           circ.append("DETECTOR", 
-          [stim.target_rec(-(n + n//2) + k)] # This Z-check qubit
-          +
-          [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # It's data qubits
-          # Note it is j - n because if j is the last data qubit, j = n - 1, we need stim.target_rec(-1) (most recent measurement)
-          , [k, k]
-          ) # putting at coordinates k,k to make slighty more compact timeline-svg. Not sure what it's doing for other diagrams.
+            [stim.target_rec(this_z_check_qubit_rec)] # This Z-check qubit
+            +
+            [stim.target_rec(j - offset_to_first_data_qubit_measurement_recording) for j in this_check_qubits_data_qubits] # Its data qubits
+            # Note it is j - n (without leakage heralds) because if j is the last data qubit, j = n - 1, we need stim.target_rec(-1) (most recent measurement)
+            , [k, k]
+            ) # putting at coordinates k,k to make slighty more compact timeline-svg. Not sure what it's doing for other diagrams.
 
   elif memory_basis == 'X':
       
@@ -273,15 +290,19 @@ def add_final_detectors(circ, code, memory_basis):
 
           this_check_qubits_data_qubits = np.nonzero(Hx[k])[0]
 
+          this_x_check_qubit_rec = -2 * n + k if not LEAKAGE_HERALDS else -4 * n + k
+
           circ.append("DETECTOR", 
-          [stim.target_rec(-2 * n + k)] # This X-check qubit
-          +
-          [stim.target_rec(j - n) for j in this_check_qubits_data_qubits] # Its data qubits
-          ,[k, k]
-          )
+            [stim.target_rec(this_x_check_qubit_rec)] 
+            +
+            [stim.target_rec(j - offset_to_first_data_qubit_measurement_recording) for j in this_check_qubits_data_qubits] # Its data qubits
+            ,[k, k]
+            )
   
   else:
     raise ValueError("Paramater 'memory_basis' must be either 'X' or 'Z' ")
+
+
 
 
 '''get_nonzero_indices
@@ -312,11 +333,13 @@ def add_logical_observables(circuit, n, Lx, Lz, memory):
 
   num_logical_ops = L.shape[0]
 
-  indices = get_nonzero_indices(L) # instead of L being 1's and 0's (like a parity check matrix) just make it a list of the indices of the 1's
+  indices = get_nonzero_indices(L) 
+
+  offset = n if LEAKAGE_HERALDS else 0 # (account for the n data qubit measurements having leakage heralds on them or not)
 
   for i in range(num_logical_ops): # for each logical qubit
 
-    recordings = (indices[i] - n).astype(int) # the measurements -- 'inner workings' note above
+    recordings = (indices[i] - n - offset).astype(int) # the measurements -- 'inner workings' note above
 
     circuit.append("OBSERVABLE_INCLUDE", [stim.target_rec(r) for r in recordings], i)
 
@@ -1077,6 +1100,92 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
     return jval_prev
 
 
+
+
+
+
+'''add_relax_then_leak
+   Appends to a deltakit_stim circuit a RELAX gate then a LEAKAGE gate (interpretable by deltakit_stim) to the given register as per the p_relax and p_leak contained in the dictionary errors for the given operation.
+   E.g. add_relax_then_leakage('CNOT', circuit, [0, 1, 2], helios_errors(p))
+
+   We append relax THEN leakage. Note that in your errors dictionary, to have P(a qubit leaks) = P(a leaked qubit relaxes) requires p_relax = p_leak / (1 - p_leak) in the error dictionary so when you draw the tree diagram you get P(a qubit leaks) = p_l and P(a qubit relaxes and does not subsequently leak) = p_l'''
+def add_relax_then_leak(operation, circ, register, errors: dict):
+
+  p_relax = errors[operation].p_relax
+  
+  p_leak = errors[operation].p_leak
+
+  if p_relax is not None and p_relax > 0:
+    circ.append("RELAX", register, p_relax)
+  if p_leak is not None and p_leak > 0:
+    circ.append("LEAKAGE", register, p_leak)
+
+
+
+
+''' idle
+Adds an idling error to qubits in register. The idling error is of class Error.
+E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
+def idle(circuit, register, error: Error):
+
+  p = error.p
+  
+  if p > 0:
+    circuit.append(error.op, register, p)
+
+  if LEAKAGE:
+    
+    p_relax = error.p_relax
+    p_leak = error.p_leak
+
+    if p_relax is not None and p_relax > 0:
+      circuit.append("RELAX", register, p_relax)
+    if p_leak is not None and p_leak > 0:
+      circuit.append("LEAKAGE", register, p_leak)
+
+
+
+
+''' apply_shuttle_error
+Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
+def apply_shuttle_error(circuit, register, errors: dict):
+
+    p = errors['shuttle'].p
+
+    if p > 0:
+
+        circuit.append(errors['shuttle'].op, register, p)
+      
+    if LEAKAGE:
+      add_relax_then_leak('shuttle', circuit, register, errors)
+
+
+''' apply_shift_error
+Applies an error to qubits to simulate them undergoing the cyclic shift required to align check and data qubit modules. Contained in errors is the shift constant. The actual value of p can be fed in to represent longer or shorter cyclic shifts'''
+def apply_shift_error(circuit, register, errors):
+    
+    p = errors['shift'].p
+    if p > 0:
+        circuit.append(errors['shift'].op, register, p) 
+
+
+''' apply_merge_error
+Once check modules have been cyclically shifted to the data qubit module they need to interact with, we simulate merging their coulomb potentials'''
+def apply_merge_error(circuit, register, errors: dict):
+    p = errors['merge'].p
+    if p > 0:
+        circuit.append(errors['merge'].op, register, p)
+
+''' apply_split_error
+Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them.'''
+def apply_split_error(circuit, register, errors: dict):
+    p = errors['split'].p
+    if p > 0:
+        circuit.append(errors['split'].op, register, p)
+
+
+
+
 ''' make_loop_body
 Constructs the stabiliser extraction round of a memory experiment using a BB code. This round or 'loop_body' can be repeated arbitrarily. Returns the loop_body which is a stim circuit. Note this does not initialise data qubits as it is designed to follow an already-constructed round-0 of stabiliser measurements which is slightly different to the repeated rounds (namely round-0 initialises the data qubits and only has detectors on stabilisers in the same basis as the preserved logical state because the other ones are non-deterministic).
 - jval_prev: gives the previous arrangement of modules before starting this repeated / looped section. I.e. if jval_prev = j, this implies check module M^a_w was aligned with data module M^d_((w + j) % m)
@@ -1087,6 +1196,9 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 - reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
 - sequential: whether or not the two-qubit gates within a leg are sequential or in parallel'''
 def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors = False):
+
+    n = code.n
+    measurements_per_round = 2 * n if LEAKAGE_HERALDS else n
 
     loop_body = stim.Circuit()
 
@@ -1132,11 +1244,17 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     
 
     # We now place detectors on these check qubit measurements. They compare these measurements and the previous round's X-check measurements (even though the first round's measurements might not have detectors on them if we're in memory Z, these are comparing the *measurements* so do not need previous detectors)
-    n = code.n
+    
     if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
             # Append X-check stabiliser detectors:
-            for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
-                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+            for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
+                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
+
+    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
+      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
+      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
+
 
     if reuse_check_qubits == True: ## If not re-using, then can reset the Z-check qubits in this same time step.
       tick(loop_body)
@@ -1175,11 +1293,17 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     
     
     # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
-    n = code.n
+    
     if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
             # Append Z-check stabiliser detectors:
             for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
-                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n)])
+                loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
+
+
+    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
+      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
+      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
 
     if reuse_check_qubits == True:
       tick(loop_body)
@@ -1222,10 +1346,12 @@ Inputs are:
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
     - leakage
             Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
-    - leakage_detecting_measurements 
-            If true, the measurements of qubits are also able to return the result 'leaked'. This is simulated by appending the Deltakit Stim gate 'HERALD_LEAKAGE_EVENT()' after each measurement.
+    - leakage_heralds 
+            If true, the measurements of qubits are also able to return the result 'leaked'. This is simulated by appending the Deltakit Stim gate 'HERALD_LEAKAGE_EVENT()' after each measurement and applying a detector to it.
     - swap-LRC
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
+    - check_deteting_regions
+            In general this should always be set to True. It uses stim's in-built circuit.detecting_regions() to check if there are any detectors which, in the absence of noise, don't commute and hence produce non-determenistic outcomes. In the absence of noise all detectors should commute so this is a problem if they don't. The only time this should be set to false is when tinkering with the circuit builder and adding and moving detectors, so you might want to look at a visual of a circuit before having finished all the detectors (and consequently want to build the circuit without checking the detecting regions)
     '''
 def make_BB_circuit(
     code: Any,
@@ -1240,9 +1366,10 @@ def make_BB_circuit(
     only_CZs: bool = False,
     only_CNOTs: bool = False,
     leakage: bool = False,
-    leakage_detecting_measurements: bool = False,
+    leakage_heralds: bool = False,
     swap_LRC: bool = False,
     loss: bool = False,
+    check_detecting_regions: bool = True
 ):
     pass
 
@@ -1258,8 +1385,8 @@ def make_BB_circuit(
     SWAPLRC = swap_LRC
     global LEAKAGE
     LEAKAGE = leakage
-    global LEAKAGE_DETECTING_MEASUREMENTS
-    LEAKAGE_DETECTING_MEASUREMENTS = leakage_detecting_measurements
+    global LEAKAGE_HERALDS
+    LEAKAGE_HERALDS = leakage_heralds
 
 
     circ = stim.Circuit()
@@ -1368,12 +1495,12 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
 
-    # if LEAKAGE_DETECTING_MEASUREMENTS:  # UP TO HERE: these are appending correctly, just need to set subsequent detectors to account for if they are here or not 
+    if LEAKAGE_HERALDS:  # These are appending correctly, just need to set subsequent detectors to account for if they are here or not 
 
-    #   circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
       
-    #   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
-    #     circ.append("DETECTOR", [stim.target_rec(-i)])
+      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+        circ.append("DETECTOR", [stim.target_rec(-i)], i) # gunna chuck on coordinates ... see what that does
 
 
 
@@ -1438,12 +1565,12 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
 
-    # if LEAKAGE_DETECTING_MEASUREMENTS:
+    if LEAKAGE_HERALDS:
 
-    #   circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 (last argument) i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
       
-    #   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
-    #     circ.append("DETECTOR", [stim.target_rec(-i)])
+      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+        circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
 
     if reuse_check_qubits == True:
@@ -1582,16 +1709,26 @@ def make_BB_circuit(
           '''end'''
 
 
-    # # Final measurement of all data qubits:
+    # # Measure all data qubits:
     measure(memory_basis, circ, qL + qR, errors)
+    
+    # Add leakage heralds onto these measurements:
+    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qL + qR)
+      circ.append("HERALD_LEAKAGE_EVENT", qL + qR, 0) 
+      for i in reversed(range(1, n + 1)): 
+        circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
+
+
     ### Add final detectors:
     add_final_detectors(circ, code, memory_basis)
+
     ## Annotate logical observables (the Lx's or Lz's if mem X or Z):
-    add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)  # FIX for swap LRC ? 
+    add_logical_observables(circ, code.n, code.Lx, code.Lz, memory_basis)  
 
 
-
-    detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions (deterministic in the absence of noise)
+    if check_detecting_regions:
+      detecting_regions = circ.detecting_regions() # a test to see that it has valid detecting regions (deterministic in the absence of noise)
 
     # Save circuit:
     # circ.to_file(f"../circuits/nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},b={memory_basis},noise={noise},r={num_syndrome_extraction_cycles},code=BB,l={l},m={m},A='{''.join(str(x) + str(y) for x, y in Aij)}',B='{''.join(str(x) + str(y) for x, y in Bij)}'.stim")
@@ -1601,90 +1738,3 @@ def make_BB_circuit(
     # with open("output.svg", "w", encoding="utf-8") as f: f.write(svg)
 
     return circ
-
-
-
-
-'''add_relax_then_leak
-   Appends to a deltakit_stim circuit a RELAX gate then a LEAKAGE gate (interpretable by deltakit_stim) to the given register as per the p_relax and p_leak contained in the dictionary errors for the given operation.
-   E.g. add_relax_then_leakage('CNOT', circuit, [0, 1, 2], helios_errors(p))
-
-   We append relax THEN leakage. Note that in your errors dictionary, to have P(a qubit leaks) = P(a leaked qubit relaxes) requires p_relax = p_leak / (1 - p_leak) in the error dictionary so when you draw the tree diagram you get P(a qubit leaks) = p_l and P(a qubit relaxes and does not subsequently leak) = p_l'''
-def add_relax_then_leak(operation, circ, register, errors: dict):
-
-  p_relax = errors[operation].p_relax
-  
-  p_leak = errors[operation].p_leak
-
-  if p_relax is not None and p_relax > 0:
-    circ.append("RELAX", register, p_relax)
-  if p_leak is not None and p_leak > 0:
-    circ.append("LEAKAGE", register, p_leak)
-
-
-
-
-''' idle
-Adds an idling error to qubits in register. The idling error is of class Error.
-E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
-def idle(circuit, register, error: Error):
-
-  p = error.p
-  
-  if p > 0:
-    circuit.append(error.op, register, p)
-
-  if LEAKAGE:
-    
-    p_relax = error.p_relax
-    p_leak = error.p_leak
-
-    if p_relax is not None and p_relax > 0:
-      circuit.append("RELAX", register, p_relax)
-    if p_leak is not None and p_leak > 0:
-      circuit.append("LEAKAGE", register, p_leak)
-
-
-
-
-''' apply_shuttle_error
-Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
-def apply_shuttle_error(circuit, register, errors: dict):
-
-    p = errors['shuttle'].p
-
-    if p > 0:
-
-        circuit.append(errors['shuttle'].op, register, p)
-      
-    if LEAKAGE:
-      add_relax_then_leak('shuttle', circuit, register, errors)
-
-    
-    
-
-
-
-
-''' apply_shift_error
-Applies an error to qubits to simulate them undergoing the cyclic shift required to align check and data qubit modules. Contained in errors is the shift constant. The actual value of p can be fed in to represent longer or shorter cyclic shifts'''
-def apply_shift_error(circuit, register, errors):
-    
-    p = errors['shift'].p
-    if p > 0:
-        circuit.append(errors['shift'].op, register, p) 
-
-
-''' apply_merge_error
-Once check modules have been cyclically shifted to the data qubit module they need to interact with, we simulate merging their coulomb potentials'''
-def apply_merge_error(circuit, register, errors: dict):
-    p = errors['merge'].p
-    if p > 0:
-        circuit.append(errors['merge'].op, register, p)
-
-''' apply_split_error
-Simulating splitting the coulomb potentials of check qubit and data qubit modules by appling an error probability to them.'''
-def apply_split_error(circuit, register, errors: dict):
-    p = errors['split'].p
-    if p > 0:
-        circuit.append(errors['split'].op, register, p)
