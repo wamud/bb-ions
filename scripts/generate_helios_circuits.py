@@ -25,7 +25,7 @@ seq_gates = True
 exclude_opp_basis_detectors = True
 leakage_heralds = False
 leakage = True
-swap_LRC = True
+swap_LRC = False
 loss_heralds = False
 
 for p in [0.001, 0.002]:
