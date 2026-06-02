@@ -21,7 +21,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/leakage_repumping/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/extra_repumping/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
