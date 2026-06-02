@@ -1,0 +1,1 @@
+Just manually gunna enter repumping after every "TICK" instruction and see what it does. If it ends up being a good idea then I'll add it to the circuit-building function

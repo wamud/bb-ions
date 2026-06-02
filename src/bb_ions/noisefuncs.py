@@ -189,6 +189,8 @@ def helios_errors(p):
         
         
         "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 5)), 
+        
+        
         # Make p_relax = p_leak / (1 - p_leak) so when you apply relax(p_relax) then leakage(p_leak) and find the joint probabilities, you actually have P(leaked qubit relaxes) = p_leak and P(a qubit leaks) = p_leak
 
         # For 2q gates leakage from 2QCB (what we use to get the partial pauli error model) is 1.14×10^(−4) (page 8 of Helios paper v1)
@@ -196,6 +198,8 @@ def helios_errors(p):
         # or 1 − p_n^2 = 1.14 × 10^−4 
         # ⇒ p_l = 5.7 × 10^(−5)  where p_l is the probability of a single qubit leaking so will be applied to each qubit in the gate.
         "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
+
+
         "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
         
         
