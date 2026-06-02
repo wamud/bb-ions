@@ -186,26 +186,26 @@ def helios_errors(p):
         # To make these values equal the Helios values (we have constants multiplied by 10^3 so that when input p is 1e-3 they equal the Helios values)
         
         
-        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 6)), 
+        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 5)), 
         # Make p_relax = p_leak / (1 - p_leak) so when you apply relax(p_relax) then leakage(p_leak) and find the joint probabilities, you actually have P(leaked qubit relaxes) = p_leak and P(a qubit leaks) = p_leak
 
         # For 2q gates leakage from 2QCB (what we use to get the partial pauli error model) is 1.14×10^(−4) (page 8 of Helios paper v1)
         # ⇒ P(at least one leakage) =  1.14 × 10^(−4) = p_l^2+2p_n p_l = p_l^2 + 2(1 - p_l)p_l
         # or 1 − p_n^2 = 1.14 × 10^−4 
         # ⇒ p_l = 5.7 × 10^(−5)  where p_l is the probability of a single qubit leaking so will be applied to each qubit in the gate.
-        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 6)), 
-        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 6)), 
+        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
         
         
-        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 6), round_sig_fig(4.2 * p / (1 - 4.2 * p), 6)), 
-        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 6), round_sig_fig(4.2 * p / (1 - 4.2 * p), 6)), 
+        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
+        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
 
         
         # Additional for our architecture (all accounted for in shuttle error)
         
          
 
-        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 6)), 
+        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5)), 
         # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
         # We usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
         # Shuttle qubits into leg, merge their coulomb potentials, perform required two qubit gates (all powers of i for that power of j in the BB code's polynomial Σ_{i,j}(x^iy^j) ), split their coulomb potentials, shuttle, cyclic shift to next power of j, repeat. 
@@ -258,22 +258,22 @@ def helios_idle_errors(p):
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
         
         
-        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 6)),  
+        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 5)),  
 
-        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 6)),
-        "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 6)),   
+        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),
+        "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),   
         
         # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
         
-        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 6) ), 
-        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 6) ),  
+        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ), 
+        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),  
 
         
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 6) ), 
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 6) ), 
+        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
 
         
-        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 6) ), 
+        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
 
 
         # All the below are accounted for in shuttle
