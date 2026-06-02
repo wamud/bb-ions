@@ -199,8 +199,8 @@ def helios_errors(p):
         "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
         
         
-        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), 1),#round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
-        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), 1),#round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
+        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), # Isn't any benefit relaxing when about to measure anyway, in fact it's the opposite because then won't get the herald. But to stay realistic there should be a chance of relaxing here and NOT heralding what was a leaked qubit up to this point.
+        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
 
         
         # Additional for our architecture (all accounted for in shuttle error)
@@ -271,9 +271,12 @@ def helios_idle_errors(p):
         "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),  
 
         
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, 1), # round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, 1), # round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
-
+        # "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ),   
+        # "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ),   
+        
+        # LEAKAGE REPUMPING ON NON-MEASURED QUBITS EVERY MEASUREMENT:
+        "MZ" : Error("DEPOLARIZE1", multiple * 3.26e-4, multiple * m * t_m, 0.99999993), # The two-qubit error rate is 8.5e-4 ... so this seems way better than doing a teleport LRC. The error is less than half.
+        "MX" : Error("DEPOLARIZE1", multiple * 3.26e-4, multiple * m * t_m, 0.99999993),
         
         "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
 

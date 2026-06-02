@@ -55,4 +55,4 @@ for p in [0.001, 0.002]:
         # with open(f"scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
 
         # Save circuit:
-        circuit.to_file(f"../circuits/with_leakage/helios/ideal_leakage_repumping/{filename}.stim")
+        circuit.to_file(f"../circuits/with_leakage/helios/leakage_repumping/{filename}.stim")

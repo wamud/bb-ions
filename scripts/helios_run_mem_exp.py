@@ -21,7 +21,7 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/leakage_repumping/*.stim") 
     circuit_paths.sort()
 
     for path in circuit_paths:
@@ -30,7 +30,7 @@ def main():
     if len(circuit_paths) == 0:
         print("No circuits")
     
-    csv_path = f"../collected_stats/helios_noise/other_investigations/gross_w_leakage.csv"
+    csv_path = f"../collected_stats/helios_noise/other_investigations/leakage_repumping.csv"
 
     # existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/*parallel*.stim") 
 
