@@ -177,7 +177,9 @@ def helios_errors(p):
 
     helios_errors = {
 
-        # We are using the Error class: Error_operation, p_error, p_leak, p_relax
+        # We are using the Error class: (Error_operation, p_error, p_leak, p_relax)
+
+
         # These values are equal to Helios values when input p is 0.001:
 
         "RZ" : Error("X_ERROR", p, 0, 0), # p_leak = p_relax = 0 because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
@@ -197,8 +199,8 @@ def helios_errors(p):
         "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
         
         
-        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
-        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
+        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), 1),#round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
+        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), 1),#round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
 
         
         # Additional for our architecture (all accounted for in shuttle error)
@@ -269,8 +271,8 @@ def helios_idle_errors(p):
         "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),  
 
         
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, 1), # round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, 1), # round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
 
         
         "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
