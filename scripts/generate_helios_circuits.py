@@ -21,7 +21,7 @@ memory_basis = 'X'
 noise = 'helios'
 loss = False
 num_syndrome_extraction_cycles = 12
-seq_gates = True
+seq_gates = False
 exclude_opp_basis_detectors = True
 leakage_heralds = False
 leakage = True
@@ -29,7 +29,7 @@ swap_LRC = False
 loss_heralds = False
 
 for p in [0.001, 0.002]:
-        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping=True,leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping=Med,leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
         print(filename)
 
