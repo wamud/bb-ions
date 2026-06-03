@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-code = gross_code()
+code = bb5_12_4_2()
 memory_basis = 'X'
 noise = 'helios'
 loss = False
@@ -45,7 +45,7 @@ for p in [0.001, 0.002]:
             leakage = leakage,
             leakage_heralds = leakage_heralds,
             swap_LRC = swap_LRC,
-            only_CZs = True
+            only_CNOTs = True
         )
 
         # svg = circuit.without_noise().diagram('timeline-svg') # diagram without noise
