@@ -486,17 +486,34 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
 
           if sequential_gates:
             if (idx + 1) % m == 0: # We can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
-              idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all
+              
+              idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all (e.g. L-data qubits if we're connecting to R-data qubits)
+
+              check_idles = []
+              data_idles = []
               
               for g in range(l * m):
-                if g not in idx_list: # for the check qubits, the qubits operated on are simply qC[idx_list], so idle the ones not in idx_list: (for data qubits will be more subtle)
-                  idle(circuit, [qC[g]], idle_during[gate])
+                if g not in idx_list:
+                  check_idles.append(g)
                 if g not in a_list:
-                  idle(circuit, [qD[g]], idle_during[gate])
+                  data_idles.append(g)
+              
+              check_qubits_to_idle = [qC[entry] for entry in check_idles]
+              data_qubits_to_idle = [qD[entry] for entry in data_idles]
+              qubits_to_idle = check_qubits_to_idle + data_qubits_to_idle
+              
+              idle(circuit,qubits_to_idle, idle_during[gate])
+
+                # if g not in idx_list: # for the check qubits, the qubits operated on are simply qC[idx_list], so idle the ones not in idx_list: 
+                #   idle(circuit, [qC[g]], idle_during[gate])
+                # if g not in a_list: # data qubits
+                #   idle(circuit, [qD[g]], idle_during[gate])
 
               idx_list = []  # reset it 
               a_list = []
-              
+              check_idles = []
+              data_idles = []
+
               tick(circuit)
 
 
