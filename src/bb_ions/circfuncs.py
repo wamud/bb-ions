@@ -374,6 +374,10 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 
     circuit.append(error_op, [kc, kt], p)
 
+  if LEAKAGE_REPUMPING: # gunna see what 2 cycles does
+    circuit.append("RELAX", [kc, kt], 0.88888889)
+    circuit.append("DEPOLARIZE1", [kc, kt], 0.00004)
+
   
 
 
@@ -1363,6 +1367,8 @@ Inputs are:
             If set to true, this creates a circuit using only CNOTs (X-checks have CNOTs from check qubit (in |+⟩ ) to data qubit, Z-checks have CNOTs from data qubit to check qubit (in |0⟩ ). If BOTH only_CNOTs and only_CZs are False then X-checks use CNOTs and Z-checks use CZs.
     - leakage
             Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
+    - leakage_repumping
+            As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this is pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. For now we will simulate 2 repumping cycles after every two-qubit gate if this is set to true. We also apply the memory error to all qubits whether they are leaked or not.
     - leakage_heralds 
             If true, the measurements of qubits are also able to return the result 'leaked'. This is simulated by appending the Deltakit Stim gate 'HERALD_LEAKAGE_EVENT()' after each measurement and applying a detector to it.
     - swap-LRC
@@ -1383,6 +1389,7 @@ def make_BB_circuit(
     only_CZs: bool = False,
     only_CNOTs: bool = False,
     leakage: bool = False,
+    leakage_repumping: bool = False,
     leakage_heralds: bool = False,
     swap_LRC: bool = False,
     loss: bool = False,
@@ -1402,6 +1409,8 @@ def make_BB_circuit(
     SWAPLRC = swap_LRC
     global LEAKAGE
     LEAKAGE = leakage
+    global LEAKAGE_REPUMPING 
+    LEAKAGE_REPUMPING = leakage_repumping
     global LEAKAGE_HERALDS
     LEAKAGE_HERALDS = leakage_heralds
 
