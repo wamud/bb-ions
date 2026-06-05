@@ -374,9 +374,12 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 
     circuit.append(error_op, [kc, kt], p)
 
-  if LEAKAGE_REPUMPING: # gunna see what 2 cycles does
-    circuit.append("RELAX", [kc, kt], 0.88888889)
-    circuit.append("DEPOLARIZE1", [kc, kt], 0.00004)
+  if LEAKAGE_REPUMPING:
+    c = 10 # num_repumping_cycles
+    p_relax = 1 - 1/(3 ** c)
+    p_error = c * 2e-5
+    circuit.append("RELAX", [kc, kt], p_relax)
+    circuit.append("DEPOLARIZE1", [kc, kt], p_error)
 
   
 
