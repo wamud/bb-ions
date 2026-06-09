@@ -1143,9 +1143,8 @@ def add_relax_then_leak(operation, circ, register, errors: dict):
   if p_relax is not None and p_relax > 0:
     circ.append("RELAX", register, p_relax)
   if p_leak is not None and p_leak > 0:
-    #circ.append("LEAKAGE", register, p_leak)
-    # temporary for DEP1 leakage:
-    circ.append("DEPOLARIZE1", register, 0.75 * p_leak)
+    circ.append("LEAKAGE", register, p_leak)
+
 
 
 
@@ -1167,9 +1166,7 @@ def idle(circuit, register, error: Error):
     if p_relax is not None and p_relax > 0:
       circuit.append("RELAX", register, p_relax)
     if p_leak is not None and p_leak > 0:
-      # circuit.append("LEAKAGE", register, p_leak)
-      # temporary for DEP1 leakage:
-      circuit.append("DEPOLARIZE1", register, 0.75 * p_leak)
+      circuit.append("LEAKAGE", register, p_leak)
 
 
 
