@@ -1,44 +1,59 @@
-import stim
 import sys
 import os
+import deltakit_stim
+
+# Save deltakit_stim as stim so any other calls to import stim (including from other packages) just use deltakit_stim:
+injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
+for namespace in injections:
+    sys.modules[namespace] = sys.modules["deltakit_{namespace}".format(namespace=namespace)]
+
+
 sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
+code = gross_code()
+memory_basis = 'X'
+noise = 'helios'
+loss = False
+num_syndrome_extraction_cycles = 12
+seq_gates = True
+exclude_opp_basis_detectors = True
+leakage_heralds = False
+leakage = True
+swap_LRC = False
+loss_heralds = False
+only_CZs = True
+leakage_repumping = True
 
+for p in [0.001]:
+        
+        
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},p_leak = p/{divisor},leakage_repumping=every_gate_10_cycles,leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+        
+        print(filename)
 
+        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+            code,
+            p,  
+            errors = helios_errors(p),
+            idle_during = helios_idle_errors(p),
+            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+            memory_basis = memory_basis,
+            sequential_gates = seq_gates, 
+            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+            reuse_check_qubits = True,
+            leakage = leakage,
+            leakage_heralds = leakage_heralds,
+            swap_LRC = swap_LRC,
+            only_CZs = only_CZs,
+            leakage_repumping = leakage_repumping
+        )
 
-ps = [0.001]
+        # svg = circuit.without_noise().diagram('timeline-svg') # diagram without noise
+        # display(svg)
+        # svg_string = str(svg)
+        # with open(f"scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
 
-seq_gates = False
-exclude_opposite_basis_detectors = False  # If set to false then it includes detectors on X (Z) stabiliser measurement results during Memory Z (X) -- i.e. allows correlated decoding
-swapLRC = False
-
-# Generate circuits:
-for code in [two_gross_code()]:
-    
-    num_syndrome_extraction_cycles = code.d_max
-
-    for p in ps:
-        for memory_basis in 'X':
-
-            noise = 'uniform'
-            errors = uniform_errors(p)
-            idle_during = uniform_idling(p)
-
-            circuit = make_BB_circuit(  # (see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs)
-                code,  
-                p,  
-                memory_basis = memory_basis,
-                num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,
-                errors = errors,
-                idle_during = idle_during,
-                sequential_gates = seq_gates, 
-                exclude_opposite_basis_detectors = exclude_opposite_basis_detectors,
-                swap_LRC = swapLRC
-            )
-
-
-            filename = f"nkd=[[{code.n}_{code.k}_{code.d_max}]],p={p},noise={noise},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opposite_basis_detectors},swap_LRC={swapLRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)},SE='non-interleaved''"
-
-            circuit.to_file(f"../circuits/{noise}/{filename}.stim")   
+        # Save circuit:
+        circuit.to_file(f"../circuits/with_leakage/helios/leakage_repumping/{filename}.stim")

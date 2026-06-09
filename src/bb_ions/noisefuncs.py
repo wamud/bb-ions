@@ -138,6 +138,72 @@ def tham_modules_idle_errors(p):
     return idle_during
 
 
+''' walking_cat_approx
+    IonQ's 'walking cat architecture' simulation noise model https://arxiv.org/abs/2604.19481v1
+    " the (0, i, j) cyclic gate, which requires im + j transport steps". They also assume fast highway travel for long-ring shift (swapping L and R data qubits being aligned with X or Z checks), e.g. (1, i, j). Each transport step takes 1/20 POC so has p = p/2000. An approximation of the idling error for transport for the gross code is presented below.'''
+def walking_cat_errors(p, p_leak = 0):
+
+
+    # For the gross code we have l = 12, m = 6 and x^3, y, y^2 and y^3, x, x^2 so steps of (Fig. 13 in walking cat paper helpful with this)
+    # 3*m = 18, then back 18 plus 1, then another 1 for X-checks. Then 1 step to swap to R data qubits, then 3, then 3 back and 6 across, then another 6 across. Similar for Z checks. So if we just overestimate and let's say 20 transport steps between each power of j. That's 1 POC. Let's overestimate and say each cyclic shift takes two shuttles and each is 20 transport steps so p / 100 -- i.e. normal idling.
+
+    p_relax = round_sig_fig(p_leak / (1 - p_leak), 6)
+
+    errors = {
+
+        "CNOT" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+
+        "RZ" : Error("DEPOLARIZE1", p / 10, p_leak, p_relax), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+        "RX" : Error("DEPOLARIZE1", p / 10, p_leak, p_relax), # as opposed to Z_ERROR
+        "H" : Error("DEPOLARIZE1", p / 10, p_leak, p_relax),
+        "MZ" : Error("X_ERROR", p / 10, p_leak, p_relax),
+        "MX" : Error("Z_ERROR", p / 10, p_leak, p_relax),
+
+        "shift" : Error("DEPOLARIZE1", 0),
+        "shift_prop_to" : None, 
+
+        "shuttle" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+
+    }
+    return errors
+
+
+''' walking_cat_idle_approx
+    IonQ's 'walking cat architecture' simulation noise model https://arxiv.org/abs/2604.19481v1
+    Cyclic shift by x^i y^j takes i*m + j time steps. If swapping L and R data qubits it's an extra 1 times step.'''
+def walking_cat_idle_approx(p, p_leak = 0):
+    
+    
+    p_relax = round_sig_fig(p_leak / (1 - p_leak), 6)
+    
+    
+    idle_during = {
+        
+        # Longchain [2503.22071] operations:
+        "RZ" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "RX" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax), 
+        "H" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "CNOT" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "MZ" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),  # different to Tham modules (which had 30p/100 for longer measurement)
+        "MX" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),  #                              ditto
+
+        
+        "shift" : Error("DEPOLARIZE1", 0), 
+        "shift_prop_to" : None, 
+
+        # Additional for our architecture:
+        "shuttle" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "pause" : Error("DEPOLARIZE1", 0), # this is an idling error applied at the beginning of each round of stabiliser measurements; simulates waiting before each round of stab. measurement
+    }
+
+    return idle_during
+
 
 
 
