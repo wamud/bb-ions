@@ -361,11 +361,12 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
   kt = convtok(l, m, ut, vt, wt)
 
   if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (will account for leakage from transport)
-    cycles = 4 # num_repumping_cycles 
-    p_relax = 1 - 1/(3 ** cycles) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
-    p_error = cycles * 2e-5       #    ditto
-    circuit.append("RELAX", [kc, kt], p_relax)
-    circuit.append("DEPOLARIZE1", [kc, kt], p_error)
+    if REPUMPING_CYCLES != 0:
+      # cycles = 4 # num_repumping_cycles 
+      p_relax = 1 - 1/(3 ** REPUMPING_CYCLES) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
+      p_error = REPUMPING_CYCLES * 2e-5       #    ditto
+      circuit.append("RELAX", [kc, kt], p_relax)
+      circuit.append("DEPOLARIZE1", [kc, kt], p_error)
   
   if LEAKAGE:
     add_relax_then_leak(gate, circuit, [kc, kt], errors)
@@ -1142,8 +1143,9 @@ def add_relax_then_leak(operation, circ, register, errors: dict):
   if p_relax is not None and p_relax > 0:
     circ.append("RELAX", register, p_relax)
   if p_leak is not None and p_leak > 0:
-    circ.append("LEAKAGE", register, p_leak)
-
+    #circ.append("LEAKAGE", register, p_leak)
+    # temporary for DEP1 leakage:
+    circ.append("DEPOLARIZE1", register, 0.75 * p_leak)
 
 
 
@@ -1165,7 +1167,9 @@ def idle(circuit, register, error: Error):
     if p_relax is not None and p_relax > 0:
       circuit.append("RELAX", register, p_relax)
     if p_leak is not None and p_leak > 0:
-      circuit.append("LEAKAGE", register, p_leak)
+      # circuit.append("LEAKAGE", register, p_leak)
+      # temporary for DEP1 leakage:
+      circuit.append("DEPOLARIZE1", register, 0.75 * p_leak)
 
 
 
@@ -1372,6 +1376,8 @@ Inputs are:
             Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
     - leakage_repumping
             As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this is pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. For now we will simulate 2 repumping cycles after every two-qubit gate if this is set to true. We also apply the memory error to all qubits whether they are leaked or not.
+    - num_repumping_cycles
+            As per 10.1103/PhysRevLett.124.170501, given num_repumping_cycles = c, p_relax = 1 - 1/3^c  and p_error = c * 2e-5 . I.e. You reduce the leaked population by a third every time you repump, but introduce an error of 2e-5 on non-leaked qubits (which we apply to all qubits whether they're leaked or not).
     - leakage_heralds 
             If true, the measurements of qubits are also able to return the result 'leaked'. This is simulated by appending the Deltakit Stim gate 'HERALD_LEAKAGE_EVENT()' after each measurement and applying a detector to it.
     - swap-LRC
@@ -1393,6 +1399,7 @@ def make_BB_circuit(
     only_CNOTs: bool = False,
     leakage: bool = False,
     leakage_repumping: bool = False,
+    num_repumping_cycles: int = 4,
     leakage_heralds: bool = False,
     swap_LRC: bool = False,
     loss: bool = False,
@@ -1416,6 +1423,8 @@ def make_BB_circuit(
     LEAKAGE_REPUMPING = leakage_repumping
     global LEAKAGE_HERALDS
     LEAKAGE_HERALDS = leakage_heralds
+    global REPUMPING_CYCLES
+    REPUMPING_CYCLES = num_repumping_cycles
 
 
     circ = stim.Circuit()

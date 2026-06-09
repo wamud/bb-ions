@@ -30,7 +30,8 @@ only_CZs = True
 leakage_repumping = True
 
 for p in [0.001]:
-        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping=b4_every_gate_4_cycles,leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+    for cycles in [0]:
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage=DEP1,leakage_repumping=b4_every_gate,repumping_cycles={cycles},leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
         print(filename)
 
@@ -48,7 +49,8 @@ for p in [0.001]:
             leakage_heralds = leakage_heralds,
             swap_LRC = swap_LRC,
             only_CZs = only_CZs,
-            leakage_repumping = leakage_repumping
+            leakage_repumping = leakage_repumping,
+            num_repumping_cycles = cycles,
         )
 
         # svg = circuit.without_noise().diagram('timeline-svg') # diagram without noise
@@ -57,4 +59,4 @@ for p in [0.001]:
         # with open(f"scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
 
         # Save circuit:
-        circuit.to_file(f"../circuits/with_leakage/helios/leakage_repumping/{filename}.stim")
+        circuit.to_file(f"../circuits/with_leakage/helios/leakage_repumping_before_gates/{filename}.stim")
