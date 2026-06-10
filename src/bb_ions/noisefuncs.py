@@ -19,7 +19,6 @@ class Error:
 
 
 
-
 ''' longchain_errors
 Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module 
 (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)'''
@@ -240,10 +239,10 @@ def helios_errors(p):
         6e-5      # ZZ
     ]
 
+    # Recall: Error(error_operation, p_error, p_leak, p_relax)
+
 
     helios_errors = {
-
-        # We are using the Error class: (Error_operation, p_error, p_leak, p_relax)
 
 
         # These values are equal to Helios values when input p is 0.001:
@@ -276,7 +275,6 @@ def helios_errors(p):
         # Additional for our architecture (all accounted for in shuttle error)
         
          
-
         "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5)), 
         # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
         # We usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes

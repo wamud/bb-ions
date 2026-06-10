@@ -235,7 +235,7 @@ def bb5_30_4_5_code():
 
 
 '''bb5_48_4_7_code'''
-def bb5_48_4_7_code():
+def bb5_48_4_7():
     # [[48, 4, 7]] BB5 code from Ye Delfosse long chain [2503.22071] Table II
     l = 8
     m = 3
@@ -249,9 +249,20 @@ def bb5_48_4_7_code():
 
     return code
 
-''' Some found n≈60 BB6 codes that could be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 it can be run on Helios.'''
+''' Some found n≈60 BB6 codes that could also be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 Helios qubits'''
 
-def bb6_56_6_8_one():
+
+def bb8_48_6_8():
+    l = 8
+    m = 3
+    Aij = [(2, 1), (3, 2), (5, 2), (7, 1)]
+    Bij = [(1, 2), (2, 0), (5, 0), (5, 2)]
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
+def bb6_56_6_8():
     l = 7
     m = 4
     Aij = [[0, 0], [2, 0], [3, 1]]
@@ -260,31 +271,32 @@ def bb6_56_6_8_one():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-def bb6_56_6_8_two():
-    l = 7
-    m = 4
-    Aij = [[0, 0], [1, 2], [5, 2]]
-    Bij = [[1, 3], [2, 3], [6, 2]]
-    d = 8
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
+# def bb6_56_6_8_two():
+#     l = 7
+#     m = 4
+#     Aij = [[0, 0], [1, 2], [5, 2]]
+#     Bij = [[1, 3], [2, 3], [6, 2]]
+#     d = 8
+#     code = get_code_params(l, m, Aij, Bij, d)
+#     return code
 
-def bb6_60_8_6_one():
+def bb6_60_8_6():
     l = 6
-    m = 5
+    m = 5  # NOTE this will be simulated as per our proposed architecture: one operation zone per module (so 5 in this case) but if pretending like this is being run on actual Helios it only has 4 operation zones with 2q gates enables.
     Aij = [[0, 0], [0, 2], [1, 1]]
     Bij = [[0, 1], [2, 4], [3, 2]]
     d = 6
     code = get_code_params(l, m, Aij, Bij, d)
     return code
-def bb6_60_8_6_two():
-    l = 6
-    m = 5
-    Aij = [[0, 0], [0, 4], [1, 2]]
-    Bij = [[1, 1], [3, 0], [4, 4]]
-    d = 6
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
+
+# def bb6_60_8_6_two():
+#     l = 6
+#     m = 5
+#     Aij = [[0, 0], [0, 4], [1, 2]]
+#     Bij = [[1, 1], [3, 0], [4, 4]]
+#     d = 6
+#     code = get_code_params(l, m, Aij, Bij, d)
+#     return code
 
 def bb8_64_12_8():
     l = 8
@@ -295,7 +307,17 @@ def bb8_64_12_8():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-''' End of some found cocdes around n=60'''
+def bb8_64_12_8_two():
+    l = 8
+    m = 4
+    Aij = [(0, 2), (0, 3), (1, 1), (3, 2)]
+    Bij = [(3, 3), (5, 2), (6, 1), (6, 2)]
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
+''' End of some found codes around n=60'''
 
 
 
