@@ -271,14 +271,6 @@ def bb6_56_6_8():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-# def bb6_56_6_8_two():
-#     l = 7
-#     m = 4
-#     Aij = [[0, 0], [1, 2], [5, 2]]
-#     Bij = [[1, 3], [2, 3], [6, 2]]
-#     d = 8
-#     code = get_code_params(l, m, Aij, Bij, d)
-#     return code
 
 def bb6_60_8_6():
     l = 6
@@ -289,25 +281,8 @@ def bb6_60_8_6():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
-# def bb6_60_8_6_two():
-#     l = 6
-#     m = 5
-#     Aij = [[0, 0], [0, 4], [1, 2]]
-#     Bij = [[1, 1], [3, 0], [4, 4]]
-#     d = 6
-#     code = get_code_params(l, m, Aij, Bij, d)
-#     return code
 
 def bb8_64_12_8():
-    l = 8
-    m = 4
-    Aij = [(0, 3), (2, 1), (7, 0), (7, 2)]
-    Bij = [(0, 1), (3, 3), (6, 3), (7, 1)]
-    d = 8
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
-
-def bb8_64_12_8_two():
     l = 8
     m = 4
     Aij = [(0, 2), (0, 3), (1, 1), (3, 2)]
