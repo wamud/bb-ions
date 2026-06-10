@@ -1144,6 +1144,8 @@ def add_relax_then_leak(operation, circ, register, errors: dict):
     circ.append("RELAX", register, p_relax)
   if p_leak is not None and p_leak > 0:
     circ.append("LEAKAGE", register, p_leak)
+    # ## Temporarily for DEP1 leakage:
+    # circ.append("DEPOLARIZE1", register, 0.75*p_leak)
 
 
 
@@ -1167,6 +1169,8 @@ def idle(circuit, register, error: Error):
       circuit.append("RELAX", register, p_relax)
     if p_leak is not None and p_leak > 0:
       circuit.append("LEAKAGE", register, p_leak)
+      # ## Temporarily for DEP1 leakage (no knock-on effects of leakage, just depolarise the qubit)
+      # circuit.append("DEPOLARIZE1", register, 0.75*p_leak)
 
 
 
