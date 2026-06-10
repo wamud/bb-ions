@@ -19,7 +19,7 @@ code = two_gross_code()
 memory_basis = 'X'
 noise = 'helios'
 loss = False
-num_syndrome_extraction_cycles = 12
+num_syndrome_extraction_cycles = code.d_max
 seq_gates = True
 exclude_opp_basis_detectors = True
 leakage_heralds = False
@@ -27,12 +27,12 @@ leakage = True
 swap_LRC = False
 loss_heralds = False
 only_CZs = True
-leakage_repumping = False
+leakage_repumping = True
 
 
 for p in [0.001]:
-    for cycles in [0]: #range(1,11):
-        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage=DEP1,leakage_repumping={leakage_repumping},repumping_cycles={cycles},leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+    for cycles in [6]:
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},leakage_heralds={leakage_heralds},loss={loss},loss_heralds={loss_heralds},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
         
         print(filename)
 
