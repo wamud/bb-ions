@@ -22,6 +22,7 @@ def append_entries_to_json(entries, filename):
             f.write("\n")
 
 
+
 osd_options={ 
     'xyz_error_bias': [1, 1, 1], 
     'bp_method': "minimum_sum", 
@@ -96,6 +97,7 @@ for loop in range(len(ivectors)):
         j3 = jvec[3]
         j4 = jvec[4]
 
+        # (Could make Aij have three terms and Bij have two but if searching all the terms anyway that will just swap the roles of the left and right data qubits).
         # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
         if (i0, j0) == (i1, j1):
             continue
@@ -129,7 +131,7 @@ for loop in range(len(ivectors)):
         seen_structures.add(key_struct)
 
 
-        # (Could make Aij have three terms and Bij have two but if searching all the terms anyway that will just swap the roles of the left and right data qubits).
+
 
         Hx, Hz = make_parity_check_matrices(l, m, Aij, Bij)
 
