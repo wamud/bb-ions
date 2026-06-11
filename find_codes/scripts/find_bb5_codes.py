@@ -68,11 +68,11 @@ random.seed(42)
 
 ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat = 5))
-random.shuffle(ivectors)
+# random.shuffle(ivectors)
 
 jvalues = range(m)
 jvectors = list(itertools.product(jvalues, repeat = 5))
-random.shuffle(jvectors)
+# random.shuffle(jvectors)
 
 seen_structures = set()   # (Aij, Bij) normalisés
 
