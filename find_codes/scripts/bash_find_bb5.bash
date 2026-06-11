@@ -31,7 +31,7 @@ for ((l=min_l; l<=max_l; l++)); do
         python find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
         
         # for macbook air:
-        python3.11 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
+        # `python3.11 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
     done
 done
 
