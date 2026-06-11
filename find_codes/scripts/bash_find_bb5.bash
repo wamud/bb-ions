@@ -25,6 +25,12 @@ for ((l=min_l; l<=max_l; l++)); do
             min_d=6
         fi
 
+        # for iHPC:
+        source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
+        conda activate base
+        python find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
+        
+        # for macbook air:
         python3.11 find_bb5_codes.py "$l" "$m" "$min_k" "$min_d" &
     done
 done
