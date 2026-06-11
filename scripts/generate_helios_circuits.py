@@ -24,30 +24,32 @@ leakage = True
 only_CZs = True
 leakage_repumping = True
 swap_LRC = False
+cycles = 4
+p = 0.001
 
-for code in [bb5_48_4_7(), bb8_48_6_8(), bb6_56_6_8(), bb6_60_8_6(), bb8_64_12_8(), bb8_64_12_8_two()]:
-    for p in [0.001]:
-        for cycles in range(1,7):
-            filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
-            
-            print(filename)
+# for code in [bb5_48_4_7(), bb8_48_6_8(), bb6_56_6_8(), bb6_60_8_6(), bb8_64_12_8(), bb8_64_12_8_two()]:
+for code in [get_code_params(6, 5, [[0, 1], [3, 0]], [[0, 1], [2, 2], [4, 4]], 6), get_code_params(6, 5, [[0, 1], [3, 0]], [[0, 1], [1, 1], [2, 0]], 6), get_code_params(6, 5, [[0, 1], [3, 0]], [[1, 3], [3, 1], [5, 1]], 6), get_code_params(6, 5, [[1, 3], [4, 2]], [[0, 1], [2, 2], [4, 1]], 8), get_code_params(6, 5, [[0, 1], [3, 0]], [[0, 0], [2, 4], [4, 0]], 8), get_code_params(6, 5, [[1, 3], [4, 2]], [[0, 1], [2, 1], [4, 0]], 8), get_code_params(6, 5, [[0, 1], [3, 0]], [[1, 2], [3, 1], [5, 2]], 8), get_code_params(6, 5, [[2, 0], [5, 3]], [[1, 1], [2, 4], [3, 3]], 7), get_code_params(6, 5, [[0, 4], [3, 2]], [[2, 1], [3, 2], [4, 1]], 7), get_code_params(6, 5, [[2, 4], [5, 1]], [[0, 4], [4, 2], [5, 0]], 7), get_code_params(6, 5, [[2, 4], [5, 3]], [[1, 4], [2, 1], [3, 0]], 7), get_code_params(9, 3, [[1, 1], [3, 1]], [[0, 1], [4, 0], [7, 2]], 6), get_code_params(9, 3, [[4, 1], [6, 2]], [[0, 1], [4, 1], [4, 2]], 6), get_code_params(9, 3, [[0, 2], [8, 2]], [[4, 0], [6, 2], [7, 1]], 6), get_code_params(9, 3, [[0, 2], [8, 0]], [[4, 2], [6, 1], [7, 1]], 6), get_code_params(9, 3, [[1, 1], [3, 2]], [[0, 0], [4, 1], [7, 0]], 6), get_code_params(9, 3, [[1, 1], [5, 1]], [[4, 1], [7, 0], [7, 2]], 6), get_code_params(10, 3, [[2, 2], [5, 2]], [[0, 0], [3, 1], [4, 2]], 6), get_code_params(10, 3, [[2, 0], [5, 0]], [[0, 0], [3, 1], [4, 2]], 6), get_code_params(10, 3, [[3, 1], [4, 1]], [[3, 0], [4, 1], [6, 2]], 6), get_code_params(10, 3, [[2, 0], [9, 0]], [[6, 1], [7, 0], [7, 2]], 7), get_code_params(10, 3, [[0, 1], [9, 1]], [[1, 0], [7, 1], [8, 2]], 7), get_code_params(10, 3, [[0, 2], [9, 2]], [[1, 1], [7, 0], [8, 2]], 7), get_code_params(10, 3, [[0, 2], [9, 2]], [[1, 0], [7, 2], [8, 1]], 7), get_code_params(10, 3, [[4, 2], [7, 2]], [[0, 0], [0, 1], [8, 2]], 8), get_code_params(10, 3, [[8, 0], [9, 0]], [[2, 1], [8, 0], [8, 2]], 8), get_code_params(10, 3, [[1, 0], [8, 0]], [[4, 1], [6, 0], [6, 2]], 8), get_code_params(10, 3, [[8, 0], [9, 0]], [[2, 0], [8, 1], [8, 2]], 8), get_code_params(10, 3, [[1, 2], [2, 2]], [[2, 0], [2, 1], [8, 2]], 8), get_code_params(15, 2, [[6, 1], [9, 0]], [[6, 1], [7, 0], [14, 0]], 7), get_code_params(15, 2, [[0, 1], [12, 0]], [[4, 0], [5, 1], [12, 1]], 7), get_code_params(15, 2, [[6, 0], [9, 1]], [[4, 1], [9, 1], [11, 1]], 8), get_code_params(15, 2, [[2, 1], [8, 0]], [[7, 1], [11, 1], [12, 1]], 8), get_code_params(15, 2, [[2, 1], [8, 0]], [[0, 1], [4, 1], [14, 1]], 8), get_code_params(15, 2, [[2, 0], [8, 1]], [[0, 1], [4, 1], [14, 1]], 8), get_code_params(15, 2, [[5, 0], [8, 1]], [[7, 1], [9, 1], [14, 1]], 8)]:
 
-            circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-                code,
-                p,  
-                errors = helios_errors(p),
-                idle_during = helios_idle_errors(p),
-                num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-                memory_basis = memory_basis,
-                sequential_gates = seq_gates, 
-                exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-                reuse_check_qubits = True,
-                leakage = leakage,
-                only_CZs = only_CZs,
-                swap_LRC = swap_LRC,
-                leakage_repumping = leakage_repumping,
-                num_repumping_cycles = cycles,
-            )
+    filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},swap_LRC={swap_LRC},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+    
+    print(filename)
 
-            # Save circuit:
-            circuit.to_file(f"../circuits/with_leakage/helios/run_on_actual_helios/{filename}.stim")
+    circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+        code,
+        p,  
+        errors = helios_errors(p),
+        idle_during = helios_idle_errors(p),
+        num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+        memory_basis = memory_basis,
+        sequential_gates = seq_gates, 
+        exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+        reuse_check_qubits = True,
+        leakage = leakage,
+        only_CZs = only_CZs,
+        swap_LRC = swap_LRC,
+        leakage_repumping = leakage_repumping,
+        num_repumping_cycles = cycles,
+    )
+
+    # Save circuit:
+    circuit.to_file(f"../circuits/with_leakage/helios/actual_helios/some_found_codes/{filename}.stim")

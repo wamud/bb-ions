@@ -19,9 +19,9 @@ def main():
     start_time = time.time()
     print(f"Start time = {start_time}")
     
-    folder_to_run = 'actual_helios'
+    folder_to_run = 'some_found_codes'
 
-    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/{folder_to_run}/*.stim") 
+    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/actual_helios/{folder_to_run}/*.stim") 
     csv_path = f"../collected_stats/helios_noise/other_investigations/{folder_to_run}.csv"
 
     circuit_paths.sort()
@@ -109,7 +109,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 10_000_000,
-        max_errors = 1000,
+        max_errors = 100,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
@@ -131,7 +131,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 100_000_000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
