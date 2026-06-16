@@ -73,7 +73,7 @@ class Code:
 ''' Functions defining BB codes'''
 
 
-''' Small codes'''
+''' Some small codes I found'''
 def bb6_6_4_2(): # Iceberg [[2m, 2m - 2, 2]] code. [[6, 4, 2]]. Its parity-check matrices are all 1's. Can be expressed as a BB code with the following parameters:
     l = 3
     m = 1
@@ -188,7 +188,7 @@ def bb8_18_6_3():
 
 
 
-'''BB6 codes I can find that might have been those compared to in the long chain paper [2503.22071] (found using code in find_codes folder)'''
+'''Some found BB6 codes that might have been those compared to in the long chain paper [2503.22071]'''
 
 '''bb6_30_4_4_code'''
 def bb6_30_4_4_code():
@@ -218,7 +218,6 @@ def bb6_48_4_6_code():
 
 ''' BB5 codes from BB5 long chain paper [2503.22071] '''
 
-''' bb5_30_4_5_code'''
 def bb5_30_4_5_code():
     
     # [[30, 4, 5]] BB5 (weight-5 stabilisers) code from Ye Delfosse long chain [2503.22071] Table II
@@ -234,7 +233,6 @@ def bb5_30_4_5_code():
     return code
 
 
-'''bb5_48_4_7_code'''
 def bb5_48_4_7():
     # [[48, 4, 7]] BB5 code from Ye Delfosse long chain [2503.22071] Table II
     l = 8
@@ -248,6 +246,7 @@ def bb5_48_4_7():
     code = get_code_params(l, m, Aij, Bij, d)
 
     return code
+
 
 ''' Some found n≈60 BB6 codes that could also be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 Helios qubits'''
 
@@ -280,6 +279,27 @@ def bb6_60_8_6():
     d = 6
     code = get_code_params(l, m, Aij, Bij, d)
     return code
+
+''' bb5 codes perform better'''
+
+def bb5_60_4_8_one():
+    l = 15
+    m = 2
+    Aij = [[6, 0], [9, 1]]
+    Bij = [[4, 1], [9, 1], [11, 1]]
+    d = 8
+    code = get_code_paramas(l, m, Aij, Bij, d)
+    return code
+
+def bb5_60_4_8_one():
+    l = 15
+    m = 2
+    Aij = [[6, 0], [9, 1]]
+    Bij = [[4, 1], [9, 1], [11, 1]]
+    d = 8
+    code = get_code_paramas(l, m, Aij, Bij, d)
+    return code
+
 
 
 def bb8_64_12_8():
