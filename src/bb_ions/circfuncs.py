@@ -1549,9 +1549,6 @@ def make_BB_circuit(
     if reuse_check_qubits == True:
       tick(circ)
 
-    
-
-
 
     # # Z-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
@@ -1592,11 +1589,8 @@ def make_BB_circuit(
         tick(circ)
 
 
-
-
     # Now measure check qubits
     measure('Z', circ, qZ, errors)
-
     idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
 
@@ -1618,12 +1612,8 @@ def make_BB_circuit(
     if reuse_check_qubits == True:
       tick(circ)
     
-
-
     # # # for diagram:
     # tick(circ)
-
-
 
 
     ## SUBSEQUENT ROUNDS:

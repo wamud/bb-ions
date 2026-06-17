@@ -213,7 +213,7 @@ Note that they combined all transport (cylic shift, merge/split Coulomb potentia
 Note also that setting p = 0.001 will give all the values as per Helios, most notably a two-qubit gate error rate of 7 × 10^-4 ≈ 1 × 10^-3 and a reset / measure error rate of 1e-3'''
 def helios_errors(p):
 
-    # Below is distribution of Pauli errors for Rzz gate taken from Table A4 of Helios [2511.05465]: (things that can be conjugated by ZZ to eachother are symmetrical - same orbit of R_ZZ -- as are things that you can swap X and Y to get to eachother (search "gauge freedom" in the paper, this is because the two qubit gate is RZZ(π/2)) 
+    # Below is distribution of Pauli errors for Rzz gate taken from Table A4 of Helios [2511.05465]: (things that can be conjugated by ZZ to eachother are symmetrical - same orbit of R_ZZ -- as are things that you can swap X and Y to get to eachother (search "gauge freedom" in the paper, this is because the two qubit gate is RZZ(π/2)). I would assume that these errors include the errors introduced by the additional 300
 
     # IX, IY, ZX, ZY = 4.5e-5
     # XI, YI, XZ, YX = 6e-5
@@ -315,8 +315,8 @@ def helios_idle_errors(p):
     m = 8e-3 # from p_l = mt -- the linear leakage function in comments above
 
     # t_2q = 70e-6  # from paper. It's ≈ 70μs
-    t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and 300μs of cooling and the 70μs two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates (i.e. simulating just one operation zone when sequential_gates = True in the circuit! (Also it's still an order of magnitude lower than tham_modules idling errors)).
-    t_1q = 70e-6    # assuing same as two-qubit gate (overestimate. Usually is at least an order of magnitude faster)
+    t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and the 300μs of cooling after a four-ion shift and the 70μs of the actual two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates (i.e. simulating just one operation zone when sequential_gates = True in the circuit).
+    t_1q = 70e-6    # assuming same as two-qubit gate (overestimate so will produce larger idling errors. Usually is at least an order of magnitude faster)
     
     
     
@@ -327,26 +327,22 @@ def helios_idle_errors(p):
     helios_idle_during = {
 
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
-        
-        
+
         "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 5)),  
 
         "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),
         "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),   
         
         # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
-        
-        "RZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ), 
-        "RX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),  
+
+        # average (including on worst-affected qubits, though we don't have any of those as neighbouring qubits will always also be being measured) crosstalk during MCMR in Helios is 6e-5. Divide this between M and R equally gives p_error = 3.00005e-5
+        "RZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
+        "RX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
 
         
-        "MZ" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ),   
-        "MX" : Error("DEPOLARIZE1", multiple * 6e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ),   
-        
-        # # LEAKAGE REPUMPING ON NON-MEASURED QUBITS EVERY MEASUREMENT:
-        # "MZ" : Error("DEPOLARIZE1", multiple * 3.26e-4, multiple * m * t_m, 0.99999993), # The two-qubit error rate is 8.5e-4 ... so this seems way better than doing a teleport LRC. The error is less than half.
-        # "MX" : Error("DEPOLARIZE1", multiple * 3.26e-4, multiple * m * t_m, 0.99999993),
-        
+        "MZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+
         "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
 
 
