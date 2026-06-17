@@ -360,7 +360,7 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
   kc = convtok(l, m, uc, vc, wc)
   kt = convtok(l, m, ut, vt, wt)
 
-  if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (will account for leakage from transport)
+  if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit)
     if REPUMPING_CYCLES != 0:
       # cycles = 4 # num_repumping_cycles 
       p_relax = 1 - 1/(3 ** REPUMPING_CYCLES) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
@@ -670,7 +670,7 @@ def update_shift_probs(j_dif, errors, idle_during):
     # updated_prob =  shift_prop_to * j_dif
 
     # # New modification: for our architecture, where we just say the shift error is equivalent to idling for that length of time
-    # # TO DO: work into making an option able to be specified when make_BB_circuit() is called. For now just manually adding it to make the circuits and start running them.
+    # # to do: work into making an option able to be specified when make_BB_circuit() is called. For now just manually adding it to make the circuits and start running them.
     
     length_of_shift = LEG_SPACING * j_dif  # LEG_SPACING defined in noisefuncs
     shuttle_speed = 1 # [m/s]
@@ -1376,7 +1376,7 @@ Inputs are:
     - leakage
             Leakage is where the qubit leaves the computational subspace of |0⟩ and |1⟩ and occupies, or is in a superposition with, another energy level, call it |2⟩. Leakage is usually false, meaning no leakage noise will be introduced. Otherwise, when leakage is True, the dictionary of errors (which also contain the leakage rates during different operations) will be used to add leakage noise. For example, if errors = { "H" : Error("DEPOLARIZE1", p_gate, p_leak, p_relax} then after a Hadamard gate and its noise we append RELAX(p_relax) and LEAKAGE(p_leak). These instructions are not recognised by stim but are recognised by deltakit_stim (see examples/leakage_intro_to_deltakit_stim.ipynb) and mean that any previously leaked qubit has a p_relax chance of returning to the computational subspace (where it is a maximally depolarised state) and then it, or any non-leaked qubit, has a p_leak chance of leaking. Leakage is modelled using the depolarising leakage model (10.1088/1367-2630/ab3372) where the qubit maximally depolarises and any qubit it later interacts with also maximally depolarises.
     - leakage_repumping
-            As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this is pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. For now we will simulate 2 repumping cycles after every two-qubit gate if this is set to true. We also apply the memory error to all qubits whether they are leaked or not.
+            As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. We repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit). We also apply the memory error from repumping to all qubits whether they are leaked or not.
     - num_repumping_cycles
             As per 10.1103/PhysRevLett.124.170501, given num_repumping_cycles = c, p_relax = 1 - 1/3^c  and p_error = c * 2e-5 . I.e. You reduce the leaked population by a third every time you repump, but introduce an error of 2e-5 on non-leaked qubits (which we apply to all qubits whether they're leaked or not).
     - leakage_heralds 
@@ -1412,7 +1412,7 @@ def make_BB_circuit(
     if only_CZs and only_CNOTs:
       raise ValueError("Only ONE of only_CZs and only_CNOTs can be True")
 
-    global ONLYCZs # inelegantly using a macro here as it's a late addition (saves me putting it as a new argument in all the sub-functions)
+    global ONLYCZs # inelegantly using macros here for these subsequent additions
     ONLYCZs = only_CZs
     global ONLYCNOTs
     ONLYCNOTs = only_CNOTs
