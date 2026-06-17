@@ -1643,7 +1643,7 @@ def make_BB_circuit(
       if num_syndrome_extraction_cycles > 1:
         for rep in range(num_syndrome_extraction_cycles - 1):
           
-          '''start'''
+          '''start of swap_LRC round'''
 
           offset = n if LEAKAGE_HERALDS else 0
 
@@ -1759,7 +1759,7 @@ def make_BB_circuit(
           if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
             tick(circ)
           
-          '''end'''
+          '''end of this swap_LRC round'''
 
 
     # # Measure all data qubits:
