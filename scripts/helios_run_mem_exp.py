@@ -19,10 +19,10 @@ def main():
     start_time = time.time()
     print(f"Start time = {start_time}")
     
-    folder_to_run = 'higher_p'
+    folder_to_run = 'actual_helios'
 
     circuit_paths = glob.glob(f"../circuits/with_leakage/helios/actual_helios/{folder_to_run}/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/other_investigations/{folder_to_run}.csv"
+    csv_path = f"../collected_stats/helios_noise/actual_helios/{folder_to_run}.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:

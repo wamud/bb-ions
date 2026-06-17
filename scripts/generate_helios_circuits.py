@@ -26,8 +26,8 @@ leakage_repumping = True
 cycles = 4
 # p = 0.001
 
-for p in [0.001]:
-    for code in [bb5_48_4_7()]:
+for p in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006]:
+    for code in [bb5_48_4_7(), bb5_60_4_8()]:
 
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
@@ -50,4 +50,4 @@ for p in [0.001]:
         )
 
         # Save circuit:
-        circuit.to_file(f"../circuits/with_leakage/helios/actual_helios/higher_p/{filename}.stim")
+        circuit.to_file(f"../circuits/with_leakage/helios/actual_helios/{filename}.stim")

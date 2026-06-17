@@ -360,13 +360,16 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
   kc = convtok(l, m, uc, vc, wc)
   kt = convtok(l, m, ut, vt, wt)
 
-  if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit)
+  if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
     if REPUMPING_CYCLES != 0:
       # cycles = 4 # num_repumping_cycles 
-      p_relax = 1 - 1/(3 ** REPUMPING_CYCLES) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
-      p_error = REPUMPING_CYCLES * 2e-5       #    ditto
+      p_relax = 1 - 1/(3 ** REPUMPING_CYCLES) 
+
+      repump_error = errors['error_per_repump'].op
+      p_repump_error = REPUMPING_CYCLES * errors['error_per_repump'].p
+
       circuit.append("RELAX", [kc, kt], p_relax)
-      circuit.append("DEPOLARIZE1", [kc, kt], p_error)
+      circuit.append(repump_error, [kc, kt], p_repump_error)
   
   if LEAKAGE:
     add_relax_then_leak(gate, circuit, [kc, kt], errors)

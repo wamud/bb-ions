@@ -287,6 +287,7 @@ def helios_errors(p):
         "shift" : Error("DEPOLARIZE1", 0),
         "shift_prop_to" : None, # shift_prop_to is used to make errors proportional to the length of the shift. We are OVERESTIMATING the shift error by using Helios' combined value for shift, merge/split/ junction enter exit and cooling operations from a 98 qubit program that had to randomly sort all the qubits because our program is more organised and just shifts a module of qubits to another module. Interestingly, this Helios overestimate comes out as only slightly less than the Tham et al. estimate of 30p/100
         
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
     }
     return helios_errors
 
