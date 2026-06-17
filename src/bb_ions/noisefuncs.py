@@ -346,12 +346,13 @@ def helios_idle_errors(p):
         # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
 
         # average (including on worst-affected qubits, though we don't have any of those as neighbouring qubits will always also be being measured) crosstalk during MCMR in Helios is 6e-5. Divide this between M and R equally gives p_error = 3.00005e-5
+        "MZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        
         "RZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
         "RX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
 
         
-        "MZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
-        "MX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
 
         "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
 

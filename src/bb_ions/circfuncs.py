@@ -1730,7 +1730,7 @@ def make_BB_circuit(
 
           # Now measure check qubits
           measure('Z', circ, qZ, errors)
-          idle(circ, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
+          idle(circ, qL + qR, idle_during['MZ']) # t_meas) # crosstalk on data qubits
           
           
           # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
