@@ -22,7 +22,7 @@ def main():
     folder_to_run = 'gross_code'
 
     circuit_paths = glob.glob(f"../circuits/with_leakage/helios/{folder_to_run}/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/{folder_to_run}.csv"
+    csv_path = f"../collected_stats/helios_noise/with_leakage/{folder_to_run}.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
