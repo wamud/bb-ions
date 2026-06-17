@@ -45,6 +45,10 @@ def longchain_errors(p):
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
 
+
+        # Added repumping error from Honeywell:
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+
     }
     return errors
 
@@ -103,6 +107,9 @@ def tham_modules_errors(p):
         "shuttle" : Error("DEPOLARIZE1", 0), # we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
 
     }
     return errors
@@ -165,6 +172,9 @@ def walking_cat_errors(p, p_leak = 0):
         "shuttle" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
 
     }
     return errors
@@ -379,6 +389,10 @@ def zero_errors():
         "shift" : Error("DEPOLARIZE1", 0),
 
         "shift_prop_to" : 0, 
+
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", 0) 
         
     }
     
@@ -436,6 +450,10 @@ def uniform_errors(p):
         "shuttle" : Error("DEPOLARIZE1", 0), 
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+
     }
     
     return errors
@@ -547,6 +565,10 @@ def our_uniform_plus_shift_and_shuttle(p, T2):
 
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
+
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
     }
     
     return errors
