@@ -28,7 +28,7 @@ leakage_repumping = True
 cycles = 3
 # p = 0.001
 
-for p in [0.001, 0.002, 0.003, 0.004]:
+for p in [0.005]:
     for seq_gates in [True, False]:
 
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
