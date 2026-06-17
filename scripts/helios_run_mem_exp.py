@@ -19,7 +19,7 @@ def main():
     start_time = time.time()
     print(f"Start time = {start_time}")
     
-    folder_to_run = 'some_found_codes'
+    folder_to_run = 'higher_p'
 
     circuit_paths = glob.glob(f"../circuits/with_leakage/helios/actual_helios/{folder_to_run}/*.stim") 
     csv_path = f"../collected_stats/helios_noise/other_investigations/{folder_to_run}.csv"
@@ -32,7 +32,7 @@ def main():
 
     
 
-    # existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/*parallel*.stim") 
+    existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/actual_helios_best.csv") 
 
     tasks = [
         sinter.Task(

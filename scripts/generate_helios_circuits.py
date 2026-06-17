@@ -24,29 +24,30 @@ leakage = True
 only_CZs = True
 leakage_repumping = True
 cycles = 4
-p = 0.001
+# p = 0.001
 
-for code in [bb5_48_4_7(), bb8_48_6_8(), bb6_56_6_8(), bb6_60_8_6(), bb8_64_12_8(), bb8_64_12_8_two()]:
+for p in [0.002, 0.003, 0.004, 0.005, 0.006]:
+    for code in [bb5_48_4_7(), bb5_60_4_8()]:
 
-    filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
-    
-    print(filename)
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_repumping={leakage_repumping},repumping_cycles={cycles},r={num_syndrome_extraction_cycles},seq_gates={seq_gates},b={memory_basis},excl_opp_b_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A='{''.join(str(x) + str(y) for x, y in code.Aij)}',B='{''.join(str(x) + str(y) for x, y in code.Bij)}'"
+        
+        print(filename)
 
-    circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-        code,
-        p,  
-        errors = helios_errors(p),
-        idle_during = helios_idle_errors(p),
-        num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-        memory_basis = memory_basis,
-        sequential_gates = seq_gates, 
-        exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-        reuse_check_qubits = True,
-        leakage = leakage,
-        only_CZs = only_CZs,
-        leakage_repumping = leakage_repumping,
-        num_repumping_cycles = cycles,
-    )
+        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+            code,
+            p,  
+            errors = helios_errors(p),
+            idle_during = helios_idle_errors(p),
+            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+            memory_basis = memory_basis,
+            sequential_gates = seq_gates, 
+            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+            reuse_check_qubits = True,
+            leakage = leakage,
+            only_CZs = only_CZs,
+            leakage_repumping = leakage_repumping,
+            num_repumping_cycles = cycles,
+        )
 
-    # Save circuit:
-    circuit.to_file(f"../circuits/with_leakage/helios/actual_helios/some_found_codes/{filename}.stim")
+        # Save circuit:
+        circuit.to_file(f"../circuits/with_leakage/helios/actual_helios/higher_p/{filename}.stim")

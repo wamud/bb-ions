@@ -287,7 +287,7 @@ def bb5_60_4_8():
     Aij = [[2, 0], [8, 1]]
     Bij = [[0, 1], [4, 1], [14, 1]]
     d = 8
-    code = get_code_paramas(l, m, Aij, Bij, d)
+    code = get_code_params(l, m, Aij, Bij, d)
     return code
 
 
