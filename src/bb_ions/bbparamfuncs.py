@@ -281,27 +281,17 @@ def bb6_60_8_6():
     return code
 
 ''' bb5 codes perform better'''
-
-def bb5_60_4_8_one():
+def bb5_60_4_8():
     l = 15
     m = 2
-    Aij = [[6, 0], [9, 1]]
-    Bij = [[4, 1], [9, 1], [11, 1]]
-    d = 8
-    code = get_code_paramas(l, m, Aij, Bij, d)
-    return code
-
-def bb5_60_4_8_one():
-    l = 15
-    m = 2
-    Aij = [[6, 0], [9, 1]]
-    Bij = [[4, 1], [9, 1], [11, 1]]
+    Aij = [[2, 0], [8, 1]]
+    Bij = [[0, 1], [4, 1], [14, 1]]
     d = 8
     code = get_code_paramas(l, m, Aij, Bij, d)
     return code
 
 
-
+'''bb8 is not so great'''
 def bb8_64_12_8():
     l = 8
     m = 4
@@ -310,6 +300,7 @@ def bb8_64_12_8():
     d = 8
     code = get_code_params(l, m, Aij, Bij, d)
     return code
+
 
 
 ''' End of some found codes around n=60'''
