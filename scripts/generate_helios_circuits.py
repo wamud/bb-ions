@@ -18,7 +18,7 @@ from bb_ions import *
 code = gross_code()
 
 memory_basis = 'X'
-noise = 'helios_free_shifts'
+noise = 'helios_half_shifts'
 num_syndrome_extraction_cycles = code.d_max
 # seq_gates = True
 exclude_opp_basis_detectors = True

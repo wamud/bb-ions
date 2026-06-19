@@ -284,7 +284,7 @@ def helios_errors(p):
         
         # Additional for our architecture (all accounted for in shuttle error)
         
-        "shuttle" : Error("Z_ERROR", 0), 
+        "shuttle" : Error("Z_ERROR", 0.5*1.2e-1 * p, 0.5*2.2e-1 * p, 0.5*round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5)),  
         # "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5)), 
         # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
         # We usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
