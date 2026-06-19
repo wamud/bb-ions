@@ -1474,10 +1474,10 @@ def make_BB_circuit(
 
     if memory_basis == 'Z': 
       if ONLYCZs == True:
-        init('Z', circ, qL + qR, errors) # need to initialise a step earlier and then hadamard the data qubits  # comment out this line for diagram
+        init('Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # diagram
     if memory_basis == 'X':
       if ONLYCZs == False:
-        init('Z', circ, qL + qR, errors)  # comment out this line for diagram
+        init('Z', circ, qL + qR, errors)  # diagram
 
     tick(circ)
 
@@ -1492,11 +1492,11 @@ def make_BB_circuit(
         hadamard(circ, qL + qR, errors)
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
-        init('Z', circ, qL + qR, errors)  # comment out this line for diagram
+        init('Z', circ, qL + qR, errors)  # diagram
 
     if ONLYCZs == False:
       if memory_basis == 'Z':
-        init('Z', circ, qL + qR, errors)   # comment out this line for diagram
+        init('Z', circ, qL + qR, errors)   # diagram
       if memory_basis == 'X':
         hadamard(circ, qL + qR, errors)
 
