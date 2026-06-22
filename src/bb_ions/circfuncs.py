@@ -64,8 +64,9 @@ Makes lists of qubit indices dividing n = 2lm qubits evenly into qA, qB, qC, qD.
   qB: qubits n/2 to n - 1
   qC: qubits n to 3n/2 - 1 
   qD: qubits 3n/2 to 2n - 1'''
-def make_registers(l, m, reuse_check_qubits = False):
-  
+def make_registers(code, reuse_check_qubits = False):
+  m = code.m
+  l = code.l
   
   if reuse_check_qubits == True:  # qX and qZ will be the same register
     X = 0
@@ -159,26 +160,79 @@ def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
 
   return 
 
-''' init
+''' init_register
 Sets qubits in the list 'register' to
 - |0⟩ if basis == 'Z'
 - |+⟩ if basis == 'X'
-Also adds a depolarizing error (in alignment with lonchain paper 2503.2207) with probability p if 'longchain' in the noise parameter, otherwise the more usual reset error which sets to orthog. eigenstate'''
-def init(basis, circuit, register, errors: dict):
-  
+This requires all the registers ('registers') to do proper idling.
+Also adds an error (usually depolarising or an error to prepare orthogonal eigenstate) depending on errors dictionary.
+Also models only doing at most 2*m at a time if SEQUENTIAL_MR1Q is on, as we're saying we have m operation zones and each operation zone can fit 2 qubits'''
+def init_register(idle_during, registers, code, basis, circuit, register, errors: dict):
+
   reset = f"R{basis}"
-  circuit.append(reset, register) # append RZ or RX
-  
-  if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
-    add_relax_then_leak(reset, circuit, register, errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+
+  if not SEQUENTIAL_MR1Q:  
+
+    circuit.append(reset, register) # append RZ or RX
+    
+    if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
+      add_relax_then_leak(reset, circuit, register, errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+    p = errors[reset].p
+    if p > 0:
+      error_op = errors[reset].op
+      circuit.append(error_op, register, p)
+
+
+  elif SEQUENTIAL_MR1Q:
+
+    all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
+
+    l = code.l
+    m = code.m 
+
+    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
+
+    for i in range(0, l, 2):
+
+      qs = []
+      
+      for module in range(m):
+        
+        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
+        q0 = register[q0_idx]
+        qs.append(q0)
+
+        if i != l - 1: # it will equal l - 1 if we're at the last row
+          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
+          q1 = register[q1_idx]
+          qs.append(q1)
+        
+        # end for loop creating list of qubits in this time step.
+
+      circuit.append(reset, qs) # append reset to all the qubits in this time step
+
+      if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
+        add_relax_then_leak(reset, circuit, [qs], errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+      p = errors[reset].p
+      if p > 0:
+        error_op = errors[reset].op
+        circuit.append(error_op, qs, p)
+
+      # idling: 
+      idle_qs = [q for q in all_registers if q not in qs]
+      idle(circuit, idle_qs, idle_during[reset])
+
+      # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
+      apply_four_ion_shift_error(circuit, all_registers, idle_during)
 
 
 
-  p = errors[reset].p
+      tick(circuit)
 
-  if p > 0:
-    error_op = errors[reset].op
-    circuit.append(error_op, register, p)
+
+
+
+
 
 
 
@@ -798,11 +852,11 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
         hadamard(circ, qC + qD, errors) # need to put sequential application within the hadamard func
       
         # UP TO HERE
-        # if SEQUENTIAL_OPS:
+        # if SEQUENTIAL_MR1Q:
         #   num_timesteps = len(qC + qD) // 2 * NUM_OP_ZONES # num_qubits_to_H / num_qubits_that_can_be_H'ed_per_timestep (two per operation zone)
         #   for i in range(num_timesteps):
         #     idle(circ, qD_idle, idle_during['H'])
-        # elif not SEQUENTIAL_OPS:
+        # elif not SEQUENTIAL_MR1Q:
         #   idle(circ, qD_idle, idle_during['H'])
 
         idle(circ, qD_idle, idle_during['H'])
@@ -1190,7 +1244,7 @@ def idle(circuit, register, error: Error):
 
 
 ''' apply_shuttle_error
-Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'. todo: make more accurate noise model once we have the info'''
+Applies a depolarising noise channel of strength p to qubits in 'register' and in stim circuit 'circuit'.'''
 def apply_shuttle_error(circuit, register, errors: dict):
 
     p = errors['shuttle'].p
@@ -1201,6 +1255,22 @@ def apply_shuttle_error(circuit, register, errors: dict):
       
     if LEAKAGE:
       add_relax_then_leak('shuttle', circuit, register, errors)
+
+
+
+''' apply_four_ion_shift_error
+Simulates the four-ion shift to move qubits into the operation zone. Takes 280μs in Helios (for example)'''
+def apply_four_ion_shift_error(circuit, register, idle_during: dict):
+
+    p = idle_during['four_ion_shift'].p
+
+    if p > 0:
+
+        circuit.append(idle_during['four_ion_shift'].op, register, p)
+      
+    if LEAKAGE:
+      add_relax_then_leak('four_ion_shift', circuit, register, idle_during)
+
 
 
 ''' apply_shift_error
@@ -1241,6 +1311,7 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors = False):
 
     n = code.n
+    m = code.m
     measurements_per_round = 2 * n if LEAKAGE_HERALDS else n
 
     loop_body = stim.Circuit()
@@ -1256,9 +1327,10 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     qC = qX
    # Initialise check qubits
-    init('Z', loop_body, qC, errors)
-    idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
-    tick(loop_body)
+    init_register(idle_during, registers, code,'Z', loop_body, qC, errors)
+    if not SEQUENTIAL_MR1Q: # (if it is, then idling is taken care of IN the function)
+      idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
+      tick(loop_body)
 
     # Hadamard check qubits to |+⟩
     hadamard(loop_body, qC, errors)
@@ -1311,7 +1383,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     qC = registers.qZ 
 
     # Initialise Z-check qubits
-    init('Z', loop_body, qC, errors) # (note qZ = qX if reuse_check_qubits == True)
+    init_register(idle_during, registers, code,'Z', loop_body, qC, errors) # (note qZ = qX if reuse_check_qubits == True)
     idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
     tick(loop_body)
 
@@ -1440,13 +1512,13 @@ def make_BB_circuit(
     LEAKAGE_HERALDS = leakage_heralds
     global REPUMPING_CYCLES
     REPUMPING_CYCLES = num_repumping_cycles
-    global SEQUENTIAL_OPS # this control whether single-qubit gates, measures and resets are also sequential. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop. This is simply because the difference in pL even when introducing sequential H, M and R rather than parallel is negligible as it is (as shown by doing sequential_gates with this sequential ops turned to false as compared to true)). We are simply setting equal to sequential_gates.
-    SEQUENTIAL_OPS = sequential_gates
+    global SEQUENTIAL_MR1Q # this control whether single-qubit gates, measures and resets are also sequential. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop. This is simply because the difference in pL even when introducing sequential H, M and R rather than parallel is negligible as it is (as shown by doing sequential_gates with this sequential ops turned to false as compared to true)). We are simply setting equal to sequential_gates.
+    SEQUENTIAL_MR1Q = sequential_gates
 
 
     circ = stim.Circuit()
 
-    registers = make_registers(code.l, code.m, reuse_check_qubits = reuse_check_qubits)
+    registers = make_registers(code, reuse_check_qubits = reuse_check_qubits)
     qX = registers.qX
     qL = registers.qL
     qR = registers.qR
@@ -1465,19 +1537,22 @@ def make_BB_circuit(
     ############# INITIALISE QUBITS:  !!!!!!!!!!!
 
     # # # For diagram (get the data qubit resets and measures out of the picture)
-    # init('Z', circ, qL + qR, errors)
+    # init_register(idle_during, registers, code,'Z', circ, qL, errors)
+    # init_register(idle_during, registers, code,'Z', circ, qR, errors)
     # tick(circ)
 
 
     # Initialise X-check qubits
-    init('Z', circ, qX, errors)
+    init_register(idle_during, registers, code,'Z', circ, qX, errors)
 
     if memory_basis == 'Z': 
       if ONLYCZs == True:
-        init('Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # diagram
+        init_register(idle_during, registers, code,'Z', circ, qL, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, qR, errors)
     if memory_basis == 'X':
       if ONLYCZs == False:
-        init('Z', circ, qL + qR, errors)  # diagram
+        init_register(idle_during, registers, code,'Z', circ, qL, errors)  # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, qR, errors)
 
     tick(circ)
 
@@ -1492,11 +1567,13 @@ def make_BB_circuit(
         hadamard(circ, qL + qR, errors)
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
-        init('Z', circ, qL + qR, errors)  # diagram
+        init_register(idle_during, registers, code,'Z', circ, qL, errors)
+        init_register(idle_during, registers, code,'Z', circ, qR, errors)  # comment out for diagram
 
     if ONLYCZs == False:
       if memory_basis == 'Z':
-        init('Z', circ, qL + qR, errors)   # diagram
+        init_register(idle_during, registers, code,'Z', circ, qL, errors)   # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, qR, errors)
       if memory_basis == 'X':
         hadamard(circ, qL + qR, errors)
 
@@ -1570,7 +1647,7 @@ def make_BB_circuit(
     qZ = registers.qZ   ### NEED THIS UPDATE
 
     # Initialise Z-check qubits
-    init('Z', circ, qZ, errors) # (note qZ = qX if reuse_check_qubits == True)
+    init_register(idle_during, registers, code,'Z', circ, qZ, errors) # (note qZ = qX if reuse_check_qubits == True)
     idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
     tick(circ)
 
@@ -1651,7 +1728,7 @@ def make_BB_circuit(
           offset = n if LEAKAGE_HERALDS else 0
 
           # Reset X-check qubits
-          init('Z', circ, qX, errors)
+          init_register(idle_during, registers, code,'Z', circ, qX, errors)
           idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
           tick(circ)
 
@@ -1710,7 +1787,7 @@ def make_BB_circuit(
           # qX = registers.qX; qL = registers.qL; qR = registers.qR; qZ =registers.qZ   # For some reason don't need this update
         
           # Initialise Z-check qubits:
-          init('Z', circ, qZ, errors)
+          init_register(idle_during, registers, code,'Z', circ, qZ, errors)
           idle(circ, qL + qR, idle_during['RZ'])
           tick(circ)
 
