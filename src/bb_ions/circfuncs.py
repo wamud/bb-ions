@@ -166,12 +166,13 @@ Sets qubits in the list 'register' to
 - |+⟩ if basis == 'X'
 This requires all the registers ('registers') to do proper idling.
 Also adds an error (usually depolarising or an error to prepare orthogonal eigenstate) depending on errors dictionary.
-Also models only doing at most 2*m at a time if SEQUENTIAL_MR1Q is on, as we're saying we have m operation zones and each operation zone can fit 2 qubits'''
+Also models only doing at most 2*m at a time if SEQUENTIAL_RESETS is on, as we're saying we have m operation zones and each operation zone can fit 2 qubits
+This sequentiality is only written for when you wnant to measure an entire register at once (qX, qL, qR or qZ). This is always the case in this research.'''
 def init_register(idle_during, registers, code, basis, circuit, register, errors: dict):
 
   reset = f"R{basis}"
 
-  if not SEQUENTIAL_MR1Q:  
+  if not SEQUENTIAL_RESETS:  
 
     circuit.append(reset, register) # append RZ or RX
     
@@ -183,12 +184,15 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
       circuit.append(error_op, register, p)
 
 
-  elif SEQUENTIAL_MR1Q:
+  elif SEQUENTIAL_RESETS:
 
     all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
 
     l = code.l
     m = code.m 
+
+    if len(register) > l * m:
+      raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
     # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
 
@@ -253,6 +257,78 @@ def hadamard(circuit, register, errors: dict):
     circuit.append(errors['H'].op, register, p)
 
 
+
+''' hadamard_register
+Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
+After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)
+Unlike the hadamard function, this can do sequential operations (limited by having m operation zones so can't do all hadamards at once) but this sequentiality is only written for when you wnant to measure an entire register at once (qX, qL, qR or qZ). This is always the case in this research.'''
+def hadamard_register(idle_during, registers, code, circuit, register, errors: dict):
+
+  if not SEQUENTIAL_HADAMARDS:
+
+    if LEAKAGE:
+      add_relax_then_leak("H", circuit, register, errors)
+
+    circuit.append("H", register)
+
+    
+    p = errors['H'].p
+    
+    if p > 0:
+      circuit.append(errors['H'].op, register, p)
+
+  elif SEQUENTIAL_HADAMARDS:
+
+
+    all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
+
+    l = code.l
+    m = code.m 
+
+    if len(register) > l * m:
+      raise ValueError("This function is written to apply sequential operations to a register of size l*m")
+
+    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
+
+    for i in range(0, l, 2):
+
+      qs = []
+      
+      for module in range(m):
+        
+        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
+        q0 = register[q0_idx]
+        qs.append(q0)
+
+        if i != l - 1: # it will equal l - 1 if we're at the last row
+          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
+          q1 = register[q1_idx]
+          qs.append(q1)
+        
+        # end for loop creating list of qubits in this time step.
+
+      if LEAKAGE:
+        add_relax_then_leak("H", circuit, qs, errors)
+      
+      circuit.append("H", qs) # append reset to all the qubits in this time step
+
+      p = errors["H"].p
+      if p > 0:
+        error_op = errors["H"].op
+        circuit.append(error_op, qs, p)
+
+      # idling: 
+      idle_qs = [q for q in all_registers if q not in qs]
+      idle(circuit, idle_qs, idle_during["H"])
+
+      # add four-ion shift to move next qubits in to be hadamarded (or simulate moving them all out):
+      apply_four_ion_shift_error(circuit, all_registers, idle_during)
+
+      tick(circuit)
+
+
+
+
 ''' measure
 Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
 def measure(basis: str, circuit, register, errors: dict):
@@ -272,6 +348,41 @@ def measure(basis: str, circuit, register, errors: dict):
 
   # Append measurement:
   circuit.append(measure_string, register)
+  
+
+
+''' measure_register
+Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'.
+Probability of measurement error given by p_meas(t_meas)
+This function can also make the measurements sequential (limited by having only m operation zones) but this sequentiality is only written for when you wnant to measure an entire register at once (qX, qL, qR or qZ). This is always the case in this research.'''
+def measure_register(idle_during, registers, code, basis: str, circuit, register, errors: dict):
+  
+  measure_string = f"M{basis}"
+  p = errors[measure_string].p
+
+  # Append leakage:
+  if LEAKAGE:
+    add_relax_then_leak(measure_string, circuit, register, errors)
+  
+  # Append error before measurement
+  if p > 0: 
+    error_op = errors[measure_string].op
+    circuit.append(error_op, register, p)
+
+  # Append measurement:
+  circuit.append(measure_string, register)
+
+  if SEQUENTIAL_MEASUREMENTS:
+
+    all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
+
+    # idling: 
+    idle_qs = [q for q in all_registers if q not in register]
+    idle(circuit, idle_qs, idle_during[measure_string])
+
+    tick(circuit)
+
+
 
 
 ''' tick
@@ -454,7 +565,7 @@ As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each che
 We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
 If there are sequential gates then a shuttling time is added between each 2q gate.
 Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the two-qubit gate. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates) or requires the addition of a CZ gate sandwiched by Hadamards (Hadamards added outside this function)'''
-def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
+def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = False):
 
   if gate == 'CX':
     gate = 'CNOT'
@@ -549,7 +660,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
 
           idx_list.append(idx)
 
-          if sequential_gates:
+          if sequential_operations:
             if (idx + 1) % m == 0: # We can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
               
               idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all (e.g. L-data qubits if we're connecting to R-data qubits)
@@ -582,7 +693,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
               tick(circuit)
 
 
-        if not sequential_gates: # idle all data qubits not in this matrix.
+        if not sequential_operations: # idle all data qubits not in this matrix.
           idle(circuit, qD_idle, idle_during[gate])
           tick(circuit)
 
@@ -595,7 +706,7 @@ As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each che
 We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
 If there are sequential gates then a shuttling time is added between each 2q gate.
 Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the CNOTs. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates)'''
-def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = False):
+def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = False):
   
   if gate == 'CX':
     gate = 'CNOT'
@@ -690,7 +801,7 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
 
             idx_list.append(idx)
 
-            if sequential_gates:
+            if sequential_operations:
               if (idx + 1) % m == 0: # This is assuming we can do m gates per time step (replace m for more or less gates). For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
                 idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all
                 
@@ -706,7 +817,7 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
                 tick(circuit)
 
 
-  if not sequential_gates: # The above for loop only excecutes one particular (i,j) value. This idling on the non-touched data qubits consequently happens outside the for loop (rather than within it as in add_2q_gates function which applies multiple i values - the for loop executes something for every i value)
+  if not sequential_operations: # The above for loop only excecutes one particular (i,j) value. This idling on the non-touched data qubits consequently happens outside the for loop (rather than within it as in add_2q_gates function which applies multiple i values - the for loop executes something for every i value)
     idle(circuit, qD_idle, idle_during[gate])
     tick(circuit)
 
@@ -849,31 +960,24 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qD = registers.qR
       qD_idle = registers.qL
       if ONLYCZs == False:
-        hadamard(circ, qC + qD, errors) # need to put sequential application within the hadamard func
-      
-        # UP TO HERE
-        # if SEQUENTIAL_MR1Q:
-        #   num_timesteps = len(qC + qD) // 2 * NUM_OP_ZONES # num_qubits_to_H / num_qubits_that_can_be_H'ed_per_timestep (two per operation zone)
-        #   for i in range(num_timesteps):
-        #     idle(circ, qD_idle, idle_during['H'])
-        # elif not SEQUENTIAL_MR1Q:
-        #   idle(circ, qD_idle, idle_during['H'])
-
-        idle(circ, qD_idle, idle_during['H'])
-        
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qC + qD, errors) # need to put sequential application within the hadamard func
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, qD_idle, idle_during['H'])
+          tick(circ)
 
       elif ONLYCZs == True:
-        hadamard(circ, qC + qD + qD_idle, errors) # we will apply the final Hadamards (converting CZs to CNOTs) here on the data qubits that are not being swapped (would usually be idle.)
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qC + qD + qD_idle, errors) # we will apply the final Hadamards (converting CZs to CNOTs) here on the data qubits that are not being swapped (would usually be idle.)
+        if not SEQUENTIAL_HADAMARDS:
+          tick(circ)
     
     elif check == 'Z':
       qC = registers.qZ
       qD = registers.qL
       qD_idle = registers.qR
-      hadamard(circ, qC + qD, errors)
-      idle(circ, qD_idle, idle_during['H'])
-      tick(circ)
+      hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+      if not SEQUENTIAL_HADAMARDS:
+        idle(circ, qD_idle, idle_during['H'])
+        tick(circ)
 
 
   if matrix == 'A' or matrix == 'AT':
@@ -885,20 +989,23 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qD = registers.qL
       qD_idle = registers.qR
       if ONLYCZs == False:
-        hadamard(circ, qC + qD, errors)
-        idle(circ, qD_idle, idle_during['H'])
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, qD_idle, idle_during['H'])
+          tick(circ)
       elif ONLYCZs == True:
-        hadamard(circ, qC + qD + qD_idle, errors)
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qC + qD + qD_idle, errors)
+        if not SEQUENTIAL_HADAMARDS:
+          tick(circ)
     
     elif check == 'Z':
       qC = registers.qZ
       qD = registers.qR
       qD_idle = registers.qL
-      hadamard(circ, qC + qD, errors)
-      idle(circ, qD_idle, idle_during['H'])
-      tick(circ)
+      hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+      if not SEQUENTIAL_HADAMARDS:
+        idle(circ, qD_idle, idle_during['H'])
+        tick(circ)
 
 
 def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors, idle_during):
@@ -915,9 +1022,10 @@ def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors,
       qC = registers.qZ
       qD = registers.qL
       qD_idle = registers.qR
-    hadamard(circ, qC + qD, errors)
-    idle(circ, qD_idle, idle_during['H'])
-    tick(circ)
+    hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+    if not SEQUENTIAL_HADAMARDS:
+      idle(circ, qD_idle, idle_during['H'])
+      tick(circ)
 
   if matrix == 'A' or matrix == 'AT':
 
@@ -931,9 +1039,10 @@ def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors,
       qD = registers.qR
       qD_idle = registers.qL
 
-    hadamard(circ, qC + qD, errors)
-    idle(circ, qD_idle, idle_during['H'])
-    tick(circ)
+    hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+    if not SEQUENTIAL_HADAMARDS:
+      idle(circ, qD_idle, idle_during['H'])
+      tick(circ)
 
 
 
@@ -951,7 +1060,7 @@ Optional reading:
   This guarantees that the final data qubits that the Z-checks interact with are of the opposite type to the final data qubits that the X-checks interact with.
 
   When a specific code is decided upon to be realised in hardware, the j_value order can be chosen in a more optimised fashion to reduce shuttling time, while still ensuring that the final data qubits each check interacts with (and is swapped with) is of an opposite type. For now, where we are simulating multiple codes, we use this method of applying ascending j's for X-checks then descending j's for Z-checks and within each j applying the i values for A then B (or A^T then B^T) implying L then R (or R then L) data qubit interactions.'''
-def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits):
+def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits):
 
 
   # a is either A or A^T
@@ -991,7 +1100,7 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
   if in_a_ij == True and in_b_ij == True: # i.e. this j value is in both A/A^T and B/B^T
 
     # Add a's 2q gates:
-    add_2q_gates(thegate, a, circ, jval, code, registers, errors, idle_during, sequential_gates) # adds for all i value(s) in A or AT
+    add_2q_gates(thegate, a, circ, jval, code, registers, errors, idle_during, sequential_operations) # adds for all i value(s) in A or AT
 
 
     # Add b's 2q gates, with a reversed one inserted before the last one
@@ -1001,7 +1110,7 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
         if thegate == 'CZ':
           add_hadamards_before_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
 
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
 
         if thegate == 'CZ': # The other Hadamard in the sandwich.
           add_hadamards_after_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
@@ -1009,13 +1118,13 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
         # Ok, we've now added the reversed CNOT, or the CZs sandwiched by hadamards. 
         # We now add the last timestep's two qubit gates:
 
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
         # and then update the registers because things have swapped around.
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
 
   if in_a_ij == True and in_b_ij == False:  # This j value only has i value(s) in A or A^T
@@ -1027,18 +1136,18 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
         if thegate == 'CZ': # to do a reversed CNOT we sandwich both ends of the CZ by Hadamards. This is on the target in order to make the gate a CNOT. It is also on the control in order to terminate the sandwiching of the preceding CZs (and turn them into CNOTs) as well as restart the sandwiching of the succeeding CZ. So we sandwich all data qubits in this terms (be they L or R) and all check qubits in this check.
           add_hadamards_before_swap_CZ(a, thegate, check, registers, circ, errors, idle_during)
 
-        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
         
         if thegate == 'CZ': # Other hadamard of the sandwich
           add_hadamards_after_swap_CZ(a, thegate, check, registers, circ, errors, idle_during)
 
 
-        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
         update_qubit_indices(code, registers, a, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
   if in_a_ij == False and in_b_ij == True:  # Only in B or B^T
 
@@ -1050,19 +1159,19 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
         if thegate == 'CZ': 
           add_hadamards_before_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
 
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates, swap_ctrl_target = True)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
         
         
         if thegate == 'CZ': 
           add_hadamards_after_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
         
         
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
-        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_gates)
+        add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
 
 
@@ -1085,9 +1194,9 @@ Accepts inputs:
 - code: class containing paramaters of the BB code, e.g. Hx = [A|B], Hz = [B^T|A^T] etc.
 - registers: indices for the stim circuit of check qubits, data qubits
 - errors: what errors and probabilities are on each operation
-- sequential_gates (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel
+- sequential_operations (bool): whether the two-qubit gates within a module are applied sequentially (in serial) or in parallel
 - reuse_check_qubits: whether the one set of check qubits are being reused (possible because we're doing non-interleaved syndrome extraction, i.e. X-checks THEN Z-checks)'''
-def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential_gates, reuse_check_qubits):
+def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, errors, idle_during, sequential_operations, reuse_check_qubits):
 
     if check == 'X':
       qC = registers.qX
@@ -1143,15 +1252,15 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           if SWAPLRC == True: # add_swap_lrc will add a SWAP gate by adding a reversed CNOT before the final CNOT or, with CZs, a CZ with both its target and control sandwiched between hadamards before the final CZ (as well as some added or cancelled hadamards after the final CZ)
             if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits)
+              add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
             else:
-              add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
-              add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_gates)
+              add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_operations)
+              add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_operations)
 
           elif SWAPLRC == False:
 
-            add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_gates)
-            add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_gates)
+            add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_operations)
+            add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_operations)
 
 
 
@@ -1165,16 +1274,16 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... 
             if jval == theunion[-1]: #and check == 'X': # TESTING -- STOPPING THIS FROM FIRING # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_gates, check, reuse_check_qubits)
+              add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
             else:
-              add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_gates)
-              add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_gates)
+              add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_operations)
+              add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_operations)
 
 
           elif SWAPLRC == False:
 
-            add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_gates)
-            add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_gates)
+            add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_operations)
+            add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_operations)
 
 
         # Split coulomb potentials of data qubit modules from check qubit modules:
@@ -1308,7 +1417,7 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 - exclude_opposite_basis_detectors: if this is True, when preserving logical 0 (memory_basis = 'Z') then there are no detectors placed on the X-stabiliser measurments (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it by taking out unused nodes.
 - reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
 - sequential: whether or not the two-qubit gates within a leg are sequential or in parallel'''
-def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors = False):
+def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors = False):
 
     n = code.n
     m = code.m
@@ -1328,34 +1437,40 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     qC = qX
    # Initialise check qubits
     init_register(idle_during, registers, code,'Z', loop_body, qC, errors)
-    if not SEQUENTIAL_MR1Q: # (if it is, then idling is taken care of IN the function)
+    
+    if not SEQUENTIAL_RESETS: # (if it's true, then idling is taken care of IN the function)
       idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
       tick(loop_body)
 
     # Hadamard check qubits to |+⟩
-    hadamard(loop_body, qC, errors)
+    hadamard_register(idle_during, registers, code, loop_body, qC, errors)
     if ONLYCZs == False:
-      idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
+      if not SEQUENTIAL_HADAMARDS:
+        idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
     elif ONLYCZs == True: # we are only using CZ gates so Hadamard all data qubits before the X-checks to effectively have CNOTs
-      hadamard(loop_body, qL + qR, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qL + qR, errors)
     
-    tick(loop_body)
+    if not SEQUENTIAL_HADAMARDS:
+      tick(loop_body)
 
     # Do cyclic shifts to required j-valued modules, apply two-qubit gates for stabilisers and return last j position
-    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
     # Alrighty we've done the X-check CNOTs!
 
     # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
-    hadamard(loop_body, qC, errors)
+    hadamard_register(idle_during, registers, code, loop_body, qC, errors)
     if ONLYCZs == False:
-      idle(loop_body, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
+      if not SEQUENTIAL_HADAMARDS:
+        idle(loop_body, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
     elif ONLYCZs == True:
-      hadamard(loop_body, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks.
-    tick(loop_body)
+      hadamard_register(idle_during, registers, code, loop_body, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks.
+    if not SEQUENTIAL_HADAMARDS:
+      tick(loop_body)
 
     # Measure check qubits
-    measure('Z', loop_body, qC, errors)
-    idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
+    measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
+    if not SEQUENTIAL_MEASUREMENTS:
+      idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
     
 
     # We now place detectors on these check qubit measurements. They compare these measurements and the previous round's X-check measurements (even though the first round's measurements might not have detectors on them if we're in memory Z, these are comparing the *measurements* so do not need previous detectors)
@@ -1389,22 +1504,25 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     if ONLYCNOTs == False:
-      hadamard(loop_body, qC, errors)
-      idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
-      tick(loop_body)
+      hadamard_register(idle_during, registers, code, loop_body, qC, errors)
+      if not SEQUENTIAL_HADAMARDS:
+        idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
+        tick(loop_body)
 
     # Apply required cyclic shifts and CZ interactions for Z-checks:
-    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
-      hadamard(loop_body, qC, errors)
-      idle(loop_body, qL + qR, idle_during['H'])  # idle data qubits
-      tick(loop_body)
+      hadamard_register(idle_during, registers, code, loop_body, qC, errors)
+      if not SEQUENTIAL_HADAMARDS:
+        idle(loop_body, qL + qR, idle_during['H'])  # idle data qubits
+        tick(loop_body)
 
     # Now measure check qubits
-    measure('Z', loop_body, qC, errors)
-    idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
+    measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
+    if not SEQUENTIAL_MEASUREMENTS:
+      idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
     
     
     # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
@@ -1448,9 +1566,9 @@ Inputs are:
             How many rounds of stabiliser measurements to perform (including the first round which just encodes the logical state)
     - memory_basis
             Either 'Z' or 'X' to preserve logical 0 or + respectively in all the logical qubits
-    - sequential_gates
-            Whether disjoint two-qubit gates are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
-            More explanation: For a given term x^i⋅y^j the most we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only X gates can be done in a single time step, where X is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step.
+    - sequential_operations
+            Whether disjoint operations are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
+            More explanation: For a given term x^i⋅y^j the most 2q gates we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only N gates can be done in a single time step, where N is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step. This is also true for reset, single-qubit gates and measurement.
     - exclude_opposite_basis_detectors
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
     - reuse_check_qubits
@@ -1479,7 +1597,7 @@ def make_BB_circuit(
     idle_during: Any = uniform_idling(1e-3),
     num_syndrome_extraction_cycles: int = 2,
     memory_basis: str = "Z",
-    sequential_gates: bool = False,
+    sequential_operations: bool = False,
     exclude_opposite_basis_detectors: bool = False,
     reuse_check_qubits: bool = False,
     only_CZs: bool = False,
@@ -1512,8 +1630,14 @@ def make_BB_circuit(
     LEAKAGE_HERALDS = leakage_heralds
     global REPUMPING_CYCLES
     REPUMPING_CYCLES = num_repumping_cycles
-    global SEQUENTIAL_MR1Q # this control whether single-qubit gates, measures and resets are also sequential. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop. This is simply because the difference in pL even when introducing sequential H, M and R rather than parallel is negligible as it is (as shown by doing sequential_gates with this sequential ops turned to false as compared to true)). We are simply setting equal to sequential_gates.
-    SEQUENTIAL_MR1Q = sequential_gates
+    
+    # Going to set all below to be equal to sequential_operations. Just doing like this in case in future some operations (e.g. measurements) can be done all at once whereas others can't. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). This is because the difference in pL even when introducing sequential H, M and R rather than everything completely parallel is probably negligible -- will test.
+    global SEQUENTIAL_RESETS
+    SEQUENTIAL_RESETS = sequential_operations
+    global SEQUENTIAL_HADAMARDS
+    SEQUENTIAL_HADAMARDS = sequential_operations
+    global SEQUENTIAL_MEASUREMENTS
+    SEQUENTIAL_MEASUREMENTS = sequential_operations 
 
 
     circ = stim.Circuit()
@@ -1558,13 +1682,14 @@ def make_BB_circuit(
 
 
     # Hadamard check qubits to |+⟩
-    hadamard(circ, qX, errors)
+    hadamard_register(idle_during, registers, code, circ, qX, errors)
 
 
     # Deal with data qubits:
     if ONLYCZs == True:
       if memory_basis == 'Z':  
-        hadamard(circ, qL + qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL, errors)
+        hadamard_register(idle_during, registers, code, circ, qR, errors)
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
         init_register(idle_during, registers, code,'Z', circ, qL, errors)
@@ -1575,9 +1700,12 @@ def make_BB_circuit(
         init_register(idle_during, registers, code,'Z', circ, qL, errors)   # comment out for diagram
         init_register(idle_during, registers, code,'Z', circ, qR, errors)
       if memory_basis == 'X':
-        hadamard(circ, qL + qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL, errors)
+        hadamard_register(idle_during, registers, code, circ, qR, errors)
 
-    tick(circ)
+    if not SEQUENTIAL_HADAMARDS:
+      if not SEQUENTIAL_RESETS:
+        tick(circ)
 
 
     ######## X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1588,26 +1716,31 @@ def make_BB_circuit(
     
     # Do cyclic shifts to required j-valued modules (and return last j position)
     # This will also add swap-LRC if swap_LRC == True and update the registers qX, qL, qR, qZ depending on which were swapped.
-    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
 
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
     
     if SWAPLRC == False:
-      hadamard(circ, qX, errors)
+      hadamard_register(idle_during, registers, code, circ, qX, errors)
       # Also hadamard data qubits if we were using only CZ gates (sandwiching all the CZ gates with hadamards turns their targets to CNOTs) else idle them ... unless we did a swap_lrc with CZs then it turns out the hadamards cancel
       if ONLYCZs == False:
-        idle(circ, qL + qR, idle_during['H']) # t_had)
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, qL + qR, idle_during['H']) # t_had)
       elif ONLYCZs == True:
-        hadamard(circ, qL + qR, errors)
-      tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qL, errors)
+        hadamard_register(idle_during, registers, code, circ, qR, errors)
+      
+      if not SEQUENTIAL_HADAMARDS:
+        tick(circ)
 
     elif SWAPLRC == True:
       if ONLYCZs == False:
-        hadamard(circ, qX, errors)
-        idle(circ, qL + qR, idle_during['H'])
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qX, errors)
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, qL + qR, idle_during['H'])
+          tick(circ)
       elif ONLYCZs == True:
         pass  # hadamards at the end cancel.
     
@@ -1615,9 +1748,9 @@ def make_BB_circuit(
 
     # Now measure the check qubits
     
-    measure('Z', circ, qX, errors)
-
-    idle(circ, qL + qR, idle_during['MZ']) # t_meas)
+    measure_register(idle_during, registers, code, 'Z', circ, qX, errors)
+    if not SEQUENTIAL_MEASUREMENTS:
+      idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
 
     # If preserving logical plus we put detectors on these measurements in the first round:
@@ -1653,9 +1786,10 @@ def make_BB_circuit(
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     if ONLYCNOTs == False:  # If we're doing Z-checks with CNOTs gates then don't need to Hadamard check qubits, just have reversed CNOTs
-      hadamard(circ, qZ, errors)
-      idle(circ, qL + qR, idle_during['H']) # idle data qubits
-      tick(circ)
+      hadamard_register(idle_during, registers, code, circ, qZ, errors)
+      if not SEQUENTIAL_HADAMARDS:
+        idle(circ, qL + qR, idle_during['H'])
+        tick(circ)
 
 
     if SWAPLRC:
@@ -1664,24 +1798,27 @@ def make_BB_circuit(
       old_qR = qR.copy()
 
     # Apply required cyclic shifts and two-qubit interactions for Z-checks:
-    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+    jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
     if ONLYCNOTs == False:
       if SWAPLRC == False:
-        hadamard(circ, qZ, errors)
-        idle(circ, qL + qR, idle_during['H'])
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, qZ, errors)
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, qL + qR, idle_during['H'])
+          tick(circ)
       if SWAPLRC == True: # It turns out that you need to Hadamard what WERE the check qubits during Z-checks with CZ gates
-        hadamard(circ, old_qZ, errors)
-        idle(circ, old_qL + old_qR, idle_during['H'])
-        tick(circ)
+        hadamard_register(idle_during, registers, code, circ, old_qZ, errors)
+        if not SEQUENTIAL_HADAMARDS:
+          idle(circ, old_qL + old_qR, idle_during['H'])
+          tick(circ)
 
 
     # Now measure check qubits
-    measure('Z', circ, qZ, errors)
-    idle(circ, qL + qR, idle_during['MZ']) # t_meas)
+    measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
+    if not SEQUENTIAL_MEASUREMENTS:
+      idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
 
     # If preserving logical zero we put detectors on these (Z) check measurements in the first round:
@@ -1714,7 +1851,7 @@ def make_BB_circuit(
     if swap_LRC == False:
       if num_syndrome_extraction_cycles > 1:
       
-        loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_gates, exclude_opposite_basis_detectors)
+        loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors)
     
         # Append loop_body to circuit:
         circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
@@ -1733,37 +1870,45 @@ def make_BB_circuit(
           tick(circ)
 
           # Hadamard X-check qubits to |+⟩ (and Hadamard data qubits if doing only CZ gates)
-          hadamard(circ, qX, errors)
+          hadamard_register(idle_during, registers, code, circ, qX, errors)
           if ONLYCZs == True: # Only doing CZ gates, so also need to Hadamard data qubits (so that the CZs on them will act like CNOTs)
-            hadamard(circ, qL + qR, errors)
+            hadamard_register(idle_during, registers, code, circ, qL, errors)
+            hadamard_register(idle_during, registers, code, circ, qR, errors)
           elif ONLYCZs == False:
-            idle(circ, qL + qR, idle_during['H']) # otherwise just idle data qubits
-          tick(circ)
+            if not SEQUENTIAL_HADAMARDS:
+              idle(circ, qL + qR, idle_during['H']) # otherwise just idle data qubits
+          if not SEQUENTIAL_HADAMARDS:
+            tick(circ)
 
           # Do cyclic shifts and two-qubit gates (accepts previous j_val -- previous position of modules -- and updates it). Might also contain swap-LRC
-          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
           # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
           if SWAPLRC == False:
-            hadamard(circ, qX, errors)
+            hadamard_register(idle_during, registers, code, circ, qX, errors)
             if ONLYCZs == False:
-              idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
+              if not SEQUENTIAL_HADAMARDS:
+                idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
             elif ONLYCZs == True:
-              hadamard(circ, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks. 
-            tick(circ)
+              hadamard_register(idle_during, registers, code, circ, qL, errors)
+              hadamard_register(idle_during, registers, code, circ, qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks. 
+            if not SEQUENTIAL_HADAMARDS:
+              tick(circ)
           
           if SWAPLRC == True:
             if ONLYCZs == False:
-              hadamard(circ, qX, errors)
-              idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
-              tick(circ)
+              hadamard_register(idle_during, registers, code, circ, qX, errors)
+              if not SEQUENTIAL_HADAMARDS:
+                idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
+                tick(circ)
             elif ONLYCZs == True: # It turns out that when doing the swap LRC with CZ gates on the X checks, the final hadamard of the final CNOT (now a CZ sandwiched by hadamards) cancels with the hadamard just before the check-qubit measurement
               pass
 
 
           # Measure check qubits:
-          measure('Z', circ, qX, errors)
-          idle(circ, qL + qR, idle_during['MZ'])
+          measure_register(idle_during, registers, code, 'Z', circ, qX, errors)
+          if not SEQUENTIAL_MEASUREMENTS:
+            idle(circ, qL + qR, idle_during['MZ'])
 
 
           # Place detectors on these check qubit measurements which compare them and the previous round's C-check measurements
@@ -1793,9 +1938,10 @@ def make_BB_circuit(
 
           # Hadamard check qubits to |+⟩, unless using only CNOT gates then we leave them in |0⟩ and do reversed-direction CNOT gates for the Z parity check
           if ONLYCNOTs == False: 
-            hadamard(circ, qZ, errors)
-            idle(circ, qL + qR, idle_during['H'])
-            tick(circ)
+            hadamard_register(idle_during, registers, code, circ, qZ, errors)
+            if not SEQUENTIAL_HADAMARDS:
+              idle(circ, qL + qR, idle_during['H'])
+              tick(circ)
 
           if SWAPLRC:
             old_qZ = qZ.copy() # qZ will be updated in next line so saving this one 
@@ -1804,23 +1950,26 @@ def make_BB_circuit(
 
 
           # Apply required cyclic shifts and CZ interactions for Z-checks, also update registers if required by swaplrc.
-          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_gates, reuse_check_qubits)
+          jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
           # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
           if ONLYCNOTs == False:
             if SWAPLRC == False:
-              hadamard(circ, qZ, errors)
-              idle(circ, qL + qR, idle_during['H'])
-              tick(circ)
+              hadamard_register(idle_during, registers, code, circ, qZ, errors)
+              if not SEQUENTIAL_HADAMARDS:
+                idle(circ, qL + qR, idle_during['H'])
+                tick(circ)
             elif SWAPLRC == True: # It turns out that you need to Hadamard what WERE the check qubits
-              hadamard(circ, old_qZ, errors)
-              idle(circ, old_qL + old_qR, idle_during['H'])
-              tick(circ)
+              hadamard_register(idle_during, registers, code, circ, old_qZ, errors)
+              if not SEQUENTIAL_HADAMARDS:
+                idle(circ, old_qL + old_qR, idle_during['H'])
+                tick(circ)
 
 
           # Now measure check qubits
-          measure('Z', circ, qZ, errors)
-          idle(circ, qL + qR, idle_during['MZ']) # t_meas) # crosstalk on data qubits
+          measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
+          if not SEQUENTIAL_MEASUREMENTS:
+            idle(circ, qL + qR, idle_during['MZ']) # t_meas) # crosstalk on data qubits
           
           
           # We now place detectors on these check qubit measurements, comparing them and the previous round's Z-check measurements
@@ -1843,7 +1992,8 @@ def make_BB_circuit(
 
 
     # # Measure all data qubits:
-    measure(memory_basis, circ, qL + qR, errors)
+    measure_register(idle_during, registers, code, memory_basis, circ, qL, errors)
+    measure_register(idle_during, registers, code, memory_basis, circ, qR, errors)
     
     # Add leakage heralds onto these measurements:
     if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qL + qR)
