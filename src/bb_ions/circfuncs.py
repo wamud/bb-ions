@@ -230,7 +230,7 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
       # idling: 
       idle_qs = [q for q in all_registers if q not in qs]
       idle(circuit, idle_qs, idle_during[reset])
-
+      tick(circuit)
       # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
       apply_four_ion_shift_error(circuit, all_registers, idle_during)
 
@@ -325,7 +325,7 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
       # idling: 
       idle_qs = [q for q in all_registers if q not in qs]
       idle(circuit, idle_qs, idle_during["H"])
-
+      tick(circuit)
       # add four-ion shift to move next qubits in to be hadamarded (or simulate moving them all out):
       apply_four_ion_shift_error(circuit, all_registers, idle_during)
 
@@ -392,40 +392,53 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
 
     # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
 
-    for i in range(0, l, 2):
+    # In the first step we will measure the first two qubits of every module. In the [[18, 4, 4]] code for example this would be qubits 0,3; 1,4; 2,5 if listing by module, or just qubits 0,1,2,3,4,5. In hadamards and resets we did it listing by module, but we don't actually have to and doing this for measurements would require a rewrite of the appending of detectors. So instead it is exactly equivalent (they're being done in the same timestep anyway so there is no difference in the noise "reordering" the way measurements are appended if they're in the same time step) to just append the measurements in groups of 2*m going up through every qubit index in ascending order. However if swapLRC == True then what is ascending order in a particular register (e.g. qX) is what holds (i.e. qX[0], qX[1], qX[2], ...) not ascending order in the stim circuit's qubit indices (q0, q1, q2,...). So we will append measurements in groups of 2*m ascending through the register:
 
-      qs = []
-      
-      for module in range(m):
+    qs = []
+    
+    for i in range(l*m):
+    
+      qs.append(register[i])
+
+      if (i+1) % (2*m) == 0: # for every group of 2*m qubits we need to go to the next timestep
+        if LEAKAGE:
+          add_relax_then_leak(measure_string, circuit, qs, errors)
+        if p > 0:
+          error_op = errors[measure_string].op
+          circuit.append(error_op, qs, p)
+        circuit.append(measure_string, qs) # appending the measurements
+
+        # idling: 
+        idle_qs = [q for q in all_registers if q not in qs]
+        idle(circuit, idle_qs, idle_during[measure_string])
+
         
-        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
-        q0 = register[q0_idx]
-        qs.append(q0)
-
-        if i != l - 1: # it will equal l - 1 if we're at the last row
-          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
-          q1 = register[q1_idx]
-          qs.append(q1)
+        tick(circuit)
         
-        # end for loop creating list of qubits in this time step.
+        # add four-ion shift to move next qubits in (or simulate moving them all out):
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+        qs = []
 
-      if LEAKAGE:
-        add_relax_then_leak(measure_string, circuit, qs, errors)
+    if len(qs) != 0:
+        if LEAKAGE:
+          add_relax_then_leak(measure_string, circuit, qs, errors)
+        if p > 0:
+          error_op = errors[measure_string].op
+          circuit.append(error_op, qs, p)
+        circuit.append(measure_string, qs) # appending the measurements
 
-      if p > 0:
-        error_op = errors[measure_string].op
-        circuit.append(error_op, qs, p)
+        # idling: 
+        idle_qs = [q for q in all_registers if q not in qs]
+        idle(circuit, idle_qs, idle_during[measure_string])
 
-      circuit.append(measure_string, qs) 
-
-      # idling: 
-      idle_qs = [q for q in all_registers if q not in qs]
-      idle(circuit, idle_qs, idle_during[measure_string])
-
-      # add four-ion shift to move next qubits in to be hadamarded (or simulate moving them all out):
-      apply_four_ion_shift_error(circuit, all_registers, idle_during)
-
-      tick(circuit)
+        
+        tick(circuit)
+        
+        # add four-ion shift to move next qubits in (or simulate moving them all out):
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+        qs = []
 
 
 
@@ -989,7 +1002,7 @@ def update_qubit_indices(code, registers, matrix, check, i, j, reuse_check_qubit
 
 
 
-def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors, idle_during):
+def add_hadamards_before_swap_CZ(code, matrix, thegate, check, registers, circ, errors, idle_during):
   if thegate != 'CZ':
     raise ValueError("This is written to go around a CZ gate")
   # to do a reversed CNOT we sandwich both ends of the CZ by Hadamards. This is on the target in order to make the gate a CNOT. It is also on the control in order to terminate the sandwiching of the preceding CZs (and turn them into CNOTs) as well as restart the sandwiching of the succeeding CZ. So we sandwich all data qubits in this terms (be they L or R) and all check qubits in this check.
@@ -1004,13 +1017,16 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qD = registers.qR
       qD_idle = registers.qL
       if ONLYCZs == False:
-        hadamard_register(idle_during, registers, code, circ, qC + qD, errors) # need to put sequential application within the hadamard func
+        hadamard_register(idle_during, registers, code, circ, qC, errors)
+        hadamard_register(idle_during, registers, code, circ, qD, errors) 
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qD_idle, idle_during['H'])
           tick(circ)
 
       elif ONLYCZs == True:
-        hadamard_register(idle_during, registers, code, circ, qC + qD + qD_idle, errors) # we will apply the final Hadamards (converting CZs to CNOTs) here on the data qubits that are not being swapped (would usually be idle.)
+        hadamard_register(idle_during, registers, code, circ, qC, errors)
+        hadamard_register(idle_during, registers, code, circ, qD, errors)
+        hadamard_register(idle_during, registers, code, circ, qD_idle, errors) # we will apply the final Hadamards (converting CZs to CNOTs) here on the data qubits that are not being swapped (would usually be idle.)
         if not SEQUENTIAL_HADAMARDS:
           tick(circ)
     
@@ -1018,7 +1034,8 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qC = registers.qZ
       qD = registers.qL
       qD_idle = registers.qR
-      hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+      hadamard_register(idle_during, registers, code, circ, qC, errors)
+      hadamard_register(idle_during, registers, code, circ, qD, errors)
       if not SEQUENTIAL_HADAMARDS:
         idle(circ, qD_idle, idle_during['H'])
         tick(circ)
@@ -1033,12 +1050,15 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qD = registers.qL
       qD_idle = registers.qR
       if ONLYCZs == False:
-        hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+        hadamard_register(idle_during, registers, code, circ, qC, errors)
+        hadamard_register(idle_during, registers, code, circ, qD, errors)
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qD_idle, idle_during['H'])
           tick(circ)
       elif ONLYCZs == True:
-        hadamard_register(idle_during, registers, code, circ, qC + qD + qD_idle, errors)
+        hadamard_register(idle_during, registers, code, circ, qC, errors)
+        hadamard_register(idle_during, registers, code, circ, qD, errors)
+        hadamard_register(idle_during, registers, code, circ, qD_idle, errors)
         if not SEQUENTIAL_HADAMARDS:
           tick(circ)
     
@@ -1046,13 +1066,14 @@ def add_hadamards_before_swap_CZ(matrix, thegate, check, registers, circ, errors
       qC = registers.qZ
       qD = registers.qR
       qD_idle = registers.qL
-      hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+      hadamard_register(idle_during, registers, code, circ, qC, errors)
+      hadamard_register(idle_during, registers, code, circ, qD, errors)
       if not SEQUENTIAL_HADAMARDS:
         idle(circ, qD_idle, idle_during['H'])
         tick(circ)
 
 
-def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors, idle_during):
+def add_hadamards_after_swap_CZ(code, matrix, thegate, check, registers, circ, errors, idle_during):
   
   if thegate != 'CZ':
     raise ValueError("This is written to go after a CZ gate")
@@ -1066,7 +1087,8 @@ def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors,
       qC = registers.qZ
       qD = registers.qL
       qD_idle = registers.qR
-    hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+    hadamard_register(idle_during, registers, code, circ, qC, errors)
+    hadamard_register(idle_during, registers, code, circ, qD, errors)
     if not SEQUENTIAL_HADAMARDS:
       idle(circ, qD_idle, idle_during['H'])
       tick(circ)
@@ -1083,7 +1105,8 @@ def add_hadamards_after_swap_CZ(matrix, thegate, check, registers, circ, errors,
       qD = registers.qR
       qD_idle = registers.qL
 
-    hadamard_register(idle_during, registers, code, circ, qC + qD, errors)
+    hadamard_register(idle_during, registers, code, circ, qC, errors)
+    hadamard_register(idle_during, registers, code, circ, qD, errors)
     if not SEQUENTIAL_HADAMARDS:
       idle(circ, qD_idle, idle_during['H'])
       tick(circ)
@@ -1152,12 +1175,12 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
       if idx == len(bs_is[jval]) - 1: # we're on the last i value so do the swaperoo
 
         if thegate == 'CZ':
-          add_hadamards_before_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_before_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
 
         if thegate == 'CZ': # The other Hadamard in the sandwich.
-          add_hadamards_after_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_after_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
 
         # Ok, we've now added the reversed CNOT, or the CZs sandwiched by hadamards. 
         # We now add the last timestep's two qubit gates:
@@ -1178,12 +1201,12 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
 
 
         if thegate == 'CZ': # to do a reversed CNOT we sandwich both ends of the CZ by Hadamards. This is on the target in order to make the gate a CNOT. It is also on the control in order to terminate the sandwiching of the preceding CZs (and turn them into CNOTs) as well as restart the sandwiching of the succeeding CZ. So we sandwich all data qubits in this terms (be they L or R) and all check qubits in this check.
-          add_hadamards_before_swap_CZ(a, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_before_swap_CZ(code, a, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
         
         if thegate == 'CZ': # Other hadamard of the sandwich
-          add_hadamards_after_swap_CZ(a, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_after_swap_CZ(code, a, thegate, check, registers, circ, errors, idle_during)
 
 
         add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
@@ -1201,13 +1224,13 @@ def add_swap_lrc(thegate, jval, theunion, code, circ, registers, errors, idle_du
 
 
         if thegate == 'CZ': 
-          add_hadamards_before_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_before_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
         
         
         if thegate == 'CZ': 
-          add_hadamards_after_swap_CZ(b, thegate, check, registers, circ, errors, idle_during)
+          add_hadamards_after_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
         
         
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
