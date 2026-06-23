@@ -21,11 +21,16 @@ class Registers:
 
 
 ''' order_of_ops
-The syndrome extraction circuit we are following is as per Algorithm 2 in Edwin Tham et al.'s paper [2508.01879]. The polynomials in the BB code are A and B and made of sums of terms x^i⋅y^j. We go through each value of j and then apply any values of i that appear. This function prints that out.'''
-def order_of_ops(code):
+The syndrome extraction circuit we are following is as per Algorithm 2 in Edwin Tham et al.'s paper [2508.01879]. The polynomials in the BB code are A and B and made of sums of terms x^i⋅y^j. We go through each value of j and then apply any values of i that appear. This function prints that out. This is deternined by doing ascending powers of j then powers of i that correspond to that power of j in order of what they have been input as in the polynomials. (As in, the powers of i are not in any particular order for a given j, they're just what the polynomials have been input as.)'''
+def order_of_ops(code, swapLRC = False):
 
     l = code.l
     m = code.m 
+
+    if SWAPLRC:
+      JTunion = code.JTunion
+      JTunion.reverse() # put in reverse order (descending, so [-2, -1, 0] becomes [0, -1, -2]. If we don't reverse, sometimes the last j value of X-checks would align with the first j value of the Z-checks and reduce shuttling. Reversing the order makes this impossible unless there is only one j value: 0. However what it does do (combined with the chosen order of 2q gates in 'apply_cyclic_shift ... ' - A then B, AT then BT) is guarantee that the X and Z checks have their last 2q gates interact with opposite type data qubits (i.e. L or R) so that if we're doing a swap-LRC we are alternating which data qubits are being swapped
+      code.JTunion = JTunion
 
     print('X-checks')
     for j in code.Junion:
@@ -360,28 +365,67 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
   measure_string = f"M{basis}"
   p = errors[measure_string].p
 
-  # Append leakage:
-  if LEAKAGE:
-    add_relax_then_leak(measure_string, circuit, register, errors)
-  
-  # Append error before measurement
-  if p > 0: 
-    error_op = errors[measure_string].op
-    circuit.append(error_op, register, p)
+  if not SEQUENTIAL_MEASUREMENTS:
+    
+    # Append leakage:
+    if LEAKAGE:
+      add_relax_then_leak(measure_string, circuit, register, errors)
+    
+    # Append error before measurement
+    if p > 0: 
+      error_op = errors[measure_string].op
+      circuit.append(error_op, register, p)
 
-  # Append measurement:
-  circuit.append(measure_string, register)
+    # Append measurement:
+    circuit.append(measure_string, register)
 
-  if SEQUENTIAL_MEASUREMENTS:
+  elif SEQUENTIAL_MEASUREMENTS:
+
 
     all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
 
-    # idling: 
-    idle_qs = [q for q in all_registers if q not in register]
-    idle(circuit, idle_qs, idle_during[measure_string])
+    l = code.l
+    m = code.m 
 
-    tick(circuit)
+    if len(register) > l * m:
+      raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
+    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
+
+    for i in range(0, l, 2):
+
+      qs = []
+      
+      for module in range(m):
+        
+        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
+        q0 = register[q0_idx]
+        qs.append(q0)
+
+        if i != l - 1: # it will equal l - 1 if we're at the last row
+          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
+          q1 = register[q1_idx]
+          qs.append(q1)
+        
+        # end for loop creating list of qubits in this time step.
+
+      if LEAKAGE:
+        add_relax_then_leak(measure_string, circuit, qs, errors)
+
+      if p > 0:
+        error_op = errors[measure_string].op
+        circuit.append(error_op, qs, p)
+
+      circuit.append(measure_string, qs) 
+
+      # idling: 
+      idle_qs = [q for q in all_registers if q not in qs]
+      idle(circuit, idle_qs, idle_during[measure_string])
+
+      # add four-ion shift to move next qubits in to be hadamarded (or simulate moving them all out):
+      apply_four_ion_shift_error(circuit, all_registers, idle_during)
+
+      tick(circuit)
 
 
 
@@ -1639,6 +1683,11 @@ def make_BB_circuit(
     global SEQUENTIAL_MEASUREMENTS
     SEQUENTIAL_MEASUREMENTS = sequential_operations 
 
+
+    if SWAPLRC:
+      JTunion = code.JTunion
+      JTunion.reverse() # put in reverse order (descending, so [-2, -1, 0] becomes [0, -1, -2]. If we don't reverse, sometimes the last j value of X-checks would align with the first j value of the Z-checks and reduce shuttling. Reversing the order makes this impossible unless there is only one j value: 0. However what it does do (combined with the chosen order of 2q gates in 'apply_cyclic_shift ... ' - A then B, AT then BT) is guarantee that the X and Z checks have their last 2q gates interact with opposite type data qubits (i.e. L or R) so that if we're doing a swap-LRC we are alternating which data qubits are being swapped
+      code.JTunion = JTunion
 
     circ = stim.Circuit()
 

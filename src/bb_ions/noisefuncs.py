@@ -209,6 +209,8 @@ def walking_cat_idle_approx(p, p_leak = 0):
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
         "pause" : Error("DEPOLARIZE1", 0), # this is an idling error applied at the beginning of each round of stabiliser measurements; simulates waiting before each round of stab. measurement
+
+        "four_ion_shift" : Error("DEPOLARIZE1", p),
     }
 
     return idle_during
@@ -423,6 +425,8 @@ def zero_idling():
         "pause" : Error("DEPOLARIZE1", 0),
 
         "shift_prop_to" : 0,
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
+        "error_per_repump" : Error("DEPOLARIZE1", 0),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
     }
 
     return idle_during
@@ -456,8 +460,9 @@ def uniform_errors(p):
         "split" : Error("DEPOLARIZE1", 0),
 
         # Added repumping error from Honeywell in case it gets called:
-        "error_per_repump" : Error("DEPOLARIZE1", p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+        "error_per_repump" : Error("DEPOLARIZE1", p),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
 
+        "four_ion_shift" : Error("DEPOLARIZE1", p),
     }
     
     return errors
@@ -486,6 +491,8 @@ def uniform_idling(p):
         "shift_prop_to" : 0,
 
         "pause" : Error("DEPOLARIZE1", 0),
+
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
 
     }
 

@@ -22,7 +22,7 @@ import sys
 import random
 from collections import defaultdict
 
-# # bbq for tanner graph (which is not always the best layout (can have unnecessarily long connections) and not the same qubit coordinates as my stim circuits - just adding now for a quick visualisation of BB codes, though circuit.diagram("timeslice-svg") is also good)
+# # bbq for tanner graph (use code.tanner_graph) but is not always the best layout (can have unnecessarily long connections) and not the same qubit coordinates as my stim circuits - commenting out for now but can be put back in (along with the commented out @property below) for a quick visualisation of BB codes, though circuit.diagram("timeslice-svg") is also good as basically reveals what the tanner graph is for my stim circuits)
 # import bbq # install by changing to bbqudit directory and pip install e . (the pip install bbqudit version does not have Monomial etc.)
 # from bbq.polynomial import Monomial
 # from bbq.bbq_code import BivariateBicycle
@@ -30,7 +30,7 @@ from collections import defaultdict
 # import matplotlib.pyplot as plt
 
 class Code:
-    def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is):
+    def __init__(self, l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is, A, B):
         self.l = l
         self.m = m
         self.Aij = Aij
@@ -50,6 +50,8 @@ class Code:
         self.Bs_is = Bs_is
         self.ATs_is = ATs_is
         self.BTs_is = BTs_is
+        self.A = A
+        self.B = B
 
     # @property
     # def tanner_graph(self):
@@ -140,15 +142,15 @@ def bb8_12_4_2():
 
 ''' Larger BB codes from papers'''
 
-def bb6_18_4_3_code():
+def bb6_18_4_3():
     # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf
-    l = 3 # only other options are l = 9 and m = 1 or vice versa which doesn't give logical qubits so must be 3,3
+    l = 3 # only other options are l = 9 and m = 1 or vice versa which doesn't give logical qubits so must be  l = m = 3
     m = 3 
     # A = x + 1 + y
     # B = x + 1 + xy^2
     Aij = [(1,0), (0,0), (0,1)]
     Bij = [(1,0), (0,0), (1,2)]
-    d=3
+    d=3 # smallest d I found was 3
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
@@ -164,7 +166,7 @@ def bb4_18_2_3():
     return code
 
 
-def bb6_18_4_4_code():
+def bb6_18_4_4():
     # [[18, 4, 4]] BB6 (weight-6 stabilisers) code from Wang et al. [2505.09684]
     l = 3
     m = 3
@@ -191,7 +193,7 @@ def bb8_18_6_3():
 '''Some found BB6 codes that might have been those compared to in the long chain paper [2503.22071]'''
 
 '''bb6_30_4_4_code'''
-def bb6_30_4_4_code():
+def bb6_30_4_4():
     # Equal best of six [[30,4,4]] and [[30,4,6]] codes found using a search in "find_codes" directory
     l = 5
     m = 3
@@ -204,7 +206,7 @@ def bb6_30_4_4_code():
 
 
 '''bb6_48_4_6_code'''
-def bb6_48_4_6_code():
+def bb6_48_4_6():
     ## Best of three of the [[48,4,6]] codes found using a search in "find_codes" directory 
     l = 6
     m = 4 
@@ -218,7 +220,7 @@ def bb6_48_4_6_code():
 
 ''' BB5 codes from BB5 long chain paper [2503.22071] '''
 
-def bb5_30_4_5_code():
+def bb5_30_4_5():
     
     # [[30, 4, 5]] BB5 (weight-5 stabilisers) code from Ye Delfosse long chain [2503.22071] Table II
     l = 5
@@ -310,7 +312,7 @@ def bb8_64_12_8():
 
 
 '''bb6_72_12_6_code'''
-def bb6_72_12_6_code():
+def bb6_72_12_6():
     # [[72, 12, 6]] BB6 code from OG BB paper [2308.07915] Table II
     l = 6
     m = 6
@@ -323,7 +325,7 @@ def bb6_72_12_6_code():
     return code
 
 '''bb6_90_8_10_code'''
-def bb6_90_8_10_code():
+def bb6_90_8_10():
     # [[90, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
     l = 15
     m = 3
@@ -338,7 +340,7 @@ def bb6_90_8_10_code():
 
 
 '''bb6_108_code'''
-def bb6_108_code():
+def bb6_108():
     # [[108, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
     l = 9
     m = 6
@@ -352,7 +354,7 @@ def bb6_108_code():
 
 
 '''bb5_120_8_8_code'''
-def bb5_120_8_8_code():
+def bb5_120_8_8():
     ## [[120, 8, 8]] BB5 found from search in "find_codes" directory
     l = 6
     m = 10
@@ -425,7 +427,7 @@ def bb6_756_code():
 
 '''Codes from Abhishek Rajput and Ben Symons' paper 2511.13560'''
 
-def bb8_64_14_8_code():
+def bb8_64_14_8():
     # From 2511.13560
     l = 8
     m = 4
@@ -438,7 +440,7 @@ def bb8_64_14_8_code():
     return code
 
 
-def bb8_72_14_8_code():
+def bb8_72_14_8():
     # From 2511.13560
     l = 6
     m = 6
@@ -451,7 +453,7 @@ def bb8_72_14_8_code():
     return code
 
 
-def bb8_128_14_12_code():
+def bb8_128_14_12():
     # From 2511.13560
     l = 8
     m = 8
@@ -476,7 +478,7 @@ def fortnight_code():
     return code
 
 
-def bb8_192_14_16_code():
+def bb8_192_14_16():
     # From 2511.13560 -- called 192_14_20 code but came back as d_max = 16 
     l = 8
     m = 12
@@ -489,7 +491,7 @@ def bb8_192_14_16_code():
     return code
 
 
-def bb8_216_14_20_code():
+def bb8_216_14_20():
     # From 2511.13560 -- actually returns code distance of d_max ≤ 16.
     l = 18
     m = 6
@@ -514,7 +516,7 @@ def bb6_248_10_14():
 
 '''Bigger BB8 codes found by Ben Symons'''
 
-def bb8_288_14_20_code():
+def bb8_288_14_20():
     l = 12
     m = 12
     Aij = [(6,10), (5,4), (3,6), (11,9)]
@@ -523,7 +525,7 @@ def bb8_288_14_20_code():
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
-def bb8_360_14_30_code():
+def bb8_360_14_30():
     l = 30
     m = 6
     d_max = 30
@@ -534,7 +536,7 @@ def bb8_360_14_30_code():
 
 
 ''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
-def bb6_378_16_18_code():
+def bb6_378_16_18():
     l= 21
     m = 9
     Aij = [(3, 0), (0, 10), (0, 17)]
@@ -605,7 +607,6 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     IAT, JAT = findIJ(ATij)
     IBT, JBT = findIJ(BTij)
     JTunion = sorted(set(JAT + JBT))
-    JTunion.reverse() # put in reverse order (descending, so [-2, -1, 0] becomes [0, -1, -2]. Sometimes the last j value of X-checks would align with the first j value of the Z-checks and reduce shuttling. This makes this impossible unless there is only one j value - 0. However what it does do is (combined with the order of 2q gates in 'apply_cyclic_shift ... ' - A then B, AT then BT) guarantee that the X and Z checks have their last 2q gates interact with opposite type data qubits (i.e. L or R). 
 
 
     # Num qubits:
@@ -634,8 +635,11 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
     ATs_is = group_by_j(ATij)
     BTs_is = group_by_j(BTij)
 
+    A=' + '.join(f"x^{i}⋅y^{j}" for i, j in Aij)
+    B=' + '.join(f"x^{i}⋅y^{j}" for i, j in Bij)
 
-    code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is)
+
+    code = Code(l, m, Aij, Bij, ATij, BTij, Hx, Hz, Lx, Lz, d_max, n, k, Junion, JTunion, As_is, Bs_is, ATs_is, BTs_is, A, B)
 
     return code
 
