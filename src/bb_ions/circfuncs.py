@@ -7,6 +7,7 @@ from .kfuncs import *
 from .noisefuncs import *
 import math
 from typing import Any
+import copy
 
 class Registers:
     def __init__(self, C = None, L = None, R = None, X = None, Z = None, qL = None, qR = None, qC = None, qX = None, qZ = None):
@@ -283,7 +284,6 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
       circuit.append(errors['H'].op, register, p)
 
   elif SEQUENTIAL_HADAMARDS:
-
 
     all_registers = list(dict.fromkeys(registers.qX + registers.qL + registers.qR + registers.qZ)) # deleting duplicates (in case we're reusing check qubits so qX = qZ)
 
@@ -614,14 +614,12 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 
 
 '''add_2q_gates
-Works when the qubit registers are updating due to SWAP gates. Apart from that it's the same as add_2q_gates.
-
-Notes from add_2q_gates function: 
 For matrix M (A, B, AT or BT) in Hx = [A|B] or Hz = [B^T|A^T], this adds the chosen two-qubit gate between check qubits and data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix M which have y^j.
 As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each check qubit (v, w) and data qubit (v ⊕ i, w ⊕ j) for one value of j. A (B) means X-checks to L(R)-data, BT (AT) means Z-check qubits to L(R)-data qubits. 
-We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
-If there are sequential gates then a shuttling time is added between each 2q gate.
-Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the two-qubit gate. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates) or requires the addition of a CZ gate sandwiched by Hadamards (Hadamards added outside this function)'''
+We are imagining that aligning the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required shuttle or shift noise), so now within modules we just do each v to v ⊕ i (modulo l).
+If there are sequential gates then a shuttling and cooling time is added between each 2q gate.
+Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the two-qubit gate. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates) or requires the addition of a CZ gate sandwiched by Hadamards (Hadamards added outside this function)
+This function also adds 'reshuffling' error between i values because even though a large cyclic shift of modules is not required (we're still doing one power of j) there is a different cyclic shift of qubits requireed for different i values.'''
 def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = False):
 
   if gate == 'CX':
@@ -666,7 +664,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
   
   
 
-  for (i, j) in Mij: 
+  for an_index, (i, j) in enumerate(Mij): 
       if j == jval: 
 
         idx_list = []
@@ -749,20 +747,30 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
 
               tick(circuit)
 
-
         if not sequential_operations: # idle all data qubits not in this matrix.
           idle(circuit, qD_idle, idle_during[gate])
           tick(circuit)
+      
+        # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). This takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got 30 pairs i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/48 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
+
+        if an_index != len(Mij) - 1: # (if last set of 2q gates for this j value we have a cyclic shift error coming so don't need to apply reshuffle:)
+          err = copy.copy(idle_during['shuttle'])
+          # update the p of this error (note it doesn't change the dictionary value for shuttle error just this variable called err)
+
+          ratio = 2 * code.l / 48
+          
+          err.p = err.p * ratio  # there are l pairs of qubits to reshuffle (though it's not a random reshuffling, actually just a different cyclic shift aligning qubits that were already aligned in a different cylic shift so this is an overestimate)
+          err.p_leak = err.p_leak * ratio
+          err.p_relax = err.p_relax * ratio
+          idle(circuit, qD + qD_idle + qC, err)
 
 
-'''add_2q_gates
+    
+
+
+'''add_2q_gates_for_this_ij_value
 The same as add_2q_gates but have an extra if statement to only apply 2q gates for a specific ij value.
-
-For matrix M (A, B, AT or BT) in Hx = [A|B] or Hz = [B^T|A^T], this adds the chosen two-qubit gate between check qubits and data qubits according the the value of j (indicating the modules that are aligned) and the terms in matrix M which have y^j.
-As per Algo. 2 & lemma 1 of [2508.01879], this applies 2q gates between each check qubit (v, w) and data qubit (v ⊕ i, w ⊕ j) for one value of j. A (B) means X-checks to L(R)-data, BT (AT) means Z-check qubits to L(R)-data qubits. 
-We are imagingin that alignging the required w to w ⊕ j (modulo m) has already been taken care of by aligning modules (simulated by applying required noise), so now within modules we just do each v to v ⊕ i (modulo l).
-If there are sequential gates then a shuttling time is added between each 2q gate.
-Addition: swap_ctrl_target variable. If swap == True this swaps the control and target of the CNOTs. Useful for doing a leakage reduction circuit using swap gates (SWAP-LRC) as this requires the addition of only one extra CNOT in the opposite direction to the final one (when working only in CNOT gates)'''
+This does not require a reshuffle error after the 2q gates like in add_2q_gates because it is being used to apply a reversed-direction 2q gate before a forward-direction 2q gate on the same qubit pairs so no reshuffling is required (i.e. it is not being called apart from when it is NOT the last 2q gate for a particular term anyway). Alternatively, the swapLRC circuit could be improved to only introduce a reverse-direction 2q gate and a pauli correction from a measurement (so not introducing any extra 2q gates -- this could also be simulated by just making this reversed-2q gate perfect and timeless), then in this case this function is still used for the reversed-direction 2q gate and followed by a cyclic shift shuttle error anyway as it is the very last 2q gate of the whole check, not just of the term, so again it doesn't require a reshuffle error.'''
 def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = False):
   
   if gate == 'CX':
@@ -1515,7 +1523,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       if not SEQUENTIAL_HADAMARDS:
         idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
     elif ONLYCZs == True: # we are only using CZ gates so Hadamard all data qubits before the X-checks to effectively have CNOTs
-      hadamard_register(idle_during, registers, code, loop_body, qL + qR, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qL, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qR, errors)
     
     if not SEQUENTIAL_HADAMARDS:
       tick(loop_body)
@@ -1530,7 +1539,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
       if not SEQUENTIAL_HADAMARDS:
         idle(loop_body, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
     elif ONLYCZs == True:
-      hadamard_register(idle_during, registers, code, loop_body, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks.
+      hadamard_register(idle_during, registers, code, loop_body, qL, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks.
     if not SEQUENTIAL_HADAMARDS:
       tick(loop_body)
 

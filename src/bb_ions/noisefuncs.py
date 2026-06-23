@@ -11,7 +11,7 @@ SHUTTLE_SPEED = 1 # [m/s]
 
 
 class Error:
-    def __init__(self, operation, p, p_leak = None, p_relax = None):
+    def __init__(self, operation, p, p_leak = 0, p_relax = 0):
         self.op = operation # the error operation
         self.p = p # its probability
         self.p_leak = p_leak # the probability of a qubit leaking during this operations
