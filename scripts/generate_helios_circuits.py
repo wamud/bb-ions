@@ -18,7 +18,7 @@ from bb_ions import *
 code = gross_code()
 
 memory_basis = 'X'
-noise = 'helios_seq_MR1Q2Q_no_reshuffling'
+noise = 'helios_w_reshuffling'
 num_syndrome_extraction_cycles = code.d_max
 seq_ops = True
 exclude_opp_basis_detectors = True
@@ -47,7 +47,6 @@ for p in [0.001, 0.002]:
         only_CZs = only_CZs,
         leakage_repumping = leakage_repumping,
         num_repumping_cycles = cycles,
-        reshuffling = False
     )
 
     # Save circuit:

@@ -52,12 +52,18 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                # ## Original BB code paper (and subsequent long chains paper) settings:
+                # max_bp_iters = 10_000, # default 30
+                # bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order = 5 
+                ## Rebecca's settings:
+                max_bp_iters = 10, # default 30
+                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                ms_scaling_factor = 0.625, # normalisation
+                schedule="serial", 
+                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order=9
             )
         },
         print_progress = True
@@ -73,12 +79,18 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                # ## Original BB code paper (and subsequent long chains paper) settings:
+                # max_bp_iters = 10_000, # default 30
+                # bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order = 5 
+                ## Rebecca's settings:
+                max_bp_iters = 10, # default 30
+                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                ms_scaling_factor = 0.625, # normalisation
+                schedule="serial", 
+                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order=9
             )
         },
         print_progress = True
@@ -94,12 +106,18 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                # ## Original BB code paper (and subsequent long chains paper) settings:
+                # max_bp_iters = 10_000, # default 30
+                # bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order = 5 
+                ## Rebecca's settings:
+                max_bp_iters = 10, # default 30
+                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                ms_scaling_factor = 0.625, # normalisation
+                schedule="serial", 
+                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order=9
             )
         },
         print_progress = True
@@ -115,12 +133,18 @@ def main():
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
-                max_bp_iters = 10_000, # default 30
-                bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
-                # ms_scaling_factor = 0.625, # normalisation
-                # schedule = "serial", 
-                osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
-                osd_order = 5 
+                # ## Original BB code paper (and subsequent long chains paper) settings:
+                # max_bp_iters = 10_000, # default 30
+                # bp_method = "min_sum", # product_sum (default), min_sum, min_sum_log
+                # osd_method = "osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                # osd_order = 5 
+                ## Rebecca's settings:
+                max_bp_iters = 10, # default 30
+                bp_method="minimum_sum", # product_sum (default), min_sum, min_sum_log
+                ms_scaling_factor = 0.625, # normalisation
+                schedule="serial", 
+                osd_method="osd_cs", # "osd0" - zero-order OSD, "osd_e" - exhaustive OSD, "osd_cs": combination-sweep OSD (default)
+                osd_order=9
             )
         },
         print_progress = True
