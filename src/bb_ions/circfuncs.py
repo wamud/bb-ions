@@ -488,7 +488,7 @@ def add_final_detectors(circ, code, memory_basis):
   Hz = code.Hz
   n = code.n
 
-  offset_to_first_data_qubit_measurement_recording = 2 * n if LEAKAGE_HERALDS else n
+  offset_to_first_data_qubit_measurement_recording = n # if not LEAKAGE_HERALDS else 2 * n
 
   if memory_basis == 'Z':
       
@@ -496,7 +496,7 @@ def add_final_detectors(circ, code, memory_basis):
           
           this_check_qubits_data_qubits = np.nonzero(Hz[k])[0] # extract the 1 positions (data qubit indices) in this check qubit's row of Hz
 
-          this_z_check_qubit_rec = -(n + n//2) + k if not LEAKAGE_HERALDS else -3 * n + k     # See above for explanation. Also note we start from the most negative recording and approach the most recent (-1) by adding k each iteration
+          this_z_check_qubit_rec = -(n + n//2) + k if not LEAKAGE_HERALDS else -2 * n - n//2 + k     # See above for explanation. Also note we start from the most negative recording and approach the most recent (-1) by adding k each iteration
 
           circ.append("DETECTOR", 
             [stim.target_rec(this_z_check_qubit_rec)] # This Z-check qubit
@@ -512,7 +512,7 @@ def add_final_detectors(circ, code, memory_basis):
 
           this_check_qubits_data_qubits = np.nonzero(Hx[k])[0]
 
-          this_x_check_qubit_rec = -2 * n + k if not LEAKAGE_HERALDS else -4 * n + k
+          this_x_check_qubit_rec = -2 * n + k if not LEAKAGE_HERALDS else -3 * n - n//2 + k
 
           circ.append("DETECTOR", 
             [stim.target_rec(this_x_check_qubit_rec)] 
@@ -557,7 +557,7 @@ def add_logical_observables(circuit, n, Lx, Lz, memory):
 
   indices = get_nonzero_indices(L) 
 
-  offset = n if LEAKAGE_HERALDS else 0 # (account for the n data qubit measurements having leakage heralds on them or not)
+  offset = 0 #if LEAKAGE_HERALDS else 0 # (account for the n data qubit measurements having leakage heralds on them or not)
 
   for i in range(num_logical_ops): # for each logical qubit
 
@@ -1545,6 +1545,12 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     if not SEQUENTIAL_HADAMARDS:
       tick(loop_body)
 
+
+    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
+      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
+      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
+
     # Measure check qubits
     measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
     if not SEQUENTIAL_MEASUREMENTS:
@@ -1557,11 +1563,6 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
             # Append X-check stabiliser detectors:
             for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
                 loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
-
-    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
-      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
-      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
-        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
 
 
     if reuse_check_qubits == True: ## If not re-using, then can reset the Z-check qubits in this same time step.
@@ -1597,6 +1598,12 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
         idle(loop_body, qL + qR, idle_during['H'])  # idle data qubits
         tick(loop_body)
 
+    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
+      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
+      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
+
+
     # Now measure check qubits
     measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
     if not SEQUENTIAL_MEASUREMENTS:
@@ -1611,10 +1618,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
                 loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
 
 
-    if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qC)
-      loop_body.append("HERALD_LEAKAGE_EVENT", qC, 0) 
-      for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
-        loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
+
 
     if reuse_check_qubits == True:
       tick(loop_body)
@@ -1832,6 +1836,13 @@ def make_BB_circuit(
         pass  # hadamards at the end cancel.
     
 
+    n = code.n
+    if LEAKAGE_HERALDS: 
+
+      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      
+      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+        circ.append("DETECTOR", [stim.target_rec(-i)], i) # gunna chuck on coordinates ... see what that does
 
     # Now measure the check qubits
     
@@ -1841,19 +1852,9 @@ def make_BB_circuit(
 
 
     # If preserving logical plus we put detectors on these measurements in the first round:
-    n = code.n
     if memory_basis == 'X':
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
-
-
-    if LEAKAGE_HERALDS: 
-
-      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
-      
-      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
-        circ.append("DETECTOR", [stim.target_rec(-i)], i) # gunna chuck on coordinates ... see what that does
-
 
 
     if reuse_check_qubits == True:
@@ -1902,6 +1903,15 @@ def make_BB_circuit(
           tick(circ)
 
 
+    if LEAKAGE_HERALDS:
+
+      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 (last argument) i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
+      
+      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
+        circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
+
+
     # Now measure check qubits
     measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
     if not SEQUENTIAL_MEASUREMENTS:
@@ -1914,13 +1924,6 @@ def make_BB_circuit(
         for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
-
-    if LEAKAGE_HERALDS:
-
-      circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 (last argument) i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
-      
-      for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2])
-        circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
 
     if reuse_check_qubits == True:
@@ -1991,6 +1994,10 @@ def make_BB_circuit(
             elif ONLYCZs == True: # It turns out that when doing the swap LRC with CZ gates on the X checks, the final hadamard of the final CNOT (now a CZ sandwiched by hadamards) cancels with the hadamard just before the check-qubit measurement
               pass
 
+          if LEAKAGE_HERALDS: # append leakage heralds to the X-check qubits just measured
+            circ.append("HERALD_LEAKAGE_EVENT", qX, 0) 
+            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+              circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
           # Measure check qubits:
           measure_register(idle_during, registers, code, 'Z', circ, qX, errors)
@@ -2005,10 +2012,6 @@ def make_BB_circuit(
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the same measurement performed in the round before it: n measurements before it if no leakage heralds, 2n measurements before it if there are (leakage herald adds to measurement record)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n - offset)]) 
 
-          if LEAKAGE_HERALDS: # append leakage heralds to the X-check qubits just measured
-            circ.append("HERALD_LEAKAGE_EVENT", qX, 0) 
-            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
-              circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
 
           if reuse_check_qubits: # if not will reset other check qubits in this same time step
@@ -2053,6 +2056,11 @@ def make_BB_circuit(
                 tick(circ)
 
 
+          if LEAKAGE_HERALDS: # append leakage heralds to the Z-check qubits just measured
+            circ.append("HERALD_LEAKAGE_EVENT", qZ, 0) 
+            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
+              circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
           # Now measure check qubits
           measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
           if not SEQUENTIAL_MEASUREMENTS:
@@ -2066,10 +2074,7 @@ def make_BB_circuit(
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are now Z-check measurements, and compares each of them to the measurement performed n measurements before it (this is the same measurement in the preceding round)
                       circ.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - n - offset)])
 
-          if LEAKAGE_HERALDS: # append leakage heralds to the Z-check qubits just measured
-            circ.append("HERALD_LEAKAGE_EVENT", qZ, 0) 
-            for i in reversed(range(1, n//2 + 1)): # append detectors to the heralds
-              circ.append("DETECTOR", [stim.target_rec(-i)], i)
+
 
 
           if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
@@ -2077,17 +2082,18 @@ def make_BB_circuit(
           
           '''end of this swap_LRC round'''
 
-
-    # # Measure all data qubits:
-    measure_register(idle_during, registers, code, memory_basis, circ, qL, errors)
-    measure_register(idle_during, registers, code, memory_basis, circ, qR, errors)
-    
     # Add leakage heralds onto these measurements:
     if LEAKAGE_HERALDS: # append leakage heralds to the qubits just measured (qL + qR)
       circ.append("HERALD_LEAKAGE_EVENT", qL + qR, 0) 
       for i in reversed(range(1, n + 1)): 
         circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
+
+
+    # # Measure all data qubits:
+    measure_register(idle_during, registers, code, memory_basis, circ, qL, errors)
+    measure_register(idle_during, registers, code, memory_basis, circ, qR, errors)
+    
 
 
     ### Add final detectors:
