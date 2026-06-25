@@ -71,6 +71,7 @@ def longchain_idle_errors(p):
         "MX" : Error("DEPOLARIZE1", 30 * p / 100),
 
         # NO shuttling errors: 
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
         "shift" : Error("DEPOLARIZE1", 0), 
         "shift_prop_to" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
         "shuttle" : Error("DEPOLARIZE1", 0),
@@ -136,6 +137,7 @@ def tham_modules_idle_errors(p):
         "shift" : Error("DEPOLARIZE1", 30 * p / 100), 
         "shift_prop_to" : None, # i.e. set to None means the the shift idling error will always be the value in the line above rather than this constant multiplied by the length of the shift
 
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
         # Additional for our architecture:
         "shuttle" : Error("DEPOLARIZE1", 0),
         "merge" : Error("DEPOLARIZE1", 0),
@@ -174,7 +176,8 @@ def walking_cat_errors(p, p_leak = 0):
         "shuttle" : Error("DEPOLARIZE1", p / 100, p_leak, p_relax),
         "merge" : Error("DEPOLARIZE1", 0),
         "split" : Error("DEPOLARIZE1", 0),
-
+        
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
         # Added repumping error from Honeywell in case it gets called:
         "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
 
@@ -546,7 +549,7 @@ def dephasing_idle_errors(T2):
         "shift" : Error("Z_ERROR", 0.1), # will be updated by circfuncs.update_shift_prob as long as p != 0.
 
         "shift_prop_to" : T2, # T2 time
-
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
         "pause" : Error("Z_ERROR", 0),
     }
 

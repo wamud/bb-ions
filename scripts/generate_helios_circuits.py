@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-code = gross_code()
+code = bb6_18_4_4()
 
 memory_basis = 'X'
 noise = 'helios'
@@ -27,31 +27,34 @@ only_CZs = True
 leakage_heralds = True
 leakage_repumping = True
 cycles = 3
+swap_LRC = False
+p = 0.001
 
-for p in [0.001, 0.002]:
-    for swap_LRC in [True, False]:
+for code in [bb6_18_4_3(), bb6_18_4_4()]:
 
-        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swap_LRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
-        
-        print("Creating: ",filename)
 
-        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-            code,
-            p,  
-            errors = helios_errors(p),
-            idle_during = helios_idle_errors(p),
-            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-            memory_basis = memory_basis,
-            sequential_operations = seq_ops, 
-            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-            reuse_check_qubits = True,
-            leakage = leakage,
-            leakage_heralds = leakage_heralds,
-            only_CZs = only_CZs,
-            leakage_repumping = leakage_repumping,
-            num_repumping_cycles = cycles,
-            swap_LRC = swap_LRC
-        )
 
-        # Save circuit:
-        circuit.to_file(f"../circuits/with_leakage/helios/gross_code/{filename}.stim")
+    filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swap_LRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
+    
+    print("Creating: ",filename)
+
+    circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+        code,
+        p,  
+        errors = helios_errors(p),
+        idle_during = helios_idle_errors(p),
+        num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+        memory_basis = memory_basis,
+        sequential_operations = seq_ops, 
+        exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+        reuse_check_qubits = True,
+        leakage = leakage,
+        leakage_heralds = leakage_heralds,
+        only_CNOTs = only_CZs,
+        leakage_repumping = leakage_repumping,
+        num_repumping_cycles = cycles,
+        swap_LRC = swap_LRC
+    )
+
+    # Save circuit:
+    circuit.to_file(f"../circuits/with_leakage/helios/trial_and_error/{filename}.stim")
