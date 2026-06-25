@@ -1,7 +1,6 @@
 import deltakit_stim
 import sys
 sys.modules["stim"] = deltakit_stim
-
 import sinter
 import numpy as np
 import glob
@@ -13,33 +12,31 @@ import multiprocessing
 
 
 def main():
- 
-    p = 1e-3
-    memory_basis = 'z'
-    circuit = deltakit_stim.Circuit.generated(
-        f"surface_code:rotated_memory_{memory_basis}",
-        rounds=15,
-        distance=5,
-        after_clifford_depolarization=p)
 
-    tasks = [
-        sinter.Task(
-            circuit = circuit,
-            json_metadata = {
-                "p": p,
-                "b": memory_basis
-            }
-        )]
-    
-    csv_path = f"example_stats/with_leakage.csv"
+    circuit = deltakit_stim.Circuit("""
+    R 0 1
+    LEAKAGE(0.1) 0 1
+    CNOT 0 1
+    HERALDED_ERASE(0.01) 0 1
+    M 0 1
+    DETECTOR rec[-1]
+    DETECTOR rec[-2]
+    HERALD_LEAKAGE_EVENT 0 1
+    DETECTOR rec[-1]
+    DETECTOR rec[-2]
+    OBSERVABLE_INCLUDE(0) rec[-4] rec[-3]
+    """)
+
+    csv_path = f"scrap_stats.csv"
+
+    tasks = [sinter.Task(circuit=circuit, json_metadata={"p": 0.1, "circ": "example"})]
 
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 10000,
-        max_errors = 100,
+        max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
-        # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = {
             "bposd": SinterDecoder_BPOSD(
@@ -56,4 +53,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()   # utile sous Windows/macOS
     main()

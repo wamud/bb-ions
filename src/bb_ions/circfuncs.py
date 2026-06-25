@@ -1714,11 +1714,11 @@ def make_BB_circuit(
     
     # Going to set all below to be equal to sequential_operations. Just doing like this in case in future some operations (e.g. measurements) can be done all at once whereas others can't. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). This is because the difference in pL even when introducing sequential H, M and R rather than everything completely parallel is probably negligible -- will test.
     global SEQUENTIAL_RESETS
-    SEQUENTIAL_RESETS = False # sequential_operations
+    SEQUENTIAL_RESETS = True # sequential_operations
     global SEQUENTIAL_HADAMARDS
-    SEQUENTIAL_HADAMARDS = False # sequential_operations
+    SEQUENTIAL_HADAMARDS = True # sequential_operations
     global SEQUENTIAL_MEASUREMENTS
-    SEQUENTIAL_MEASUREMENTS = False # sequential_operations
+    SEQUENTIAL_MEASUREMENTS = True # sequential_operations
     global RESHUFFLING
     RESHUFFLING = reshuffling
 

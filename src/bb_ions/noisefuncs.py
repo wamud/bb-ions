@@ -11,11 +11,13 @@ SHUTTLE_SPEED = 1 # [m/s]
 
 
 class Error:
-    def __init__(self, operation, p, p_leak = 0, p_relax = 0):
+    def __init__(self, operation, p, p_leak = 0, p_relax = 0, p_loss = 1e-7, loss_op = "LEAKAGE"): # making p_loss 1e-7 per operation as this is walking cat estimate
         self.op = operation # the error operation
         self.p = p # its probability
         self.p_leak = p_leak # the probability of a qubit leaking during this operations
         self.p_relax = p_relax # the propability of a previously-leaked qubit relaxing during this operation
+        self.p_loss = p_loss
+        self.loss_op = loss_op
 
 
 
