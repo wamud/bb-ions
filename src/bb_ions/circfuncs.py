@@ -1847,7 +1847,7 @@ def make_BB_circuit(
             circ.append("DETECTOR", [stim.target_rec(-i)])
 
 
-    if LEAKAGE_HERALDS:  # These are appending correctly, just need to set subsequent detectors to account for if they are here or not 
+    if LEAKAGE_HERALDS: 
 
       circ.append("HERALD_LEAKAGE_EVENT", qX, 0) # set p = 0 i.e. herald tells with certainty if a qubit has leaked rather than potentially making a mistake as to whether it's leaked or not
       
