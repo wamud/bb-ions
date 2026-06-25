@@ -2091,8 +2091,13 @@ def make_BB_circuit(
 
 
     # # Measure all data qubits:
-    measure_register(idle_during, registers, code, memory_basis, circ, qL, errors)
-    measure_register(idle_during, registers, code, memory_basis, circ, qR, errors)
+
+    if memory_basis == 'X':
+        hadamard_register(idle_during, registers, code, circ, qL, errors)
+        hadamard_register(idle_during, registers, code, circ, qR, errors)
+
+    measure_register(idle_during, registers, code, 'Z', circ, qL, errors)
+    measure_register(idle_during, registers, code, 'Z', circ, qR, errors)
     
 
 
