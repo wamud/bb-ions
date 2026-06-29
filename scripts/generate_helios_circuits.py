@@ -33,7 +33,6 @@ p = 0.001
 for code in [bb6_18_4_3(), bb6_18_4_4()]:
 
 
-
     filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swap_LRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
     
     print("Creating: ",filename)

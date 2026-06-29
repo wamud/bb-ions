@@ -442,6 +442,7 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
 
 
 
+
 ''' tick
 Appends a 'TICK' annotation to an input stim circuit, indicating the end of a time-step. '''
 def tick(circuit):
