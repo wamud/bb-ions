@@ -95,18 +95,6 @@ def make_registers(code, reuse_check_qubits = False):
 
   return registers
 
-''' make_meas_record_dict
-Will keep a record of which measurement in the list of measurements each qubit is measured at. This will aid keeping detectors on the qubits while other detectors (such as leakage heralds and heralded erase to represent qubit loss) are interspersed between them.'''
-def make_meas_record_dict(registers):
-  meas_record = {
-      "qX": [[] for _ in range(len(registers.qX))],
-      "qL": [[] for _ in range(len(registers.qL))],
-      "qR": [[] for _ in range(len(registers.qR))],
-      "qZ": [[] for _ in range(len(registers.qZ))],
-      "current_meas_index": 0,
-  }
-  return meas_record
-
 
 ''' add_qubit_coordinates
 Adds coordinates to the qubits for use in circuit diagrams and importing to crumble.
@@ -372,13 +360,10 @@ def measure(basis: str, circuit, register, errors: dict):
 Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'.
 Probability of measurement error given by p_meas(t_meas)
 This function can also make the measurements sequential (limited by having only m operation zones) but this sequentiality is only written for when you wnant to measure an entire register at once (qX, qL, qR or qZ). This is always the case in this research.'''
-def measure_register(reg_string, meas_record, idle_during, registers, code, basis: str, circuit, register, errors: dict):
+def measure_register(idle_during, registers, code, basis: str, circuit, register, errors: dict):
   
   measure_string = f"M{basis}"
   p = errors[measure_string].p
-
-  current_meas_index = meas_record['current_meas_index']
-
 
   if not SEQUENTIAL_MEASUREMENTS:
     
@@ -393,17 +378,6 @@ def measure_register(reg_string, meas_record, idle_during, registers, code, basi
 
     # Append measurement:
     circuit.append(measure_string, register)
-    
-    # Add measurements to record:
-    for i in range(len(register)):
-      meas_record[reg_string][i].append(current_meas_index)
-      current_meas_index += 1
-    
-    # Update measure index in the dictionary:
-    meas_record['current_meas_index'] = current_meas_index
-
-    return
-
 
   elif SEQUENTIAL_MEASUREMENTS:
 
@@ -422,70 +396,49 @@ def measure_register(reg_string, meas_record, idle_during, registers, code, basi
 
     qs = []
     
-    for i in range(l*m):  #### beginning of for loop
+    for i in range(l*m):
     
       qs.append(register[i])
 
-      if (i+1) % (2*m) == 0: # for every group of 2*m qubits we will apply the measurements and go to the next timestep
+      if (i+1) % (2*m) == 0: # for every group of 2*m qubits we need to go to the next timestep
         if LEAKAGE:
           add_relax_then_leak(measure_string, circuit, qs, errors)
         if p > 0:
           error_op = errors[measure_string].op
           circuit.append(error_op, qs, p)
-
         circuit.append(measure_string, qs) # appending the measurements
-        
-        #update the measurement record:
-        for qubit in qs:
-          index = register.index(qubit)
-          meas_record[reg_string][index].append(current_meas_index)
-          current_meas_index += 1
 
         # idling: 
         idle_qs = [q for q in all_registers if q not in qs]
         idle(circuit, idle_qs, idle_during[measure_string])
 
+        
         tick(circuit)
         
         # add four-ion shift to move next qubits in (or simulate moving them all out):
         apply_four_ion_shift_error(circuit, all_registers, idle_during)
         tick(circuit)
         qs = []
-    
-    ######## end of for loop #####
 
-    if len(qs) != 0:  # if there are leftover qubits from for loop (i.e. there wasn't an even multiple of 2m qubits to be measured) then apply measurements to them now:
-      if LEAKAGE:
-        add_relax_then_leak(measure_string, circuit, qs, errors)
-      if p > 0:
-        error_op = errors[measure_string].op
-        circuit.append(error_op, qs, p)
-      circuit.append(measure_string, qs) # appending the measurements
+    if len(qs) != 0:
+        if LEAKAGE:
+          add_relax_then_leak(measure_string, circuit, qs, errors)
+        if p > 0:
+          error_op = errors[measure_string].op
+          circuit.append(error_op, qs, p)
+        circuit.append(measure_string, qs) # appending the measurements
 
-      #update the measurement record:
-      for qubit in qs:
-        index = register.index(qubit)
-        meas_record[reg_string][index].append(current_meas_index)
-        current_meas_index += 1
+        # idling: 
+        idle_qs = [q for q in all_registers if q not in qs]
+        idle(circuit, idle_qs, idle_during[measure_string])
 
-      # idling: 
-      idle_qs = [q for q in all_registers if q not in qs]
-      idle(circuit, idle_qs, idle_during[measure_string])
-
-      
-      tick(circuit)
-      
-      # add four-ion shift to move next qubits in (or simulate moving them all out):
-      apply_four_ion_shift_error(circuit, all_registers, idle_during)
-      tick(circuit)
-      qs = []
-    
-    # Update measure index in the dictionary:
-    meas_record['current_meas_index'] = current_meas_index
-    print(f"current_meas_index = {current_meas_index}")
-    
-    return
-
+        
+        tick(circuit)
+        
+        # add four-ion shift to move next qubits in (or simulate moving them all out):
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+        qs = []
 
 
 
@@ -517,7 +470,7 @@ if leakage_heralds == False:
     -(n + 1) to -(n + n//2) is qZ measurements
     -(n + n//2 + 1) to -2n is qX measurements
 
-elif leakage_heralds == True:
+elif leakage_heralds == True and sequential_ops == False:
 
     rec[ ]:
       -1 to -n                        # n leakage heralds on the n data qubit measurements
@@ -527,6 +480,7 @@ elif leakage_heralds == True:
       -(3n + 1) to (-3n + n//2)       # n/2 leakage heralds on the n/2 qX measurements
       -(3n + n//2 + 1) to -4n         # n/2 qX measurements
 
+else (see code)
 
 For each check qubit we want the detector to include its parity multiplied with the parity of all the data qubits it checked. These are contained in Hz and Hz, but note that the j-th data qubit will be rec[j - n] without leakage heralds or rec[j - 2n] with leakage heralds (so the 0-th data qubit was measured n or 2n measurements ago, the last data qubit, i.e. the (n - 1)th data qubit, was measured one / (1 + n) measurement(s) ago etc.'''
 def add_final_detectors(circ, code, memory_basis):
@@ -1540,7 +1494,7 @@ Constructs the stabiliser extraction round of a memory experiment using a BB cod
 - exclude_opposite_basis_detectors: if this is True, when preserving logical 0 (memory_basis = 'Z') then there are no detectors placed on the X-stabiliser measurments (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it by taking out unused nodes.
 - reuse_check_qubits: one register of check qubits of size n/2 -- is possible as we're doing X-checks then Z-checks
 - sequential: whether or not the two-qubit gates within a leg are sequential or in parallel'''
-def make_loop_body(meas_record, jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors = False):
+def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors = False):
 
     n = code.n
     m = code.m
@@ -1558,7 +1512,6 @@ def make_loop_body(meas_record, jval_prev, code, errors, idle_during, registers,
 
     # X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     qC = qX
-
    # Initialise check qubits
     init_register(idle_during, registers, code,'Z', loop_body, qC, errors)
     
@@ -1600,7 +1553,7 @@ def make_loop_body(meas_record, jval_prev, code, errors, idle_during, registers,
         loop_body.append("DETECTOR", [stim.target_rec(-i)], i)
 
     # Measure check qubits
-    measure_register('qX', meas_record, idle_during, registers, code, 'Z', loop_body, qC, errors)
+    measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
     if not SEQUENTIAL_MEASUREMENTS:
       idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
     
@@ -1653,7 +1606,7 @@ def make_loop_body(meas_record, jval_prev, code, errors, idle_during, registers,
 
 
     # Now measure check qubits
-    measure_register('qZ', meas_record, idle_during, registers, code, 'Z', loop_body, qC, errors) # qC is qZ now
+    measure_register(idle_during, registers, code, 'Z', loop_body, qC, errors)
     if not SEQUENTIAL_MEASUREMENTS:
       idle(loop_body, qL + qR, idle_during['MZ']) # t_meas) # idle data qubits
     
@@ -1736,7 +1689,7 @@ def make_BB_circuit(
     only_CNOTs: bool = False,
     leakage: bool = False,
     leakage_repumping: bool = False,
-    num_repumping_cycles: int = 3,
+    num_repumping_cycles: int = 4,
     leakage_heralds: bool = False,
     swap_LRC: bool = False,
     loss: bool = False,
@@ -1787,7 +1740,6 @@ def make_BB_circuit(
     qR = registers.qR
     qZ = registers.qZ  
 
-    meas_record = make_meas_record_dict(registers)
 
     add_qubit_coordinates(circ, code, registers, reuse_check_qubits)
 
@@ -1895,7 +1847,7 @@ def make_BB_circuit(
 
     # Now measure the check qubits
     
-    measure_register('qX', meas_record, idle_during, registers, code, 'Z', circ, qX, errors)
+    measure_register(idle_during, registers, code, 'Z', circ, qX, errors)
     if not SEQUENTIAL_MEASUREMENTS:
       idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
@@ -1962,7 +1914,7 @@ def make_BB_circuit(
 
 
     # Now measure check qubits
-    measure_register('qZ', meas_record, idle_during, registers, code, 'Z', circ, qZ, errors)
+    measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
     if not SEQUENTIAL_MEASUREMENTS:
       idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
@@ -1990,7 +1942,7 @@ def make_BB_circuit(
     if swap_LRC == False:
       if num_syndrome_extraction_cycles > 1:
       
-        loop_body = make_loop_body(meas_record, jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors)
+        loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors)
     
         # Append loop_body to circuit:
         circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
@@ -2049,7 +2001,7 @@ def make_BB_circuit(
               circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
           # Measure check qubits:
-          measure_register('qX', meas_record, idle_during, registers, code, 'Z', circ, qX, errors)
+          measure_register(idle_during, registers, code, 'Z', circ, qX, errors)
           if not SEQUENTIAL_MEASUREMENTS:
             idle(circ, qL + qR, idle_during['MZ'])
 
@@ -2111,7 +2063,7 @@ def make_BB_circuit(
               circ.append("DETECTOR", [stim.target_rec(-i)], i)
 
           # Now measure check qubits
-          measure_register('qZ', meas_record, idle_during, registers, code, 'Z', circ, qZ, errors)
+          measure_register(idle_during, registers, code, 'Z', circ, qZ, errors)
           if not SEQUENTIAL_MEASUREMENTS:
             idle(circ, qL + qR, idle_during['MZ']) # t_meas) # crosstalk on data qubits
           
@@ -2145,8 +2097,8 @@ def make_BB_circuit(
         hadamard_register(idle_during, registers, code, circ, qL, errors)
         hadamard_register(idle_during, registers, code, circ, qR, errors)
 
-    measure_register('qL', meas_record, idle_during, registers, code, 'Z', circ, qL, errors)
-    measure_register('qR', meas_record, idle_during, registers, code, 'Z', circ, qR, errors)
+    measure_register(idle_during, registers, code, 'Z', circ, qL, errors)
+    measure_register(idle_during, registers, code, 'Z', circ, qR, errors)
     
 
 
@@ -2166,8 +2118,5 @@ def make_BB_circuit(
     # # print(circ.to_crumble_url())
     # svg = str(circ.without_noise().diagram("timeline-svg"))
     # with open("output.svg", "w", encoding="utf-8") as f: f.write(svg)
-
-    print(meas_record['current_meas_index'])
-    print(meas_record)
 
     return circ
