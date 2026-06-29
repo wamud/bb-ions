@@ -87,7 +87,7 @@ def bb6_6_4_2(): # Iceberg [[2m, 2m - 2, 2]] code. [[6, 4, 2]]. Its parity-check
 
 iceberg_code = bb6_6_4_2
 
-def bb8_8_6_2(): #[8, 6, 2]
+def bb8_8_6_2(): #Iceberg 
     l = 2
     m = 2
     Aij = [[0, 0], [0, 1], [1, 0], [1, 1]]
