@@ -11,7 +11,7 @@ SHUTTLE_SPEED = 1 # [m/s]
 
 
 class Error:
-    def __init__(self, operation, p, p_leak = 0, p_relax = 0, p_loss = 1e-7, loss_op = "LEAKAGE"): # making p_loss 1e-7 per operation as this is walking cat estimate
+    def __init__(self, operation, p, p_leak = 0, p_relax = 0, p_loss = 0, loss_op = "DEPOLARIZE1"): # p_loss of 1e-7 per op. is walking cat estimate per time-step. When error is DEPOLARIZE1 it is 3p/4 to give probability p of converting to the maximally mixed state.
         self.op = operation # the error operation
         self.p = p # its probability
         self.p_leak = p_leak # the probability of a qubit leaking during this operations
@@ -256,20 +256,22 @@ def helios_errors(p):
         6e-5      # ZZ
     ]
 
-    # Recall: Error(error_operation, p_error, p_leak, p_relax)
+    p_loss = 7.5e-4 # such that when p = 1e-3 it's a loss rate of 1e-7 (simulated as depolarising noise as we are simulating beacon qubit checks and replacing lost qubits with maximally mixed qubits, so 3p/4)
+
+    # Recall: Error(error_operation, p_error, p_leak, p_relax, loss_operation, p_loss)
 
     helios_errors = {
 
 
         # These values are equal to Helios values when input p is 0.001:
 
-        "RZ" : Error("X_ERROR", p, 0, 0), # p_leak = p_relax = 0 because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
-        "RX" : Error("Z_ERROR", p, 0, 0),  
+        "RZ" : Error("X_ERROR", p, 0, 0, p * p_loss), # p_leak = p_relax = 0 because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+        "RX" : Error("Z_ERROR", p, 0, 0, p * p_loss),  
 
         # To make these values equal the Helios values (we have constants multiplied by 10^3 so that when input p is 1e-3 they equal the Helios values)
         
         
-        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 5)), 
+        "H" : Error("DEPOLARIZE1", 1.4e-2  * p,  1.1e-2 * p,  round_sig_fig( (1.1e-2 * p / (1 - 1.1e-2 * p)), 5), p * p_loss), 
         
         
         # Make p_relax = p_leak / (1 - p_leak) so when you apply relax(p_relax) then leakage(p_leak) and find the joint probabilities, you actually have P(leaked qubit relaxes) = p_leak and P(a qubit leaks) = p_leak
@@ -278,20 +280,20 @@ def helios_errors(p):
         # ⇒ P(at least one leakage) =  1.14 × 10^(−4) = p_l^2+2p_n p_l = p_l^2 + 2(1 - p_l)p_l
         # or 1 − p_n^2 = 1.14 × 10^−4 
         # ⇒ p_l = 5.7 × 10^(−5)  where p_l is the probability of a single qubit leaking so will be applied to each qubit in the gate.
-        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
+        "CNOT" : Error("DEPOLARIZE2", 7e-1 * p, 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5), p * p_loss), 
 
 
-        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5)), 
+        "CZ" : Error("PAULI_CHANNEL_2", [1e3 * p * prob for prob in rzzprobs], 5.7e-2 * p, round_sig_fig(5.7e-2 * p / (1 - 5.7e-2 * p), 5), p * p_loss), 
         
         
-        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
-        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5)), 
+        "MZ" : Error("X_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5), p * p_loss), 
+        "MX" : Error("Z_ERROR", p, round_sig_fig(4.2 * p, 5), round_sig_fig(4.2 * p / (1 - 4.2 * p), 5), p * p_loss), 
 
         
         # Additional for our architecture (all accounted for in shuttle error)
         
 
-        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5)), 
+        "shuttle" : Error("Z_ERROR", 1.2e-1 * p, 2.2e-1 * p, round_sig_fig(2.2e-1 * p / (1 - 2.2e-1 * p), 5), p * p_loss), 
         # p_leak = 4.4e-4 (Table A5 Helios paper) during one depth-1 transport. As explained in next comment we're dividing this into two "shuttles" so 2.2e-4 each (which will be the value when p = 1e-3).
         # We usually define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules, as distinct from the cyclic shift of modules around the racetrack). For Helios noise though it makes more sense to just put other transport errors to zero and just make two shuttles represent the split, shuttle, cyclic shift, shuttle, merge and cooling. That's because usually the process goes
         # Shuttle qubits into leg, merge their coulomb potentials, perform required two qubit gates (all powers of i for that power of j in the BB code's polynomial Σ_{i,j}(x^iy^j) ), split their coulomb potentials, shuttle, cyclic shift to next power of j, repeat. 
@@ -303,7 +305,7 @@ def helios_errors(p):
         "shift" : Error("DEPOLARIZE1", 0),
         "shift_prop_to" : None, # shift_prop_to is used to make errors proportional to the length of the shift. We are OVERESTIMATING the shift error by using Helios' combined value for shift, merge/split/ junction enter exit and cooling operations from a 98 qubit program that had to randomly sort all the qubits because our program is more organised and just shifts a module of qubits to another module. Interestingly, this Helios overestimate comes out as only slightly less than the Tham et al. estimate of 30p/100
         
-        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p)  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+        "error_per_repump" : Error("DEPOLARIZE1", 2e-2 * p, p * p_loss),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
     }
     return helios_errors
 
@@ -326,6 +328,7 @@ def helios_idle_errors(p):
 
 
     multiple = p/(1e-3) # When input p = 1e-3 you get exactly the Helios errors. p = 2e-3 would be double etc.
+
     T2 = 115 # see note above
 
     m = 8e-3 # from p_l = mt -- the linear leakage function in comments above
@@ -341,28 +344,29 @@ def helios_idle_errors(p):
 
     t_4s = 280e-6 # Time of a four-ion shift
     
+    p_loss = 7.5e-7
     
     helios_idle_during = {
 
         # Operation : What qubits suffer that are NOT undergoing the operation (i.e. idling while other qubits have that operation done)
 
-        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 5)),  
+        "H" : Error("Z_ERROR", multiple * p_idle_dephasing(t_1q, T2), multiple * m * t_1q, round_sig_fig( multiple * m * t_1q / (1 - multiple * m * t_1q), 5), multiple * p_loss),  
 
-        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),
-        "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5)),   
+        "CNOT" : Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5), multiple * p_loss),
+        "CZ" :   Error("Z_ERROR", multiple * p_idle_dephasing(t_2q, T2), multiple * m * t_2q, round_sig_fig( multiple * m * t_2q / (1 - multiple * m * t_2q), 5), multiple * p_loss),   
         
         # Crosstalk errors and leakage idling ( note t_m and t_r not used for the idling on other qubits during reset and measure as crosstalk dominates (over an order of magnitude larger) but are used for the linear leakage function rate)
 
         # average (including on worst-affected qubits, though we don't have any of those as neighbouring qubits will always also be being measured) crosstalk during MCMR in Helios is 6e-5. Divide this between M and R equally gives p_error = 3.00005e-5
-        "MZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
-        "MX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) ), 
+        "MZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) , multiple * p_loss), 
+        "MX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_m, round_sig_fig( multiple * m * t_m / (1 - multiple * m * t_m), 5) , multiple * p_loss), 
         
-        "RZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
-        "RX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) ),
+        "RZ" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) , multiple * p_loss),
+        "RX" : Error("DEPOLARIZE1", multiple * 3e-5, multiple * m * t_r, round_sig_fig( multiple * m * t_r / (1 - multiple * m * t_r), 5) , multiple * p_loss),
 
         
 
-        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) ), 
+        "shuttle" : Error("Z_ERROR", multiple * 1.2e-4, multiple * 2.2e-4, round_sig_fig( multiple * 2.2e-4 / (1 - multiple * 2.2e-4), 5) , multiple * p_loss), 
 
 
         # All the below are accounted for in shuttle
@@ -374,7 +378,7 @@ def helios_idle_errors(p):
         # Opetional when we were considering just pausing the syndrome extraction.
         "pause" : Error("Z_ERROR", multiple * 0),
         
-        "four_ion_shift" : Error("Z_ERROR", multiple * p_idle_dephasing(t_4s, T2), multiple * m * t_4s, round_sig_fig( multiple * m * t_4s / (1 - multiple * m * t_4s), 5)),  
+        "four_ion_shift" : Error("Z_ERROR", multiple * p_idle_dephasing(t_4s, T2), multiple * m * t_4s, round_sig_fig( multiple * m * t_4s / (1 - multiple * m * t_4s), 5), multiple * p_loss),  
     }
 
     return helios_idle_during

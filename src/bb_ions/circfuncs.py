@@ -188,6 +188,12 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
     if p > 0:
       error_op = errors[reset].op
       circuit.append(error_op, register, p)
+    
+    if LOSS:
+      p_loss = errors[reset].p_loss
+      if p_loss > 0:
+        loss_op = errors[reset].loss_op
+        circuit.append(loss_op, register, p_loss)
 
 
   elif SEQUENTIAL_RESETS:
@@ -228,6 +234,12 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
         error_op = errors[reset].op
         circuit.append(error_op, qs, p)
 
+      if LOSS:
+        p_loss = errors[reset].p_loss
+        if p_loss > 0:
+          loss_op = errors[reset].loss_op
+          circuit.append(loss_op, qs, p_loss)
+
       # idling: 
       idle_qs = [q for q in all_registers if q not in qs]
       idle(circuit, idle_qs, idle_during[reset])
@@ -246,21 +258,21 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
 
 
 
-''' hadamard
-Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
-After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)'''
-def hadamard(circuit, register, errors: dict):
+# ''' hadamard
+# Appends a hadamard gate to the stim circuit on qubit(s) specified in 'register'.
+# After the gate it adds a depolarising noise of strength p (i.e. an error will occur with prob p. Given it occurs, pick one of X, Y or Z at random)'''
+# def hadamard(circuit, register, errors: dict):
 
-  if LEAKAGE:
-    add_relax_then_leak("H", circuit, register, errors)
+#   if LEAKAGE:
+#     add_relax_then_leak("H", circuit, register, errors)
 
-  circuit.append("H", register)
+#   circuit.append("H", register)
 
   
-  p = errors['H'].p
+#   p = errors['H'].p
   
-  if p > 0:
-    circuit.append(errors['H'].op, register, p)
+#   if p > 0:
+#     circuit.append(errors['H'].op, register, p)
 
 
 
@@ -321,6 +333,12 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
       if p > 0:
         error_op = errors["H"].op
         circuit.append(error_op, qs, p)
+      
+      if LOSS:
+        loss_op = errors["H"].loss_op
+        p_loss = errors["H"].p_loss
+        if p_loss > 0:
+          circuit.append(loss_op, qs, p_loss)
 
       # idling: 
       idle_qs = [q for q in all_registers if q not in qs]
@@ -334,25 +352,25 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
 
 
 
-''' measure
-Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
-def measure(basis: str, circuit, register, errors: dict):
+# ''' measure
+# Appends a 'basis'-basis measurement onto the qubits specified by 'register' on an input stim circuit 'circuit'. Probability of measurement error given by p_meas(t_meas)'''
+# def measure(basis: str, circuit, register, errors: dict):
   
-  measure_string = f"M{basis}"
+#   measure_string = f"M{basis}"
   
-  p = errors[measure_string].p
+#   p = errors[measure_string].p
 
-  # Append leakage:
-  if LEAKAGE:
-    add_relax_then_leak(measure_string, circuit, register, errors)
+#   # Append leakage:
+#   if LEAKAGE:
+#     add_relax_then_leak(measure_string, circuit, register, errors)
   
-  # Append error before measurement
-  if p > 0: 
-    error_op = errors[measure_string].op
-    circuit.append(error_op, register, p)
+#   # Append error before measurement
+#   if p > 0: 
+#     error_op = errors[measure_string].op
+#     circuit.append(error_op, register, p)
 
-  # Append measurement:
-  circuit.append(measure_string, register)
+#   # Append measurement:
+#   circuit.append(measure_string, register)
   
 
 
@@ -365,6 +383,7 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
   measure_string = f"M{basis}"
   p = errors[measure_string].p
 
+
   if not SEQUENTIAL_MEASUREMENTS:
     
     # Append leakage:
@@ -375,6 +394,12 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     if p > 0: 
       error_op = errors[measure_string].op
       circuit.append(error_op, register, p)
+    
+    if LOSS:
+      p_loss = errors[measure_string].p_loss
+      if p_loss > 0:
+        loss_op = errors[measure_string].loss_op
+        circuit.append(loss_op, register, p_loss)
 
     # Append leakage herald (simulating the, for example, Helios measurement which can return whether a qubit is |0⟩, |1⟩ or leaked)
     if LEAKAGE_HERALDS:
@@ -418,6 +443,13 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
         if p > 0:
           error_op = errors[measure_string].op
           circuit.append(error_op, qs, p)
+        
+        if LOSS:
+          p_loss = errors[measure_string].p_loss
+          if p_loss > 0:
+            loss_op = errors[measure_string].loss_op
+            circuit.append(loss_op, qs, p_loss)
+
 
         if LEAKAGE_HERALDS:
           # Append leakage heralds:
@@ -615,6 +647,12 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
   
   if LEAKAGE:
     add_relax_then_leak(gate, circuit, [kc, kt], errors)
+
+  if LOSS: # for helios noise we're saying the cooling that precedes every two-qubit gate can be used to check that the qubit is there, and if it isn't it's replaced with a maximally mixed qubit.
+    p_loss = errors[gate].p_loss
+    if p_loss > 0:
+      loss_op = errors[gate].loss_op
+      circuit.append(loss_op, [kc, kt], p_loss)
 
 
   circuit.append(gate, [kc, kt])
@@ -1426,24 +1464,29 @@ def add_relax_then_leak(operation, circ, register, errors: dict):
 ''' idle
 Adds an idling error to qubits in register. The idling error is of class Error.
 E.g. idle(circuit, [0, 1], idle_during['MZ']) '''
-def idle(circuit, register, error: Error):
+def idle(circuit, register, idle_error: Error):
 
-  p = error.p
+  p = idle_error.p
   
   if p > 0:
-    circuit.append(error.op, register, p)
+    circuit.append(idle_error.op, register, p)
 
   if LEAKAGE:
     
-    p_relax = error.p_relax
-    p_leak = error.p_leak
+    p_relax = idle_error.p_relax
+    p_leak = idle_error.p_leak
 
     if p_relax is not None and p_relax > 0:
       circuit.append("RELAX", register, p_relax)
     if p_leak is not None and p_leak > 0:
       circuit.append("LEAKAGE", register, p_leak)
-      # ## Temporarily for DEP1 leakage (no knock-on effects of leakage, just depolarise the qubit)
-      # circuit.append("DEPOLARIZE1", register, 0.75*p_leak)
+  
+  if LOSS:
+    p_loss = idle_error.p_loss
+    if p_loss > 0:
+      loss_op = idle_error.loss_op
+      circuit.append(loss_op, register, p_loss)
+    
 
 
 
@@ -1460,6 +1503,13 @@ def apply_shuttle_error(circuit, register, errors: dict):
       
     if LEAKAGE:
       add_relax_then_leak('shuttle', circuit, register, errors)
+    
+    if LOSS:
+      p_loss = errors['shuttle'].p_loss
+      if p_loss > 0:
+        loss_op = errors['shuttle'].loss_op
+        circuit.append(loss_op, register, p_loss)
+
 
 
 
@@ -1576,14 +1626,14 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
             # Append X-check stabiliser detectors:
             
-            if not sequential_operations:
+            if not SEQUENTIAL_MEASUREMENTS:
               
               measurements_per_round = 2 * n if LEAKAGE_HERALDS else n
               
               for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
                   loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
 
-            else:  # if operations are sequential:
+            else:  # if measurements are sequential:
               if LEAKAGE_HERALDS == False: # there are no extra detectors to worry about, proceed as normal even though sequential operations (they are simply put over different time steps)
                 measurements_per_round = n
                 for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements ( i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
@@ -1670,14 +1720,14 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     if (memory_basis == 'X' and not exclude_opposite_basis_detectors) or memory_basis == 'Z':
             # Append Z-check stabiliser detectors:
 
-            if not sequential_operations:
+            if not SEQUENTIAL_MEASUREMENTS:
               
               measurements_per_round = 2 * n if LEAKAGE_HERALDS else n
               
               for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
                   loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
 
-            else:  # if operations are sequential:
+            else:  # if measurements are sequential:
               if LEAKAGE_HERALDS == False: # there are no extra detectors to worry about, proceed as normal even though sequential operations (they are simply spread over different time steps)
                 measurements_per_round = n
                 for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements ( i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
@@ -1762,6 +1812,8 @@ Inputs are:
             As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. We repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit). We also apply the memory error from repumping to all qubits whether they are leaked or not.
     - num_repumping_cycles
             As per 10.1103/PhysRevLett.124.170501, given num_repumping_cycles = c, p_relax = 1 - 1/3^c  and p_error = c * 2e-5 . I.e. You reduce the leaked population by a third every time you repump, but introduce an error of 2e-5 on non-leaked qubits (which we apply to all qubits whether they're leaked or not).
+    - loss 
+            Add loss_op (loss operation) from the noise model to each operation with a probablity given by the noise model inserted into errors.
     - swap-LRC
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
     - check_deteting_regions
@@ -1775,6 +1827,7 @@ def make_BB_circuit(
     num_syndrome_extraction_cycles: int = 2,
     memory_basis: str = "Z",
     sequential_operations: bool = False,
+    sequential_measurements: bool = False,
     exclude_opposite_basis_detectors: bool = False,
     reuse_check_qubits: bool = False,
     only_CZs: bool = False,
@@ -1792,7 +1845,9 @@ def make_BB_circuit(
     if only_CZs and only_CNOTs:
       raise ValueError("Only ONE of only_CZs and only_CNOTs can be True")
 
-    global ONLYCZs # inelegantly using macros here for these subsequent additions
+    # inelegantly using macros here for these subsequent additions
+    
+    global ONLYCZs
     ONLYCZs = only_CZs
     global ONLYCNOTs
     ONLYCNOTs = only_CNOTs
@@ -1806,16 +1861,18 @@ def make_BB_circuit(
     LEAKAGE_REPUMPING = leakage_repumping
     global REPUMPING_CYCLES
     REPUMPING_CYCLES = num_repumping_cycles
+    global LOSS
+    LOSS = loss
     global RESHUFFLING
     RESHUFFLING = reshuffling
 
     # Going to set all below to be equal to sequential_operations. Just doing like this in case in future some operations (e.g. measurements) can be done all at once whereas others can't. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). This is because the difference in pL even when introducing sequential H, M and R rather than everything completely parallel is probably negligible -- will test.
     global SEQUENTIAL_RESETS
-    SEQUENTIAL_RESETS = sequential_operations # sequential_operations
+    SEQUENTIAL_RESETS = sequential_operations
     global SEQUENTIAL_HADAMARDS
-    SEQUENTIAL_HADAMARDS = sequential_operations # sequential_operations
+    SEQUENTIAL_HADAMARDS = sequential_operations
     global SEQUENTIAL_MEASUREMENTS
-    SEQUENTIAL_MEASUREMENTS = sequential_operations # sequential_operations
+    SEQUENTIAL_MEASUREMENTS = sequential_measurements 
 
 
     if SWAPLRC:
@@ -2173,3 +2230,14 @@ def make_BB_circuit(
     # with open("output.svg", "w", encoding="utf-8") as f: f.write(svg)
 
     return circ
+
+
+''' calculate_round_time
+given durations of each gate in Helios, calculate how long a round takes for different codes'''
+def calculate_round_time(code):
+  l = code.l
+  m = code.m
+  # At the moment this is quite rough and is for BB5 [[48, 4, 7]] code (5 sets of two-qubit gates), also these times are for non-sequential operations (apart from sequential two-qubit gates) so are underestimates. If you have all sequential operations then pL will be higher but so will the memory time (this, atm, will give an underestimate of the memory time)
+  # (Times in ms):
+  t = 0.31 + 0.07 + 27.5 + 2*(l*0.65 + l*0.65 + l*0.65 + 55 + l*0.65 + 55 + l*0.65+ 0.24)
+  return t/1000

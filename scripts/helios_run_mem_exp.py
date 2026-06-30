@@ -41,8 +41,8 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/with_leakage/helios/trial_and_error/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/with_leakage/trial_and_error.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/gross_lnl.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -99,17 +99,17 @@ def main():
         print_progress = True
         )
 
-    # samples = sinter.collect(
-    #     num_workers = multiprocessing.cpu_count(),
-    #     max_shots = 10_000_000,
-    #     max_errors = 100,
-    #     tasks = tasks,
-    #     decoders=['bposd'],
-    #     # existing_data_filepaths = existing,
-    #     save_resume_filepath = csv_path,
-    #     custom_decoders = custom_decoders,
-    #     print_progress = True
-    #     )
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 10_000_000,
+        max_errors = 100,
+        tasks = tasks,
+        decoders=['bposd'],
+        # existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
 
 
 
