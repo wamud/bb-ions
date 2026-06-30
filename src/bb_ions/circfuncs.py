@@ -1834,6 +1834,7 @@ def make_BB_circuit(
     only_CNOTs: bool = False,
     leakage: bool = False,
     leakage_repumping: bool = False,
+    leakage_heralds: bool = False,
     num_repumping_cycles: int = 4,
     swap_LRC: bool = False,
     loss: bool = False,
@@ -1856,7 +1857,7 @@ def make_BB_circuit(
     global LEAKAGE
     LEAKAGE = leakage
     global LEAKAGE_HERALDS
-    LEAKAGE_HERALDS = leakage
+    LEAKAGE_HERALDS = leakage_heralds
     global LEAKAGE_REPUMPING 
     LEAKAGE_REPUMPING = leakage_repumping
     global REPUMPING_CYCLES
