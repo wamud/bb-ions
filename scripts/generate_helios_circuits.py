@@ -5,11 +5,12 @@ import sys
 import os
 import deltakit_stim
 
-# Save deltakit_stim as stim so any other calls to import stim (including from other packages) just use deltakit_stim:
-injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
-for namespace in injections:
-    sys.modules[namespace] = sys.modules["deltakit_{namespace}".format(namespace=namespace)]
+## Save deltakit_stim as stim so any other calls to import stim (including from other packages) just use deltakit_stim:
+# injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
+# for namespace in injections:
+#     sys.modules[namespace] = sys.modules["deltakit_{namespace}".format(namespace=namespace)]
 
+sys.modules["stim"] = deltakit_stim 
 
 sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
