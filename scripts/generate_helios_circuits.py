@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-code = bb5_60_4_8()
+code = gross_code()
 
 memory_basis = 'X'
 noise = 'helios'
@@ -27,38 +27,37 @@ only_CZs = True
 
 cycles = 3
 
-loss = False
-
+loss = True
+swapLRC = True
+leakage_repumping = True
 seq_meas = False
 
 for p in [0.002]:
-    for swap_LRC in [False]:
-        for leakage_repumping in [False]:
-            for leakage_heralds in [True, False]:
+    for leakage_heralds in [True, False]:
 
 
-                filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},leakage_heralds={leakage_heralds},loss={loss},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swap_LRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_mes={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
-                
-                print("Creating: ",filename)
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
+        
+        print("Creating: ",filename)
 
-                circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-                    code,
-                    p,  
-                    errors = helios_errors(p),
-                    idle_during = helios_idle_errors(p),
-                    num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-                    memory_basis = memory_basis,
-                    sequential_operations = seq_ops, 
-                    sequential_measurements = seq_meas,
-                    exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-                    reuse_check_qubits = True,
-                    leakage = leakage,
-                    only_CNOTs = only_CZs,
-                    leakage_repumping = leakage_repumping,
-                    num_repumping_cycles=cycles,
-                    swap_LRC = swap_LRC,
-                    loss = loss
-                )
+        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+            code,
+            p,  
+            errors = helios_errors(p),
+            idle_during = helios_idle_errors(p),
+            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+            memory_basis = memory_basis,
+            sequential_operations = seq_ops, 
+            sequential_measurements = seq_meas,
+            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+            reuse_check_qubits = True,
+            leakage = leakage,
+            only_CZs = only_CZs,
+            leakage_repumping = leakage_repumping,
+            num_repumping_cycles=cycles,
+            swapLRC = swapLRC,
+            loss = loss
+        )
 
-                # Save circuit:
-                circuit.to_file(f"../circuits/leakage_and_loss/test/{filename}.stim")
+        # Save circuit:
+        circuit.to_file(f"../circuits/leakage_and_loss/gross/{filename}.stim")
