@@ -61,4 +61,4 @@ for swapLRC in [False, True]:
             )
 
             # Save circuit:
-            circuit.to_file(f"../circuits/leakage_and_loss/gross/{filename}.stim")
+            circuit.to_file(f"../circuits/leakage_and_loss/{filename}.stim")
