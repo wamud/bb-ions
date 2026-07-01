@@ -29,7 +29,7 @@ only_CZs = True
 cycles = 3
 
 loss = True
-leakage_repumping = True
+leakage_repumping = False
 seq_meas = False
 
 for swapLRC in [False, True]:
