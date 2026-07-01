@@ -29,7 +29,7 @@ cycles = 3
 
 loss = True
 swapLRC = True
-leakage_repumping = True
+leakage_repumping = False
 seq_meas = False
 
 for p in [0.002]:

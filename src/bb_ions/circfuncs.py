@@ -64,6 +64,18 @@ def order_of_ops(code, swapLRC = False):
                 print(f"  i = {ival%l}")
 
 
+
+''' loosely_calculate_round_time
+given durations of each gate in Helios, calculate how long a round takes for different codes'''
+def loosely_calculate_round_time(code):
+  l = code.l
+  m = code.m
+  # At the moment this is quite rough and is for BB5 [[48, 4, 7]] code (5 sets of two-qubit gates), also these times are for non-sequential operations (apart from sequential two-qubit gates) so are underestimates. If you have all sequential operations then pL will be higher but so will the memory time (this, atm, will give an underestimate of the memory time)
+  # (Times in ms):
+  t = 0.31 + 0.07 + 27.5 + 2*(l*0.65 + l*0.65 + l*0.65 + 55 + l*0.65 + 55 + l*0.65+ 0.24)
+  return t/1000
+
+
 ''' make_registers
 Makes lists of qubit indices dividing n = 2lm qubits evenly into qA, qB, qC, qD.
   qA: qubits 0 to n/2 - 1
@@ -997,7 +1009,7 @@ The best way to do this is simply updating the integers X, L, R, Z and the qubit
 So X, L, R, Z will take on different integer values, then the indices within qX, qL, qR, qZ will change according to the swap gate they went through.
 For example, if the last term in the X-checks is in A and is x^2 y^3  then this means check qubit (X, v, w) interacted with and was swapped with (L, (v + i) mod l, (w + j) mod m).
 
-This function does the required update and is used in the function add_swapLRCI 
+This function does the required update and is used in the function add_swapLRC 
 
 matrix -- the matrix (A,B,AT or BT) that the term was in
 i, j -- the i and j of the term x^i⋅y^j 
@@ -1180,7 +1192,7 @@ def add_hadamards_after_swap_CZ(code, matrix, thegate, check, registers, circ, e
 
 
 
-'''add_swapLRCI 
+'''add_swapLRC 
 This adds a swap gate after the final 2q interaction for each stabiliser, swapping each check qubit with the last data qubit it interacts with. This means every physical qubit gets measured every other round (while the data is preserved over rounds, unmeasured), providing a mechanism to detect leakage with a leakage-detecting measurement or at least to stop leakage propagating. As per Natalie Brown et al. (10.1088/1367-2630/ab3372) when working with CNOTs the circuit reduces to just adding a reversed-direction CNOT before the final CNOT. 
 
 Optional reading:
@@ -1194,7 +1206,7 @@ Optional reading:
   This guarantees that the final data qubits that the Z-checks interact with are of the opposite type to the final data qubits that the X-checks interact with.
 
   When a specific code is decided upon to be realised in hardware, the j_value order can be chosen in a more optimised fashion to reduce shuttling time, while still ensuring that the final data qubits each check interacts with (and is swapped with) is of an opposite type. For now, where we are simulating multiple codes, we use this method of applying ascending j's for X-checks then descending j's for Z-checks and within each j applying the i values for A then B (or A^T then B^T) implying L then R (or R then L) data qubit interactions.'''
-def add_swapLRCI (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits):
+def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits):
 
 
   # a is either A or A^T
@@ -1313,7 +1325,7 @@ def add_swapLRCI (thegate, jval, theunion, code, circ, registers, errors, idle_d
 
 # Not sure I need to write the below function now ... if the registers are updating then the measures should just update too...
 # '''swapped_measure
-# The swap leakage reduction circuit of add_swapLRCI  has swapped each check qubit with the last data qubit it interacted with. So when measuring between rounds we need to alternate our mesaurements between qubits which were originally data qubits and which were originally check qubits.
+# The swap leakage reduction circuit of add_swapLRC  has swapped each check qubit with the last data qubit it interacted with. So when measuring between rounds we need to alternate our mesaurements between qubits which were originally data qubits and which were originally check qubits.
 # # Note to self, could be good to do this by simply adding an integer to the index of the register. As in, if we were going to measure qZ but now would like to measure qL, then we just write Z + 1. We will also need to track whether the Z-checks or X-checks are swapping with L or R data qubits because in the following rounds we need to reverse the direction of the two-qubit gates.
 # '''
 
@@ -1384,9 +1396,9 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           elif ONLYCZs == True:
             thegate = 'CZ'
           
-          if SWAPLRC == True: # add_swapLRCI  will add a SWAP gate by adding a reversed CNOT before the final CNOT or, with CZs, a CZ with both its target and control sandwiched between hadamards before the final CZ (as well as some added or cancelled hadamards after the final CZ)
+          if SWAPLRC == True: # add_swapLRC  will add a SWAP gate by adding a reversed CNOT before the final CNOT or, with CZs, a CZ with both its target and control sandwiched between hadamards before the final CZ (as well as some added or cancelled hadamards after the final CZ)
             if jval == theunion[-1]: # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swapLRCI (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
+              add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
             else:
               add_2q_gates(thegate, 'A', circ, jval, code, registers, errors, idle_during, sequential_operations)
               add_2q_gates(thegate, 'B', circ, jval, code, registers, errors, idle_during, sequential_operations)
@@ -1408,7 +1420,7 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           
           if SWAPLRC == True: # Do a reversed CNOT before the final CNOTs in order to implement a swap gate ... 
             if jval == theunion[-1]: #and check == 'X': # TESTING -- STOPPING THIS FROM FIRING # If we're at the final j value add the reversed CNOTs and the final CNOTs for the final i value.
-              add_swapLRCI (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
+              add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_during, sequential_operations, check, reuse_check_qubits)
             else:
               add_2q_gates(thegate, 'AT', circ, jval, code, registers, errors, idle_during, sequential_operations)
               add_2q_gates(thegate, 'BT', circ, jval, code, registers, errors, idle_during, sequential_operations)
@@ -1771,11 +1783,6 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
 
 
 
-
-
-
-
-
 ''' make_BB_circuit
 This function makes a stim circuit realising a memory experiment for any bivariate bicycle (BB) code [2308.07915] according to algorithm 2 of Tham et al.'s "qubit modules" paper [2508.01879]. All the X-checks are performed in parallel, then all the Z-checks. The two-qubit gates proceed according to ascending j, the powers of y in the BB code's matrices A = sum(x^i * y^j), B = sum(x^i * y^j), the two matrices which form the code's parity check matrices Hx = [A|B] and Hz = [B^T|A^T]. All of the required information is contained in the input object 'code'.
 
@@ -1836,7 +1843,7 @@ def make_BB_circuit(
     leakage_repumping: bool = False,
     leakage_heralds: bool = False,
     num_repumping_cycles: int = 4,
-    swapLRCI : bool = False,
+    swapLRC : bool = False,
     loss: bool = False,
     check_detecting_regions: bool = True,
     reshuffling: bool = True,
@@ -1853,7 +1860,7 @@ def make_BB_circuit(
     global ONLYCNOTs
     ONLYCNOTs = only_CNOTs
     global SWAPLRC 
-    SWAPLRC = swapLRCI 
+    SWAPLRC = swapLRC 
     global LEAKAGE
     LEAKAGE = leakage
     global LEAKAGE_HERALDS
@@ -1957,7 +1964,7 @@ def make_BB_circuit(
     jval_0 = Junion[0] # we assume the starting arrangement of the modules is M^a_w with M^d_((w + j) % m), i.e. no cyclic shift errors initially
     
     # Do cyclic shifts to required j-valued modules (and return last j position)
-    # This will also add swap-LRC if swapLRCI  == True and update the registers qX, qL, qR, qZ depending on which were swapped.
+    # This will also add swap-LRC if swapLRC  == True and update the registers qX, qL, qR, qZ depending on which were swapped.
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_0, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
 
@@ -1966,7 +1973,7 @@ def make_BB_circuit(
     
     if SWAPLRC == False:
       hadamard_register(idle_during, registers, code, circ, qX, errors)
-      # Also hadamard data qubits if we were using only CZ gates (sandwiching all the CZ gates with hadamards turns their targets to CNOTs) else idle them ... unless we did a swapLRCI  with CZs then it turns out the hadamards cancel
+      # Also hadamard data qubits if we were using only CZ gates (sandwiching all the CZ gates with hadamards turns their targets to CNOTs) else idle them ... unless we did a swapLRC  with CZs then it turns out the hadamards cancel
       if ONLYCZs == False:
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qL + qR, idle_during['H']) # t_had)
@@ -2062,7 +2069,7 @@ def make_BB_circuit(
 
     ## Make repeated / looped stabiliser measurement rounds:
 
-    if swapLRCI  == False:
+    if swapLRC  == False:
       if num_syndrome_extraction_cycles > 1:
       
         loop_body = make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis, reuse_check_qubits, sequential_operations, exclude_opposite_basis_detectors)
@@ -2070,11 +2077,11 @@ def make_BB_circuit(
         # Append loop_body to circuit:
         circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
 
-    elif swapLRCI  == True: # Just manually tack on the extra rounds rather than making a 'repeat' section. Could potentially improve this with a repeated loop_body, however depending on whether we reuse_check_qubits or not it requires different numbers of rounds to be back in original position, so chosen number of stabiliser extraction rounds would need to be the correct number of rounds long. Could write code that just manually tacks on extra rounds, unless num_rounds is a multiple of the correct number, then it could be made into a loop body ... but most of the time apart from specific choices of loops the rounds will just be tacked on anyway. Or there could be a repeated number of rounds in loop body with the extra ones added at the end. Anyway ... having a repeat instruction probably doesn't speed up stim anyway.
+    elif swapLRC  == True: # Just manually tack on the extra rounds rather than making a 'repeat' section. To simulate in deltakit_stim (with leakage) atm the circuits have to be flattened anyway..
       if num_syndrome_extraction_cycles > 1:
         for rep in range(num_syndrome_extraction_cycles - 1):
           
-          '''start of swapLRCI  round'''
+          '''start of swapLRC  round'''
 
           offset = n if LEAKAGE_HERALDS else 0 # don't think this is correct if there are sequential measurements
 
@@ -2193,7 +2200,7 @@ def make_BB_circuit(
           if reuse_check_qubits == True: # otherwise can do this measurement during same time step as other check qubits are reset
             tick(circ)
           
-          '''end of this swapLRCI  round'''
+          '''end of this swapLRC  round'''
 
 
 
@@ -2231,14 +2238,3 @@ def make_BB_circuit(
     # with open("output.svg", "w", encoding="utf-8") as f: f.write(svg)
 
     return circ
-
-
-''' calculate_round_time
-given durations of each gate in Helios, calculate how long a round takes for different codes'''
-def calculate_round_time(code):
-  l = code.l
-  m = code.m
-  # At the moment this is quite rough and is for BB5 [[48, 4, 7]] code (5 sets of two-qubit gates), also these times are for non-sequential operations (apart from sequential two-qubit gates) so are underestimates. If you have all sequential operations then pL will be higher but so will the memory time (this, atm, will give an underestimate of the memory time)
-  # (Times in ms):
-  t = 0.31 + 0.07 + 27.5 + 2*(l*0.65 + l*0.65 + l*0.65 + 55 + l*0.65 + 55 + l*0.65+ 0.24)
-  return t/1000
