@@ -29,15 +29,15 @@ only_CZs = True
 cycles = 3
 
 loss = True
-leakage_repumping = False
+leakage_repumping = True
 seq_meas = False
 
-for swapLRC in [False, True]:
+for swapLRC in [True]:
     for p in [0.001, 0.002]:
         for leakage_heralds in [True, False]:
 
 
-            filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
+            filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds=before{leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
             
             print("Creating: ",filename)
 
@@ -62,4 +62,4 @@ for swapLRC in [False, True]:
             )
 
             # Save circuit:
-            circuit.to_file(f"../circuits/leakage_and_loss/{filename}.stim")
+            circuit.to_file(f"../circuits/leakage_and_loss/heralds_before/{filename}.stim")
