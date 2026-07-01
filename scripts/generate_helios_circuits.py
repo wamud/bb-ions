@@ -56,7 +56,8 @@ for p in [0.002]:
             leakage_repumping = leakage_repumping,
             num_repumping_cycles=cycles,
             swapLRC = swapLRC,
-            loss = loss
+            loss = loss,
+            leakage_heralds=leakage_heralds
         )
 
         # Save circuit:

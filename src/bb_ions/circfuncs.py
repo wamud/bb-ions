@@ -2083,8 +2083,6 @@ def make_BB_circuit(
           
           '''start of swapLRC  round'''
 
-          offset = n if LEAKAGE_HERALDS else 0 # don't think this is correct if there are sequential measurements
-
           # Reset X-check qubits
           init_register(idle_during, registers, code,'Z', circ, qX, errors)
           idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
@@ -2133,6 +2131,7 @@ def make_BB_circuit(
 
           # Place detectors on these check qubit measurements which compare them and the previous round's C-check measurements
           n = code.n
+          offset = n if LEAKAGE_HERALDS else 0 # I don't think this is correct if there are sequential measurements
           if (memory_basis == 'Z' and not exclude_opposite_basis_detectors) or memory_basis == 'X':
                   # Append X-check stabiliser detectors:
                   for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the same measurement performed in the round before it: n measurements before it if no leakage heralds, 2n measurements before it if there are (leakage herald adds to measurement record)
