@@ -338,6 +338,17 @@ def bb6_90_8_10():
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
+def interchanged_bb6_90_8_10():
+    # [[90, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
+    l = 3
+    m = 15
+    Aij = [(0, 9), (1, 0), (2, 0)]
+    Bij = [(0, 0), (0, 2), (0, 7)]
+    d = 10
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
 
 
 '''bb6_108_code'''
@@ -349,6 +360,17 @@ def bb6_108():
     # B = y^3 + x + x^2
     Aij = [(3, 0), (0, 1), (0, 2)]
     Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 10
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+'''bb6_108_code'''
+def interchanged_bb6_108():
+    # [[108, 8, 10]] BB6 code from OG BB paper [2308.07915] Table III
+    l = 6
+    m = 9
+    Aij = [(0, 3), (1, 0), (2, 0)]
+    Bij = [(3, 0), (0, 1), (0, 2)]
     d = 10
     code = get_code_params(l, m, Aij, Bij, d)
     return code
@@ -375,6 +397,21 @@ def gross_code():
     # B = y^3 + x + x^2
     Aij = [(3, 0), (0, 1), (0, 2)]
     Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 12
+
+    code = get_code_params(l, m, Aij, Bij, d)
+
+    return code
+
+'''gross_code'''
+def interchanged_gross_code():
+    # [[144, 12, 12]] BB6 'gross' code from OG BB paper [2308.07915] Table III
+    l = 6
+    m = 12
+    # A = x^3 + y + y^2
+    # B = y^3 + x + x^2
+    Aij = [(0, 3), (1, 0), (2, 0)]
+    Bij = [(3, 0), (0, 1), (0, 2)]
     d = 12
 
     code = get_code_params(l, m, Aij, Bij, d)

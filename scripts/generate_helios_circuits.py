@@ -30,8 +30,8 @@ exclude_opp_basis_detectors = True
 # p = 0.001
 
 
-for p in [0.002, 0.003]:
-    for code in [bb5_48_4_7(), bb5_60_4_8()]:
+for p in [0.001]:
+    for code in [interchanged_bb6_108(), interchanged_bb6_90_8_10(), interchanged_gross_code()]:
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
         print("Creating: ",filename)
