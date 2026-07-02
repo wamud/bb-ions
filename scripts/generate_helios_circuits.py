@@ -17,8 +17,8 @@ noise = 'helios'
 memory_basis = 'X'
 num_syndrome_extraction_cycles = 20
 only_CZs = True
-seq_ops = True
-seq_meas = True
+seq_ops = False
+seq_meas = False
 
 leakage = True
 loss = True
@@ -30,8 +30,8 @@ exclude_opp_basis_detectors = True
 # p = 0.001
 
 
-for p in [0.001]:
-    for code in [interchanged_bb6_108(), interchanged_bb6_90_8_10(), interchanged_gross_code()]:
+for p in [0.001, 0.002]:
+    for code in [bb5_48_4_7(), bb5_60_4_8()]:
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
         print("Creating: ",filename)
@@ -56,4 +56,4 @@ for p in [0.001]:
         )
 
         # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/scrap/{filename}.stim")
