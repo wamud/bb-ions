@@ -250,6 +250,19 @@ def bb5_48_4_7():
     return code
 
 
+
+''' bb5 codes perform better'''
+def bb5_60_4_8():
+    l = 15
+    m = 2
+    Aij = [[2, 0], [8, 1]]
+    Bij = [[0, 1], [4, 1], [14, 1]]
+    d = 8
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
+
 ''' Some found n≈60 BB6 codes that could also be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 Helios qubits'''
 
 
@@ -275,20 +288,10 @@ def bb6_56_6_8():
 
 def bb6_60_8_6():
     l = 6
-    m = 5  # NOTE this will be simulated as per our proposed architecture: one operation zone per module (so 5 in this case) but if pretending like this is being run on actual Helios it only has 4 operation zones with 2q gates enables.
+    m = 5  # NOTE this will be simulated as per our proposed architecture: one operation zone per module (so 5 in this case) but if pretending like this is being run on actual Helios, Helios only has 4 operation zones with 2q gates enabled so this is allowing for one more than that (won't affect pL very much as compared to doing completely sequential operations (imagining all disjoint operations can be done in a single time step) doesn't affect pL very much).
     Aij = [[0, 0], [0, 2], [1, 1]]
     Bij = [[0, 1], [2, 4], [3, 2]]
     d = 6
-    code = get_code_params(l, m, Aij, Bij, d)
-    return code
-
-''' bb5 codes perform better'''
-def bb5_60_4_8():
-    l = 15
-    m = 2
-    Aij = [[2, 0], [8, 1]]
-    Bij = [[0, 1], [4, 1], [14, 1]]
-    d = 8
     code = get_code_params(l, m, Aij, Bij, d)
     return code
 
@@ -306,8 +309,6 @@ def bb8_64_12_8():
 
 
 ''' End of some found codes around n=60'''
-
-
 
 
 
@@ -412,6 +413,16 @@ def bb6_360_code():
 
     return code
 
+def interchanged_bb6_360_code():
+    # [[36x0, 12, ≤24]] BB6 code from OG BB paper [2308.07915] Table III BUT WITH l AND m (AND POWERS OF X AND Y) INTERCHANGED 
+    # This makes a difference in performance as we are simulating m data-qubit modules of size 2*l and m operation zones when doing helios noise.
+    l = 6
+    m = 30
+    Aij = [(0, 9), (1, 0), (2, 0)]
+    Bij = [(3, 0), (0, 25), (0, 26)]
+    d = 24
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
 
 ''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
 def bb6_378_16_18():
@@ -422,8 +433,19 @@ def bb6_378_16_18():
     d_max = 18
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
-
 undercover_code = bb6_378_16_18
+
+def interchanged_bb6_378_16_18():
+    l= 9
+    m = 21
+    Aij = [(0, 3), (10, 0), (17, 0)]
+    Bij = [(5, 0), (0, 3), (0, 19)]
+    d_max = 18
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+interchanged_undercover_code = interchanged_bb6_378_16_18
+
+
 
 '''bb6_756_code'''
 def bb6_756_code():
