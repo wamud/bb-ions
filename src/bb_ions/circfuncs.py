@@ -1,4 +1,4 @@
-`''' circfuncs
+''' circfuncs
 Given the parity check matrices (constructed using bbfuncs.py) and paramaters & logical operators (found using bbparams.py) of a Bicycle Bivariate [2308.07915] code, these functions (culminating in make_BB_circuit at the bottom of this file) are for constructing a stim circuit that realises, with appropriate detectors annotated, a memory experiment using the BB code, i.e. it prepares logical |0⟩ or |+⟩ in all the logical qubits of the BB code, runs multiple rounds of stabiliser measurements, then measures all the data qubits.
 Note Stim api reference: https://github.com/quantumlib/Stim/wiki/Stim-v1.9-Python-API-Reference'''
 
@@ -1828,7 +1828,7 @@ Inputs are:
     '''
 def make_BB_circuit(
     code: Any,
-    p: float = 1e-3,
+    # p: float = 1e-3,
     errors: Any = uniform_errors(1e-3),
     idle_during: Any = uniform_idling(1e-3),
     num_syndrome_extraction_cycles: int = 2,

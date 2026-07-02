@@ -5,11 +5,6 @@ import sys
 import os
 import deltakit_stim
 
-## Save deltakit_stim as stim so any other calls to import stim (including from other packages) just use deltakit_stim:
-# injections = ['stim._detect_machine_architecture', 'stim._stim_polyfill', 'stim']
-# for namespace in injections:
-#     sys.modules[namespace] = sys.modules["deltakit_{namespace}".format(namespace=namespace)]
-
 sys.modules["stim"] = deltakit_stim 
 
 sys.path.append(os.path.abspath("../src"))
@@ -18,48 +13,47 @@ from bb_ions import *
 
 code = bb5_60_4_8()
 
-memory_basis = 'X'
 noise = 'helios'
+memory_basis = 'X'
 num_syndrome_extraction_cycles = 12
-seq_ops = True
-exclude_opp_basis_detectors = True
-leakage = True
 only_CZs = True
+seq_ops = True
+seq_meas = True
 
-cycles = 3
-
+leakage = True
 loss = True
 leakage_repumping = True
-seq_meas = False
-
-for swapLRC in [True]:
-    for p in [0.001, 0.002]:
-        for leakage_heralds in [True, False]:
+cycles = 3
+swapLRC = False
+leakage_heralds = False
 
 
-            filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds=before{leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
-            
-            print("Creating: ",filename)
 
-            circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-                code,
-                p,  
-                errors = helios_errors(p),
-                idle_during = helios_idle_errors(p),
-                num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-                memory_basis = memory_basis,
-                sequential_operations = seq_ops, 
-                sequential_measurements = seq_meas,
-                exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-                reuse_check_qubits = True,
-                leakage = leakage,
-                only_CZs = only_CZs,
-                leakage_repumping = leakage_repumping,
-                num_repumping_cycles=cycles,
-                swapLRC = swapLRC,
-                loss = loss,
-                leakage_heralds=leakage_heralds
-            )
+for exclude_opp_basis_detectors in [True, False]:
+    for p in [0.001]:
 
-            # Save circuit:
-            circuit.to_file(f"../circuits/leakage_and_loss/heralds_before/{filename}.stim")
+        filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leakage_heralds={leakage_heralds},leakage_repumping={leakage_repumping},repumping_cycles={cycles},swapLRC={swapLRC},rounds={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
+        
+        print("Creating: ",filename)
+
+        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+            code,
+            errors = helios_errors(p),
+            idle_during = helios_idle_errors(p),
+            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+            memory_basis = memory_basis,
+            sequential_operations = seq_ops, 
+            sequential_measurements = seq_meas,
+            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+            reuse_check_qubits = True,
+            leakage = leakage,
+            only_CZs = only_CZs,
+            leakage_repumping = leakage_repumping,
+            num_repumping_cycles=cycles,
+            swapLRC = swapLRC,
+            loss = loss,
+            leakage_heralds=leakage_heralds
+        )
+
+        # Save circuit:
+        circuit.to_file(f"../circuits/leakage_and_loss/{filename}.stim")
