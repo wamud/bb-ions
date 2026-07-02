@@ -225,7 +225,7 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
       qs = []
       
       for module in range(m):
-        
+
         q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
         q0 = register[q0_idx]
         qs.append(q0)
@@ -449,7 +449,7 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     
       qs.append(register[i])
 
-      if (i+1) % (2*m) == 0: # for every group of 2*m qubits, append the measurements then go to the next time step
+      if (i+1) % (2*NUM_OP_ZONES) == 0: # for every group of 2*m qubits, append the measurements then go to the next time step
         if LEAKAGE:
           add_relax_then_leak(measure_string, circuit, qs, errors)
         if p > 0:
@@ -786,7 +786,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
           idx_list.append(idx)
 
           if sequential_operations:
-            if (idx + 1) % m == 0: # We can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
+            if (idx + 1) % NUM_OP_ZONES == 0: # We're saying we can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
               
               idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all (e.g. L-data qubits if we're connecting to R-data qubits)
 
@@ -938,7 +938,7 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
             idx_list.append(idx)
 
             if sequential_operations:
-              if (idx + 1) % m == 0: # This is assuming we can do m gates per time step (replace m for more or less gates). For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
+              if (idx + 1) % NUM_OP_ZONES == 0: # This is assuming we can do m gates per time step (replace m for more or less gates). For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
                 idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all
                 
                 for g in range(l * m):
@@ -1645,7 +1645,7 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
               for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements (i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
                   loop_body.append("DETECTOR", [stim.target_rec(-i), stim.target_rec(-i - measurements_per_round)])
 
-            else:  # if measurements are sequential:
+            elif SEQUENTIAL_MEASUREMENTS:  # if measurements are sequential:
               if LEAKAGE_HERALDS == False: # there are no extra detectors to worry about, proceed as normal even though sequential operations (they are simply put over different time steps)
                 measurements_per_round = n
                 for i in reversed(range(1, n//2 + 1)): # appends detectors to last n/2 measurements ( i.e. from rec[-1] to rec[-n/2]), these are the X-check measurements, and compares each of them to the measurement performed n measurements before it if there are no leakage heralds, or 2n before it if there are, as this is the same measurement in the preceding round
@@ -1881,6 +1881,9 @@ def make_BB_circuit(
     SEQUENTIAL_HADAMARDS = sequential_operations
     global SEQUENTIAL_MEASUREMENTS
     SEQUENTIAL_MEASUREMENTS = sequential_measurements 
+
+    global NUM_OP_ZONES
+    NUM_OP_ZONES = code.m # at the moment from the way two-qubit gates, sequential_measurements / resets etc. are applied this needs to be a multiple of m (can fix by just adding some code adding gates to any leftover qubits if not an even multiple of m)
 
 
     if SWAPLRC:
