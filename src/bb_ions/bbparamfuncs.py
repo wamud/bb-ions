@@ -412,6 +412,19 @@ def bb6_360_code():
 
     return code
 
+
+''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
+def bb6_378_16_18():
+    l= 21
+    m = 9
+    Aij = [(3, 0), (0, 10), (0, 17)]
+    Bij = [(0, 5), (3, 0), (19, 0)]
+    d_max = 18
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
+undercover_code = bb6_378_16_18
+
 '''bb6_756_code'''
 def bb6_756_code():
     # [[756, 16, ≤34]] BB6 code from OG BB paper [2308.07915] Table III
@@ -534,16 +547,6 @@ def bb8_360_14_30():
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
-
-''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
-def bb6_378_16_18():
-    l= 21
-    m = 9
-    Aij = [(3, 0), (0, 10), (0, 17)]
-    Bij = [(0, 5), (3, 0), (19, 0)]
-    d_max = 18
-    code = get_code_params(l, m, Aij, Bij, d_max)
-    return code
 
 
 ''' suppress_stdout
