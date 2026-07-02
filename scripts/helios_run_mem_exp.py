@@ -40,8 +40,8 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/sixty_four_five.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/all_codes.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -67,7 +67,7 @@ def main():
         max_shots = 1000,
         max_errors = 1000,
         tasks = tasks,
-        decoders=['bposd', 'bposd_625'],
+        decoders=['bposd'],
         # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
@@ -79,7 +79,7 @@ def main():
         max_shots = 100_000,
         max_errors = 100,
         tasks = tasks,
-        decoders=['bposd', 'bposd_625'],
+        decoders=['bposd'],
         # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
@@ -91,7 +91,7 @@ def main():
         max_shots = 1_000_000,
         max_errors = 1000,
         tasks = tasks,
-        decoders=['bposd', 'bposd_625'],
+        decoders=['bposd'],
         # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
@@ -103,7 +103,7 @@ def main():
         max_shots = 10_000_000,
         max_errors = 200,
         tasks = tasks,
-        decoders=['bposd', 'bposd_625'],
+        decoders=['bposd'],
         # existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
