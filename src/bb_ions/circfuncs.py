@@ -824,16 +824,9 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
 
         if RESHUFFLING:
           # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise we're saying a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). Two shuttles takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got l=30 PAIRS i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/49 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
-          if an_index != len(Mij) - 1: # (if last set of 2q gates for this j value we have a cyclic shift error coming so don't need to apply reshuffle:)
-            err = copy.copy(idle_during['shuttle'])
-            # update the p of this error (note it doesn't change the dictionary value for shuttle error just this variable called err)
-
-            ratio = 2 * code.l / 49   # there are l pairs of qubits to reshuffle (though it's not a random reshuffling, actually just a different cyclic shift aligning qubits that were already aligned in a different cylic shift so this is an overestimate)
-
-            err.p = err.p * ratio 
-            err.p_leak = err.p_leak * ratio
-            err.p_relax = err.p_relax * ratio
-            idle(circuit, qD + qD_idle + qC, err)
+          if an_index != len(Mij) - 1: # (if last set of 2q gates for this j value we have a cyclic shift error coming so don't need to apply reshuffle. Else, we do. We will set it equal to the shuttle error 
+            idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) 
+            idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) # double seeing as in helios I've divided the shifting error into two so it could be applied at the beginning and end of the repeat.
 
 
     
@@ -1803,7 +1796,8 @@ Inputs are:
             Whether disjoint operations are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
             More explanation: For a given term x^i⋅y^j the most 2q gates we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only N gates can be done in a single time step, where N is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step. This is also true for reset, single-qubit gates and measurement.
     - reshuffling
-            Cylic shifts and qubit alignment to align modules of qubits that need to be interacted in a particular time step are built into the error dictionary input in 'errors'. The modules that are aligned correspond to all terms with the same power of y^j. (E.g. y^j, xy^j, x^2y^j etc.). However if we require further reshuffling when doing two different terms (this is not required if, for example, you have a chain of ions that are two connected modules and non-neighbour ions can still have two-qubit gates done between them), then set reshuffling to true (this is required for, for example, Helios).
+            You have aligned required modules but might need to (as you do in Helios) cyclic shift *within* the modules to align required qubits. When two modules are first aligned this error is already accounted for in 'shuttle' but when changing from one term to another you need to reshuffle (not a technical term) / realign again.
+            In other words, the modules that are aligned correspond to all terms with the same power of y^j. (E.g. y^j, xy^j, x^2y^j etc.). However if we require further reshuffling when doing two different terms (this is not required if, for example, you have a chain of ions that are two connected modules and non-neighbour ions can still have two-qubit gates done between them), then set reshuffling to true (this is required for, for example, Helios).
     - exclude_opposite_basis_detectors
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
     - reuse_check_qubits
