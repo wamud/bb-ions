@@ -20,14 +20,16 @@ cycles = 3
 swapLRC = False
 leakage_heralds = False
 exclude_opp_basis_detectors = True
-max_parallel_1q_ops = 16
-max_parallel_2q_ops = 4
 
 
-for p in [0.001, 0.002, 0.003, 0.004]:
+for p in [0.001]:
 
-    for code in [bb5_48_4_7(), bb5_60_4_8()]:
+    for code in [bb5_48_4_7(), bb5_60_4_8(), bb6_72_12_6(), gross_code(), two_gross_code(), bb6_360_code(), undercover_code(), interchanged_bb6_360_code()]:
     
+        max_parallel_1q_ops = 16 * code.m
+        max_parallel_2q_ops = 4 * code.m
+
+
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
         print("Creating: ",filename)
@@ -55,4 +57,4 @@ for p in [0.001, 0.002, 0.003, 0.004]:
 
 
         # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/actual_helios/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")

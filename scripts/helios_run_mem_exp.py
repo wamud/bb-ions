@@ -41,7 +41,7 @@ def main():
     
 
     circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/all_codes.csv"
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -49,7 +49,6 @@ def main():
     for path in circuit_paths:
         print(path)
 
-    
 
     # existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/actual_helios_best.csv") 
 
@@ -152,7 +151,7 @@ def main():
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
         max_shots = 10_000_000_000,
-        max_errors = 10,
+        max_errors = 5,
         tasks = tasks,
         decoders=['bposd'],
         # existing_data_filepaths = existing,
