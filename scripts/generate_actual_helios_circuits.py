@@ -1,4 +1,5 @@
-# This file generates BB code circuits with the syndrome extraction circuits as usual (i.e. following Edwin Tham, Min Ye ... Delfosse "modules" paper's Algorithm 2) but with the noise model based on Helios' quantum computer.
+# Inserts reshuffling / shuttle error of the 55ms of actual Helios.
+
 import sys
 import os
 import deltakit_stim
@@ -7,7 +8,7 @@ sys.path.append(os.path.abspath("../src"))
 from bb_ions import *
 
 
-noise = 'helios'
+noise = 'rl_helios'
 memory_basis = 'X' # mem X is worst-case in Helios due to two-qubit gate and idling being dominate by Z errors
 num_syndrome_extraction_cycles = 20
 only_CZs = True
@@ -24,7 +25,7 @@ max_parallel_1q_ops = 16
 max_parallel_2q_ops = 4
 
 
-for p in [0.001, 0.002, 0.003, 0.004]:
+for p in [0.001, 0.002, 0.003]:
 
     for code in [bb5_48_4_7(), bb5_60_4_8()]:
     
@@ -32,10 +33,29 @@ for p in [0.001, 0.002, 0.003, 0.004]:
         
         print("Creating: ",filename)
 
+
+
+
+        errors = helios_errors(p, code.l)
+        errors['CZ'].op = "DEPOLARIZE2"
+        errors['CZ'].p = p
+        errors['shuttle'].p = 2.4e-4
+        errors['shuttle'].p_leak = 4.4e-4
+        errors['shuttle'].p_relax = 4.4e-4
+
+        idle_errors = helios_idle_errors(p, code.l)
+        idle_errors['shuttle'].p = 2.4e-4
+        idle_errors['shuttle'].p_leak = 4.4e-4
+        idle_errors['shuttle'].p_relax = 4.4e-4
+
+
+
+
+
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
-            errors = helios_errors(p, code.l),
-            idle_during = helios_idle_errors(p, code.l),
+            errors = errors,
+            idle_during = idle_errors,
             num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
             memory_basis = memory_basis,
             sequential_operations = seq_ops, 

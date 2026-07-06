@@ -215,8 +215,6 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
     l = code.l
     m = code.m 
 
-    if len(register) > l * m:
-      raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
     # A register has l rows, m columns. Each column is a module. We can just go up the qubit indices and get one qubit per module if we go up m. Or if 1.5m for example we have the first two qubits of the first half of the columns and the first qubit of the second half. In the next time step it would be the third qubit of the first half of the modules and the second and third of the second half of the modules. So just going up the qubit indices naturally takes care of the order of qubit operations even with a number of operation zones not a multiple of m. Four our architecture it will be a multiple of m though so can much more easily design the shuttling for this too, and once again just going up the qubit indices takes care of doing the required operations in order.
 
@@ -256,7 +254,7 @@ def apply_resets(circuit, reset, qs, all_registers, errors, idle_during):
   circuit.append(reset, qs) # append reset to all the qubits in this time step
 
   if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
-    add_relax_then_leak(reset, circuit, [qs], errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+    add_relax_then_leak(reset, circuit, qs, errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
   p = errors[reset].p
   if p > 0:
     error_op = errors[reset].op
@@ -281,7 +279,7 @@ def apply_1q_ops(circuit, operation, qs, all_registers, errors, idle_during):
 
 
   if LEAKAGE:    
-    add_relax_then_leak(operation, circuit, [qs], errors) 
+    add_relax_then_leak(operation, circuit, qs, errors) 
 
   p = errors[operation].p
   if p > 0:
@@ -663,7 +661,7 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
   if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
     if REPUMPING_CYCLES != 0:
       # cycles = 4 # num_repumping_cycles 
-      p_relax = 1 - 1/(3 ** REPUMPING_CYCLES) 
+      p_relax = round_sig_fig(1 - 1/(3 ** REPUMPING_CYCLES), 4) 
 
       repump_error = errors['error_per_repump'].op
       p_repump_error = REPUMPING_CYCLES * errors['error_per_repump'].p
