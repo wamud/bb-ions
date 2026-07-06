@@ -692,6 +692,8 @@ Addition: swap_ctrl_target variable. If swap == True this swaps the control and 
 This function also adds 'reshuffling' error between i values because even though a large cyclic shift of modules is not required (we're still doing one power of j) there is a different cyclic shift of qubits requireed for different i values.'''
 def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = False):
 
+
+
   if gate == 'CX':
     gate = 'CNOT'
   
@@ -732,13 +734,17 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
   if matrix == 'A' or matrix == 'B':
     qC = qX 
   
+
   
 
-  for an_index, (i, j) in enumerate(Mij): 
-      if j == jval: 
+  for an_index, (i, j) in enumerate(Mij):   #### GO THROUGH ALL THE TERMS IN THE POLYNOMIALS
+      if j == jval:                         ### IF THE TERM HAS THE CORRECT POWER OF J, WE WILL APPLY ITS 2Q GATES
 
         idx_list = []
         a_list = []
+
+        # apply shuttle error:
+        apply_shuttle_error(circuit, qD + qD_idle + qC, errors)
         
         for idx in range(l * m):
           
@@ -822,11 +828,9 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
           tick(circuit)
       
 
-        if RESHUFFLING:
-          # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise we're saying a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). Two shuttles takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got l=30 PAIRS i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/49 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
-          if an_index != len(Mij) - 1: # (if last set of 2q gates for this j value we have a cyclic shift error coming so don't need to apply reshuffle. Else, we do. We will set it equal to the shuttle error 
-            idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) 
-            idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) # double seeing as in helios I've divided the shifting error into two so it could be applied at the beginning and end of the repeat.
+        # if RESHUFFLING: ------ NOW I've just added reshuffling as default.
+        #   # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise we're saying a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). Two shuttles takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got l=30 PAIRS i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/49 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
+        #   idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) # double seeing as in helios I've divided the shuttling error into two so it could be applied at the beginning and end of the repeat.
 
 
     
@@ -877,6 +881,8 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
   if matrix == 'AT' or matrix == 'BT':
     qC = qZ
 
+  # apply shuttle error:
+  apply_shuttle_error(circuit, qD + qD_idle + qC, errors)
   
   for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
       if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
@@ -1371,11 +1377,11 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
             idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
             tick(circ)
 
-        # Shuttle check qubit modules from racetrack into leg:
-        if errors['shuttle'].p > 0:
-          apply_shuttle_error(circ, qC, errors)
-          idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
-          tick(circ)
+        # # Shuttle check qubit modules from racetrack into leg: ## Now taken care of by reshuffling or initial cyclic shift to align modules
+        # if errors['shuttle'].p > 0:
+        #   apply_shuttle_error(circ, qC, errors)
+        #   idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
+        #   tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
         if errors['merge'].p > 0:
@@ -1430,11 +1436,11 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           apply_split_error(circ, qC + qL + qR, errors)
           tick(circ)
 
-        # # Shuttle check qubits from leg into racetrack:
-        if errors['shuttle'].p > 0:
-          apply_shuttle_error(circ, qC, errors)
-          idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
-          tick(circ)
+        # # # Shuttle check qubits from leg into racetrack:
+        # if errors['shuttle'].p > 0:
+        #   apply_shuttle_error(circ, qC, errors)
+        #   idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
+        #   tick(circ)
 
         jval_prev = jval
 
@@ -1609,7 +1615,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
     # Alrighty we've done the X-check CNOTs!
 
-    # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
+    # Hadamard check qubits 
+    apply_shuttle_error(loop_body, qC + qL + qR, errors)
     hadamard_register(idle_during, registers, code, loop_body, qC, errors)
     if ONLYCZs == False:
       if not SEQUENTIAL_HADAMARDS:
@@ -1708,7 +1715,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     # Apply required cyclic shifts and CZ interactions for Z-checks:
     jval_prev = apply_cyclic_shift_and_2q_gates(loop_body, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
-    # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
+    # Now to hadamard the check qubits 
+    apply_shuttle_error(loop_body, qC + qL + qR, errors)
     if ONLYCNOTs == False:
       hadamard_register(idle_during, registers, code, loop_body, qC, errors)
       if not SEQUENTIAL_HADAMARDS:
@@ -1926,11 +1934,10 @@ def make_BB_circuit(
 
     tick(circ)
 
-
+    ########## INITIALISE QUBITS #######################
+    
     # Hadamard check qubits to |+⟩
     hadamard_register(idle_during, registers, code, circ, qX, errors)
-
-
     # Deal with data qubits:
     if ONLYCZs == True:
       if memory_basis == 'Z':  
@@ -1954,7 +1961,7 @@ def make_BB_circuit(
         tick(circ)
 
 
-    ######## X-CHECKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ######## X-CHECKS ########
 
 
     Junion = code.Junion
@@ -1967,7 +1974,7 @@ def make_BB_circuit(
 
 
     # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
-    
+    apply_shuttle_error(circ, qX + qL + qR, errors)
     if SWAPLRC == False:
       hadamard_register(idle_during, registers, code, circ, qX, errors)
       # Also hadamard data qubits if we were using only CZ gates (sandwiching all the CZ gates with hadamards turns their targets to CNOTs) else idle them ... unless we did a swapLRC  with CZs then it turns out the hadamards cancel
@@ -2027,8 +2034,8 @@ def make_BB_circuit(
     # Apply required cyclic shifts and two-qubit interactions for Z-checks:
     jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
-
-    # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
+    apply_shuttle_error(circ, qZ + qL + qR, errors)
+    # Now to hadamard the check qubits (they've already been shuttled to properly align)
     if ONLYCNOTs == False:
       if SWAPLRC == False:
         hadamard_register(idle_during, registers, code, circ, qZ, errors)
@@ -2099,7 +2106,8 @@ def make_BB_circuit(
           # Do cyclic shifts and two-qubit gates (accepts previous j_val -- previous position of modules -- and updates it). Might also contain swap-LRC
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
-          # Hadamard check qubits (which have already been shuttled back to racetrack in apply_cyclic_shifts_and_stab_interactions)
+          # Hadamard check qubits
+          apply_shuttle_error(circ, qX + qD, errors)
           if SWAPLRC == False:
             hadamard_register(idle_during, registers, code, circ, qX, errors)
             if ONLYCZs == False:
@@ -2164,7 +2172,8 @@ def make_BB_circuit(
           # Apply required cyclic shifts and CZ interactions for Z-checks, also update registers if required by swaplrc.
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
-          # Now to hadamard the check qubits (they've already been shuttled back into racetrack)
+          # Now to hadamard the check qubits
+          apply_shuttle_error(circ, qZ + qD, errors)
           if ONLYCNOTs == False:
             if SWAPLRC == False:
               hadamard_register(idle_during, registers, code, circ, qZ, errors)

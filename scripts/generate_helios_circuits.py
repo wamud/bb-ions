@@ -38,8 +38,8 @@ for p in [0.001, 0.002]:
 
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
-            errors = helios_errors(p),
-            idle_during = helios_idle_errors(p),
+            errors = helios_errors(p, code.l),
+            idle_during = helios_idle_errors(p, code.l),
             num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
             memory_basis = memory_basis,
             sequential_operations = seq_ops, 
