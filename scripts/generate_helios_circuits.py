@@ -36,6 +36,8 @@ for p in [0.001, 0.002]:
         
         print("Creating: ",filename)
 
+        num_op_zones_per_leg_pair = 4
+
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
             errors = helios_errors(p, code.l),
@@ -53,7 +55,10 @@ for p in [0.001, 0.002]:
             swapLRC = swapLRC,
             loss = loss,
             leakage_heralds=leakage_heralds
+            num_parallel_1q_ops = 2 * num_op_zones_per_leg_pair * m, # l qubits per module need to have operations done on them. If you have l operation zones per leg that's double what you need
+            num_parallel_2q_ops = num_op_zones_per_leg_pair * code.m,
         )
+
 
         # Save circuit:
         circuit.to_file(f"../circuits/leakage_and_loss/scrap/{filename}.stim")

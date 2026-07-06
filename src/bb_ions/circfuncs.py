@@ -218,54 +218,86 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
     if len(register) > l * m:
       raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
-    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
+    # A register has l rows, m columns. Each column is a module. We can just go up the qubit indices and get one qubit per module if we go up m. Or if 1.5m for example we have the first two qubits of the first half of the columns and the first qubit of the second half. In the next time step it would be the third qubit of the first half of the modules and the second and third of the second half of the modules. So just going up the qubit indices naturally takes care of the order of qubit operations even with a number of operation zones not a multiple of m. Four our architecture it will be a multiple of m though so can much more easily design the shuttling for this too, and once again just going up the qubit indices takes care of doing the required operations in order.
 
-    for i in range(0, l, 2):
 
-      qs = []
+
+    qs = []
+    for i in range(l * m):
       
-      for module in range(m):
-
-        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
-        q0 = register[q0_idx]
-        qs.append(q0)
-
-        if i != l - 1: # it will equal l - 1 if we're at the last row
-          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
-          q1 = register[q1_idx]
-          qs.append(q1)
+      qs.append(register[i])
+      # print(qs)
+      
+      if (i + 1) % NUM_PARALLEL_R == 0: # for every group of NUM_PARALLEL_R qubits, append the resets then go to next time step
         
-        # end for loop creating list of qubits in this time step.
+        apply_resets(circuit, reset, qs, all_registers, errors, idle_during)
 
-      circuit.append(reset, qs) # append reset to all the qubits in this time step
+        # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+        
+        qs = [] # empty the list of qubits to have operations applied to them in this time step
+      
+    if len(qs) != 0: # if leftover qubits: 
 
-      if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
-        add_relax_then_leak(reset, circuit, [qs], errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
-      p = errors[reset].p
-      if p > 0:
-        error_op = errors[reset].op
-        circuit.append(error_op, qs, p)
+      apply_resets(circuit, reset, qs, all_registers, errors, idle_during)
 
-      if LOSS:
-        p_loss = errors[reset].p_loss
-        if p_loss > 0:
-          loss_op = errors[reset].loss_op
-          circuit.append(loss_op, qs, p_loss)
-
-      # idling: 
-      idle_qs = [q for q in all_registers if q not in qs]
-      idle(circuit, idle_qs, idle_during[reset])
-      tick(circuit)
       # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
       apply_four_ion_shift_error(circuit, all_registers, idle_during)
-
-
-
       tick(circuit)
+      
+      qs = [] # empty the list of qubits to have operations applied to them in this time step
 
 
 
+'''apply_resets
+    packaging all the reset operations and errors (idling, leakage, loss etc.) into one function'''
+def apply_resets(circuit, reset, qs, all_registers, errors, idle_during):
+  circuit.append(reset, qs) # append reset to all the qubits in this time step
 
+  if LEAKAGE:    # appending leakage AFTER the reset (wouldn't do anything if appended before)
+    add_relax_then_leak(reset, circuit, [qs], errors) # If errors = helios_errors(p) then this won't actually add any leakage / relax because p_leak = p_relax = 0 for reset gates in ions because "Typically, ions are initialized using optical pumping techniques which do not result in leakage (https://doi.org/10.1103/PhysRevA.100.032325)"
+  p = errors[reset].p
+  if p > 0:
+    error_op = errors[reset].op
+    circuit.append(error_op, qs, p)
+
+  if LOSS:
+    p_loss = errors[reset].p_loss
+    if p_loss > 0:
+      loss_op = errors[reset].loss_op
+      circuit.append(loss_op, qs, p_loss)
+
+  # idling: 
+  idle_qs = [q for q in all_registers if q not in qs]
+  idle(circuit, idle_qs, idle_during[reset])
+  tick(circuit)
+
+
+'''apply_1q_ops
+    helper function for applying 1q operations and errors (idling, leakage, loss etc.) sequentially in a for loop'''
+def apply_1q_ops(circuit, operation, qs, all_registers, errors, idle_during):
+  circuit.append(operation, qs) # append reset to all the qubits in this time step
+
+
+  if LEAKAGE:    
+    add_relax_then_leak(operation, circuit, [qs], errors) 
+
+  p = errors[operation].p
+  if p > 0:
+    error_op = errors[operation].op
+    circuit.append(error_op, qs, p)
+
+  if LOSS:
+    p_loss = errors[operation].p_loss
+    if p_loss > 0:
+      loss_op = errors[operation].loss_op
+      circuit.append(loss_op, qs, p_loss)
+
+  # idling: 
+  idle_qs = [q for q in all_registers if q not in qs]
+  idle(circuit, idle_qs, idle_during[operation])
+  tick(circuit)
 
 
 
@@ -317,49 +349,33 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
     if len(register) > l * m:
       raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
-    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
 
-    for i in range(0, l, 2):
 
-      qs = []
+    qs = []
+    for i in range(l * m):
       
-      for module in range(m):
+      qs.append(register[i])
+      # print(qs)
+      
+      if (i + 1) % NUM_PARALLEL_1Q == 0: # for every group of NUM_PARALLEL_1Q qubits, append the operations then go to next time step
         
-        q0_idx = conv_vw_to_k(i, module, m) # row i column 'module'
-        q0 = register[q0_idx]
-        qs.append(q0)
+        apply_1q_ops(circuit, 'H', qs, all_registers, errors, idle_during)
 
-        if i != l - 1: # it will equal l - 1 if we're at the last row
-          q1_idx = conv_vw_to_k(i + 1, module, m) # row i + 1, column 'module'
-          q1 = register[q1_idx]
-          qs.append(q1)
+        # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
         
-        # end for loop creating list of qubits in this time step.
-
-      if LEAKAGE:
-        add_relax_then_leak("H", circuit, qs, errors)
+        qs = [] # empty the list of qubits to have operations applied to them in this time step
       
-      circuit.append("H", qs) # append reset to all the qubits in this time step
+    if len(qs) != 0: # if leftover qubits: 
 
-      p = errors["H"].p
-      if p > 0:
-        error_op = errors["H"].op
-        circuit.append(error_op, qs, p)
-      
-      if LOSS:
-        loss_op = errors["H"].loss_op
-        p_loss = errors["H"].p_loss
-        if p_loss > 0:
-          circuit.append(loss_op, qs, p_loss)
+      apply_1q_ops(circuit, 'H', qs, all_registers, errors, idle_during)
 
-      # idling: 
-      idle_qs = [q for q in all_registers if q not in qs]
-      idle(circuit, idle_qs, idle_during["H"])
-      tick(circuit)
-      # add four-ion shift to move next qubits in to be hadamarded (or simulate moving them all out):
+      # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
       apply_four_ion_shift_error(circuit, all_registers, idle_during)
-
       tick(circuit)
+      
+      qs = [] # empty the list of qubits to have operations applied to them in this time step
 
 
 
@@ -434,12 +450,9 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     l = code.l
     m = code.m 
 
-    # if len(register) > l * m:
-    #   raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
-    # A register has l rows, m columns. Each column is a module. If l is odd then the last qubit will be by itself being initialised.
-
-    # In the first step we will measure the first two qubits of every module. In the [[18, 4, 4]] code for example this would be qubits 0,3; 1,4; 2,5 if listing by module, or just qubits 0,1,2,3,4,5. In hadamards and resets we did it listing by module, but we don't actually have to and doing this for measurements would require a rewrite of the appending of detectors. So instead it is exactly equivalent (they're being done in the same timestep anyway so there is no difference in the noise "reordering" the way measurements are appended if they're in the same time step) to just append the measurements in groups of 2*m going up through every qubit index in ascending order. However if swapLRC == True then what is ascending order in a particular register (e.g. qX) is what holds (i.e. qX[0], qX[1], qX[2], ...) not ascending order in the stim circuit's qubit indices (q0, q1, q2,...). So we will append measurements in groups of 2*m ascending through the register:
+    # In the first step we will measure NUM_PARALLEL_M, taking the first qubit of every module then the second etc. until we reach NUM_PARALLEL_M. In the [[18, 4, 4]] code (for example) if we have NUM_PARALLEL_M = 6 (for example) this would be qubits 0,3; 1,4; 2,5 if listing by module, or just qubits 0,1,2,3,4,5.
+    # We can just append the measurements in groups of NUM_PARALLEL_M going up through every qubit index in ascending order. Note if swapLRC == True then what is ascending order in that particular register (e.g. qX) is what holds (i.e. qX[0], qX[1], qX[2], ...) not ascending order in the stim circuit's qubit indices (q0, q1, q2,...). So we will append measurements in groups of NUM_PARALLEL_M in ascending through the registers:
 
     qs = []
     
@@ -449,7 +462,8 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     
       qs.append(register[i])
 
-      if (i+1) % (2*NUM_OP_ZONES) == 0: # for every group of 2*m qubits, append the measurements then go to the next time step
+      if (i+1) % NUM_PARALLEL_M == 0: 
+        
         if LEAKAGE:
           add_relax_then_leak(measure_string, circuit, qs, errors)
         if p > 0:
@@ -772,7 +786,7 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
             v, w = convtorowcol(m, idx)
             # Shift the index to interact with the (v+i, w+j)-th data qubit
             a = conv_vw_to_k((v + i) % l, (w + j) % m, m)
-            a_list.append(a)
+            a_list.append(a) # this is the data qubit index that will be interacted with
             data_qubit = convtouvw(l, m, qD[a])
 
             control = data_qubit
@@ -783,16 +797,13 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
             control = target
             target = control_temp
 
-          # 
-          # print(f"Control = {control}")
-          # print(f"Target = {target}")
 
           myCP(circuit, gate, l, m, control, target, errors)
 
           idx_list.append(idx)
 
           if sequential_operations:
-            if (idx + 1) % NUM_OP_ZONES == 0: # We're saying we can do m gates per time step. Could replace to be more or less but needs to be a multiple of m for the layout. For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
+            if (idx + 1) % NUM_PARALLEL_2Q == 0: 
               
               idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all (e.g. L-data qubits if we're connecting to R-data qubits)
 
@@ -800,40 +811,53 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
               data_idles = []
               
               for g in range(l * m):
-                if g not in idx_list:
+                if g not in idx_list:  # indices of check qubits to idle
                   check_idles.append(g)
-                if g not in a_list:
+                if g not in a_list:    # indices of data qubits to idle
                   data_idles.append(g)
               
-              check_qubits_to_idle = [qC[entry] for entry in check_idles]
+              check_qubits_to_idle = [qC[entry] for entry in check_idles] # converting the indices to the actual stim qubit index
               data_qubits_to_idle = [qD[entry] for entry in data_idles]
+
               qubits_to_idle = check_qubits_to_idle + data_qubits_to_idle
               
               idle(circuit,qubits_to_idle, idle_during[gate])
-
                 # if g not in idx_list: # for the check qubits, the qubits operated on are simply qC[idx_list], so idle the ones not in idx_list: 
                 #   idle(circuit, [qC[g]], idle_during[gate])
                 # if g not in a_list: # data qubits
                 #   idle(circuit, [qD[g]], idle_during[gate])
-
-              idx_list = []  # reset it 
-              a_list = []
+              # reset them 
+              idx_list = []  
+              a_list = [] 
               check_idles = []
               data_idles = []
-
               tick(circuit)
 
-        if not sequential_operations: # idle all data qubits not in this matrix.
-          idle(circuit, qD_idle, idle_during[gate])
+        if len(idx_list) != 0: # this applies idling to any leftover qubits
+          idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all (e.g. L-data qubits if we're connecting to R-data qubits)
+          check_idles = []
+          data_idles = []
+          for g in range(l * m):
+            if g not in idx_list:  # indices of check qubits to idle
+              check_idles.append(g)
+            if g not in a_list:    # indices of data qubits to idle
+              data_idles.append(g)
+          check_qubits_to_idle = [qC[entry] for entry in check_idles] # converting the indices to the actual stim qubit index
+          data_qubits_to_idle = [qD[entry] for entry in data_idles]
+          qubits_to_idle = check_qubits_to_idle + data_qubits_to_idle
+          idle(circuit,qubits_to_idle, idle_during[gate])
+          # reset them 
+          idx_list = []  
+          a_list = [] 
+          check_idles = []
+          data_idles = []
           tick(circuit)
-      
-
-        # if RESHUFFLING: ------ NOW I've just added reshuffling as default.
-        #   # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise we're saying a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). Two shuttles takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got l=30 PAIRS i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/49 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
-        #   idle(circuit, qD + qD_idle + qC, idle_during['shuttle']) # double seeing as in helios I've divided the shuttling error into two so it could be applied at the beginning and end of the repeat.
 
 
-    
+
+        # if not sequential_operations: # idle all data qubits not in this matrix.
+        #   idle(circuit, qD_idle, idle_during[gate])
+        #   tick(circuit)
 
 
 '''add_2q_gates_for_this_ij_value
@@ -881,8 +905,6 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
   if matrix == 'AT' or matrix == 'BT':
     qC = qZ
 
-  # apply shuttle error:
-  apply_shuttle_error(circuit, qD + qD_idle + qC, errors)
   
   for (i, j) in Mij: # runs over all i,j, applies any i that has this value of j:
       if j == jval: # i.e. this (i, j) appears in Mij, we apply this value of i:
@@ -892,7 +914,6 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
           a_list = []
           
           for idx in range(l * m):
-            
 
             # Target and control set as if doing all CNOT gates. For CZ gates target / control doesn't matter.
             
@@ -937,7 +958,8 @@ def add_2q_gates_for_this_ij_value(gate, matrix, circuit, ival, jval, code, regi
             idx_list.append(idx)
 
             if sequential_operations:
-              if (idx + 1) % NUM_OP_ZONES == 0: # This is assuming we can do m gates per time step (replace m for more or less gates). For our layout of m modules we are saying we have applied one 2q gate per module. Assuming sequential gates, i.e. we have m modules and only m operation zones which do one 2q gate per timestep, we must therefore apply idling here to any qubits not in the 2q gate.
+              if (idx + 1) % NUM_PARALLEL_2Q == 0: # This is assuming we can do NUM_PARALLEL_2Q gates per time step. Assuming sequential gates we must apply idling here to any qubits not in the 2q gate.
+                
                 idle(circuit, qD_idle, idle_during[gate]) # all the data qubits not in this term at all
                 
                 for g in range(l * m):
@@ -1251,8 +1273,11 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
     # Add b's 2q gates, with a reversed one inserted before the last one
     for idx, ival in enumerate(bs_is[jval]):
       if idx == len(bs_is[jval]) - 1: # we're on the last i value so do the swaperoo
+        
+        
 
         if thegate == 'CZ':
+          apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
           add_hadamards_before_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
@@ -1262,13 +1287,13 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
 
         # Ok, we've now added the reversed CNOT, or the CZs sandwiched by hadamards. 
         # We now add the last timestep's two qubit gates:
-
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
         # and then update the registers because things have swapped around.
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
+        apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
 
@@ -1277,8 +1302,10 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
     for idx, ival in enumerate(as_is[jval]):
       if idx == len(as_is[jval]) - 1: # we're on the last ival so do the swaperoo
 
-
+        
+        
         if thegate == 'CZ': # to do a reversed CNOT we sandwich both ends of the CZ by Hadamards. This is on the target in order to make the gate a CNOT. It is also on the control in order to terminate the sandwiching of the preceding CZs (and turn them into CNOTs) as well as restart the sandwiching of the succeeding CZ. So we sandwich all data qubits in this terms (be they L or R) and all check qubits in this check.
+          apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
           add_hadamards_before_swap_CZ(code, a, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
@@ -1288,10 +1315,12 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
 
 
         add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
+        apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
 
         update_qubit_indices(code, registers, a, check, ival, jval, reuse_check_qubits)
 
       else:
+        apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
         add_2q_gates_for_this_ij_value(thegate, a, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
 
   if in_a_ij == False and in_b_ij == True:  # Only in B or B^T
@@ -1302,6 +1331,7 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
 
 
         if thegate == 'CZ': 
+          apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
           add_hadamards_before_swap_CZ(code, b, thegate, check, registers, circ, errors, idle_during)
 
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations, swap_ctrl_target = True)
@@ -1312,11 +1342,14 @@ def add_swapLRC (thegate, jval, theunion, code, circ, registers, errors, idle_du
         
         
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
+        apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
 
         update_qubit_indices(code, registers, b, check, ival, jval, reuse_check_qubits)
 
       else:
+        apply_shuttle_error(circ, qC + registers.qL + registers.qR, errors)
         add_2q_gates_for_this_ij_value(thegate, b, circ, ival, jval, code, registers, errors, idle_during, sequential_operations)
+
 
 
 
@@ -1803,9 +1836,6 @@ Inputs are:
     - sequential_operations
             Whether disjoint operations are sequential (done in successive time steps) or, instead, all in parallel. This affects idling errors applied.
             More explanation: For a given term x^i⋅y^j the most 2q gates we can possibly do in parallel is all lm X-check qubits to either the lm L or R data qubits and all lm Z-check qubit to the lm opposite type data qubits. So 2lm check qubits connecting to 2lm data qubits. However, we are doing non-interleaved syndrome extraction, that is X-checks *then* Z-checks, so the most that can be done in a single time step is lm check qubits of one type to lm data qubits of one type. (Doing non-interleaved means we can also halve the check-qubit count). Doing them all in a single time step with high fidelity is possible with techniques such as those in [2603.07548]. Alternatively, as in Quantinuum's Helios [2511.05465], gates are done in separate operation zones to maintain high fidelity and reduce crosstalk, meaning only N gates can be done in a single time step, where N is the number of operation zones. This circuit-builder assumes m operation zones, one for each of the m data qubit modules. When setting sequential gates to true, two-qubit gates are done sequentially rather than all in parallel so only m two-qubit gates can be done in each time step. This is also true for reset, single-qubit gates and measurement.
-    - reshuffling
-            You have aligned required modules but might need to (as you do in Helios) cyclic shift *within* the modules to align required qubits. When two modules are first aligned this error is already accounted for in 'shuttle' but when changing from one term to another you need to reshuffle (not a technical term) / realign again.
-            In other words, the modules that are aligned correspond to all terms with the same power of y^j. (E.g. y^j, xy^j, x^2y^j etc.). However if we require further reshuffling when doing two different terms (this is not required if, for example, you have a chain of ions that are two connected modules and non-neighbour ions can still have two-qubit gates done between them), then set reshuffling to true (this is required for, for example, Helios).
     - exclude_opposite_basis_detectors
             If this is True, when preserving logical 0 (+) then there are no detectors placed on the X-(Z-) stabiliser measurements (though they are still performed). This is useful if the decoder being used is uncorrelated (i.e. treats X and Z detector graphs separately) as it reduces the size of the detector error model to be fed to it (and thus increases the speed of the simulations) by removing unused detectors.
     - reuse_check_qubits
@@ -1827,6 +1857,14 @@ Inputs are:
             "swap leakage reduction circuit". If set to true, an additional CNOT timestep is inserted before the very last CNOT timestep in each of the X-checks and Z-checks. This CNOT interacts the exact same two qubits as the final CNOT it now precedes, but with control and target reversed. The effect of inserting this one additional reversed CNOT is doing the final CNOT and a SWAP gate. So the data qubits and check qubits have swapped roles. Consequently, every qubit will be measured every other round to prevent leakage lasting the whole memory time.
     - check_deteting_regions
             In general this should always be set to True. It uses stim's in-built circuit.detecting_regions() to check if there are any detectors which, in the absence of noise, don't commute and hence produce non-determenistic outcomes. In the absence of noise all detectors should commute so this is a problem if they don't. The only time this should be set to false is when tinkering with the circuit builder and adding and moving detectors, so you might want to look at a visual of a circuit before having finished all the detectors (and consequently want to build the circuit without checking the detecting regions)
+    - num_parallel_1q_ops
+            a limitation of the hardware we're imagining running the circuit on. This is how many simultaneous single-qubit operations (R, M, H) can be done. In Helios (for example) there are eight operation zones and each can hold two qubits so num_parallel_1q_ops = 16.
+    - num_2Q_parallel_2q_ops = 4.
+            same as above but for 2q gates. In Helios (for example) only four operation zones are equipped with 2q gates so this number is 4 (acting on 8 qubits).
+    - reshuffling
+            Ignore now as I've added it by default as a 'shuttle' between every term in each polynomial being applied.
+            Previous explanation: You have aligned required modules but might need to (as you do in Helios) cyclic shift *within* the modules to align required qubits. When two modules are first aligned this error is already accounted for in 'shuttle' but when changing from one term to another you need to reshuffle (not a technical term) / realign again.
+            In other words, the modules that are aligned correspond to all terms with the same power of y^j. (E.g. y^j, xy^j, x^2y^j etc.). However if we require further reshuffling when doing two different terms (this is not required if, for example, you have a chain of ions that are two connected modules and non-neighbour ions can still have two-qubit gates done between them), then set reshuffling to true (this is required for, for example, Helios).
     '''
 def make_BB_circuit(
     code: Any,
@@ -1848,7 +1886,9 @@ def make_BB_circuit(
     swapLRC : bool = False,
     loss: bool = False,
     check_detecting_regions: bool = True,
-    reshuffling: bool = True,
+    # reshuffling: bool = True,
+    num_parallel_1q_ops: int = 16,
+    num_parallel_2q_ops: int = 4,
 ):
 
 
@@ -1873,8 +1913,6 @@ def make_BB_circuit(
     REPUMPING_CYCLES = num_repumping_cycles
     global LOSS
     LOSS = loss
-    global RESHUFFLING
-    RESHUFFLING = reshuffling
 
     # Going to set all below to be equal to sequential_operations. Just doing like this in case in future some operations (e.g. measurements) can be done all at once whereas others can't. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). This is because the difference in pL even when introducing sequential H, M and R rather than everything completely parallel is probably negligible -- will test.
     global SEQUENTIAL_RESETS
@@ -1884,9 +1922,14 @@ def make_BB_circuit(
     global SEQUENTIAL_MEASUREMENTS
     SEQUENTIAL_MEASUREMENTS = sequential_measurements 
 
-    global NUM_OP_ZONES
-    NUM_OP_ZONES = code.m # at the moment from the way two-qubit gates, sequential_measurements / resets etc. are applied this needs to be a multiple of m (can fix by just adding some code adding gates to any leftover qubits if not an even multiple of m)
-
+    global NUM_PARALLEL_1Q
+    NUM_PARALLEL_1Q = num_parallel_1q_ops 
+    global NUM_PARALLEL_M
+    NUM_PARALLEL_M = num_parallel_1q_ops
+    global NUM_PARALLEL_R
+    NUM_PARALLEL_R = num_parallel_1q_ops
+    global NUM_PARALLEL_2Q 
+    NUM_PARALLEL_2Q = num_parallel_2q_ops
 
     if SWAPLRC:
       JTunion = code.JTunion
@@ -2107,7 +2150,7 @@ def make_BB_circuit(
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'X', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
           # Hadamard check qubits
-          apply_shuttle_error(circ, qX + qD, errors)
+          apply_shuttle_error(circ, qX + qL + qR, errors)
           if SWAPLRC == False:
             hadamard_register(idle_during, registers, code, circ, qX, errors)
             if ONLYCZs == False:
@@ -2173,7 +2216,7 @@ def make_BB_circuit(
           jval_prev = apply_cyclic_shift_and_2q_gates(circ, jval_prev, 'Z', code, registers, errors, idle_during, sequential_operations, reuse_check_qubits)
 
           # Now to hadamard the check qubits
-          apply_shuttle_error(circ, qZ + qD, errors)
+          apply_shuttle_error(circ, qZ + qL + qR, errors)
           if ONLYCNOTs == False:
             if SWAPLRC == False:
               hadamard_register(idle_during, registers, code, circ, qZ, errors)
