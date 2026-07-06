@@ -32,30 +32,13 @@ for p in [0.001, 0.002, 0.003]:
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},noise={noise},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
         print("Creating: ",filename)
-
-
-
-
-        errors = helios_errors(p, code.l)
-        errors['CZ'].op = "DEPOLARIZE2"
-        errors['CZ'].p = p
-        errors['shuttle'].p = 2.4e-4
-        errors['shuttle'].p_leak = 4.4e-4
-        errors['shuttle'].p_relax = 4.4e-4
-
-        idle_errors = helios_idle_errors(p, code.l)
-        idle_errors['shuttle'].p = 2.4e-4
-        idle_errors['shuttle'].p_leak = 4.4e-4
-        idle_errors['shuttle'].p_relax = 4.4e-4
-
-
-
+        print(f"p = {p}")
 
 
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
-            errors = errors,
-            idle_during = idle_errors,
+            errors = helios_errors(p, code),
+            idle_during = helios_idle_errors(p, code),
             num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
             memory_basis = memory_basis,
             sequential_operations = seq_ops, 

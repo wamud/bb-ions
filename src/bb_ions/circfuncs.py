@@ -1408,11 +1408,6 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
             idle(circ, qL + qR, idle_during['shift']) # t_shift) # idle the data qubits 
             tick(circ)
 
-        # # Shuttle check qubit modules from racetrack into leg: ## Now taken care of by reshuffling or initial cyclic shift to align modules
-        # if errors['shuttle'].p > 0:
-        #   apply_shuttle_error(circ, qC, errors)
-        #   idle(circ, qL + qR, idle_during['shuttle'])  # idle the data qubits
-        #   tick(circ)
 
         # Merge check and data qubit modules Coulomb potentials:
         if errors['merge'].p > 0:
@@ -1467,11 +1462,6 @@ def apply_cyclic_shift_and_2q_gates(circ, jval_prev, check, code, registers, err
           apply_split_error(circ, qC + qL + qR, errors)
           tick(circ)
 
-        # # # Shuttle check qubits from leg into racetrack:
-        # if errors['shuttle'].p > 0:
-        #   apply_shuttle_error(circ, qC, errors)
-        #   idle(circ, qL + qR, idle_during['shuttle']) # idle the data qubits
-        #   tick(circ)
 
         jval_prev = jval
 
@@ -1538,6 +1528,7 @@ Applies a depolarising noise channel of strength p to qubits in 'register' and i
 def apply_shuttle_error(circuit, register, errors: dict):
 
     p = errors['shuttle'].p
+    # print(f"applying shuttle_error = {p}, leak = {errors['shuttle'].p_leak}, relax = {errors['shuttle'].p_relax}")
 
     if p > 0:
 

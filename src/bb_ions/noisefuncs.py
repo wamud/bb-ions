@@ -228,10 +228,16 @@ Defines noise values as per Quantinuum's Helios quantum computer [2511.05465]. F
 Note that they combined all transport (cylic shift, merge/split Coulomb potentials, junction enter/exit) and cooling into one "depth-n memory error" (we take depth-1 even though this is an overestimate for our more organised circuit as compared to their random pairings of 98 qubits), which we will divide into two independent shuttle errors (setting P(exactly one Z error from two shuttles) = P(one Z error from depth-1 memory time)) because this is equivalent for all the cyclic shifts while also makes a roughly half as likely Z error for when just doing the final shuttle of qubits before measurements.
 
 Note also that setting p = 0.001 will give all the values as per Helios, most notably a two-qubit gate error rate of 7 × 10^-4 ≈ 1 × 10^-3 and a reset / measure error rate of 1e-3'''
-def helios_errors(p, l):
+def helios_errors(p, code):
 
 
-    ratio = 2 * l / 98 # Helios depth-1 transport error is for RANDOMLY pairing, cooling and performing two-qubit gates on 98 qubits. Each time step where we need to pair qubits it is l check qubits with l data qubits (where l depends on the BB code). These are already arranged into modules that need to be paired and within modules it is only a cyclic shift difference rather than a random pairing. Still, we will overestimate by assuming random pairings, however we will assume that requiring to pair x qubits rather than 98 would take ratio = x/98 the time. This ratio gets multiplied by the p_z = 2.4e-4 depth-1 transport error (could equivlently multiply it by the time then sub into p_idle_dephasing but get same result as for small t the exponential is almost linear)
+    l = code.l
+    m = code.m
+
+    # ratio = 2 * l / 98 # Helios depth-1 transport error is for RANDOMLY pairing, cooling and performing two-qubit gates on 98 qubits. Each time step where we need to pair qubits it is l check qubits with l data qubits (where l depends on the BB code). These are already arranged into modules that need to be paired and within modules it is only a cyclic shift difference rather than a random pairing. Still, we will overestimate by assuming random pairings, however we will assume that requiring to pair x qubits rather than 98 would take ratio = x/98 the time. This ratio gets multiplied by the p_z = 2.4e-4 depth-1 transport error (could equivlently multiply it by the time then sub into p_idle_dephasing but get same result as for small t the exponential is almost linear)
+
+    # ratio = l * m / 98 # temporarily for actual_helios
+
 
 
     # Below is distribution of Pauli errors for Rzz gate taken from Table A4 of Helios [2511.05465]: (things that can be conjugated by ZZ to eachother are symmetrical - same orbit of R_ZZ -- as are things that you can swap X and Y to get to eachother (search "gauge freedom" in the paper, this is because the two qubit gate is RZZ(π/2)). I would assume that these errors include the errors introduced by the additional 300
@@ -329,8 +335,12 @@ def helios_errors(p, l):
     ⇒  p_l =  4.4e-4  when t = 0.055s 
     ⇒  m   =  4.4e-4 / 0.055 = 8e-3   
 	⇒  p_l =  8e-3 * t                                       <----  idling leakage function'''
-def helios_idle_errors(p, l):
+def helios_idle_errors(p, code):
 
+    l = code.l
+    m = code.m
+
+    # ratio = l * m / 98 # temporarily for actual_helios
 
     ratio = 2 * l / 98 # Helios depth-1 transport error is for RANDOMLY pairing, cooling and performing two-qubit gates on 98 qubits. Each time step where we need to pair qubits it is l check qubits with l data qubits (where l depends on the BB code). These are already arranged into modules that need to be paired and within modules it is only a cyclic shift difference rather than a random pairing. Still, we will overestimate by assuming random pairings, however we will assume that requiring to pair x qubits rather than 98 would take ratio = x/98 the time. This ratio gets multiplied by the p_z = 2.4e-4 depth-1 transport error (could equivlently multiply it by the time then sub into p_idle_dephasing but get same result as for small t the exponential is almost linear)
 
