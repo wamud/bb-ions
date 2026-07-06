@@ -23,12 +23,12 @@ class Registers:
 
 ''' order_of_ops
 The syndrome extraction circuit we are following is as per Algorithm 2 in Edwin Tham et al.'s paper [2508.01879]. The polynomials in the BB code are A and B and made of sums of terms x^i⋅y^j. We go through each value of j and then apply any values of i that appear. This function prints that out. This is deternined by doing ascending powers of j then powers of i that correspond to that power of j in order of what they have been input as in the polynomials. (As in, the powers of i are not in any particular order for a given j, they're just what the polynomials have been input as.)'''
-def order_of_ops(code, swapLRC = False):
+def order_of_ops(code, swapLRC=False):
 
     l = code.l
     m = code.m 
 
-    if SWAPLRC:
+    if swapLRC:
       JTunion = code.JTunion
       JTunion.reverse() # put in reverse order (descending, so [-2, -1, 0] becomes [0, -1, -2]. If we don't reverse, sometimes the last j value of X-checks would align with the first j value of the Z-checks and reduce shuttling. Reversing the order makes this impossible unless there is only one j value: 0. However what it does do (combined with the chosen order of 2q gates in 'apply_cyclic_shift ... ' - A then B, AT then BT) is guarantee that the X and Z checks have their last 2q gates interact with opposite type data qubits (i.e. L or R) so that if we're doing a swap-LRC we are alternating which data qubits are being swapped
       code.JTunion = JTunion
@@ -70,7 +70,7 @@ given durations of each gate in Helios, calculate how long a round takes for dif
 def loosely_calculate_round_time(code):
   l = code.l
   m = code.m
-  # At the moment this is quite rough and is for BB5 [[48, 4, 7]] code (5 sets of two-qubit gates), also these times are for non-sequential operations (apart from sequential two-qubit gates) so are underestimates. If you have all sequential operations then pL will be higher but so will the memory time (this, atm, will give an underestimate of the memory time)
+  # At the moment this is quite rough. To do: improve
   # (Times in ms):
   t = 0.31 + 0.07 + 27.5 + 2*(l*0.65 + l*0.65 + l*0.65 + 55 + l*0.65 + 55 + l*0.65+ 0.24)
   return t/1000
@@ -823,14 +823,14 @@ def add_2q_gates(gate, matrix, circuit, jval, code, registers, errors, idle_duri
       
 
         if RESHUFFLING:
-          # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). This takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got 30 pairs i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/48 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
+          # We've done this i value's 2q gates: now do a 'reshuffling error' to account for the different cyclic shift required for the next i value. We will overestimate this as being proportional to Helios' depth-1 transport error for randomly pairing 98 qubits even though changing the cyclic shift of pairs is much less costly. In Helios noise we're saying a 'shuttle' is half the error to randomly pair 98 qubits and do two-qubit gates on them. (We combine two shuttles in succession to represent the complete cyclic shift even though this is also an overestimate). Two shuttles takes 55ms. Reverse-calculating the T2 from this gave T2 = 115s (see noisefuncs.py). At small scales p_idle_dephasing(t, T2) is basically a linear function so whether we divide the error by how many qubits we're reshuffling or the time it gives the same result. So we'll just divide the error here. E.g. the [[360,12,≤24]] code has l = 30. So we've got l=30 PAIRS i.e. 60 qubits to reshuffle: the error will be p_idle_dephasing(0.055 * (60/98), 115) or 60/49 multiplied by the shuttle error which is already half of the 98-qubit depth-1 transport time:
           if an_index != len(Mij) - 1: # (if last set of 2q gates for this j value we have a cyclic shift error coming so don't need to apply reshuffle:)
             err = copy.copy(idle_during['shuttle'])
             # update the p of this error (note it doesn't change the dictionary value for shuttle error just this variable called err)
 
-            ratio = 2 * code.l / 48
+            ratio = 2 * code.l / 49   # there are l pairs of qubits to reshuffle (though it's not a random reshuffling, actually just a different cyclic shift aligning qubits that were already aligned in a different cylic shift so this is an overestimate)
 
-            err.p = err.p * ratio  # there are l pairs of qubits to reshuffle (though it's not a random reshuffling, actually just a different cyclic shift aligning qubits that were already aligned in a different cylic shift so this is an overestimate)
+            err.p = err.p * ratio 
             err.p_leak = err.p_leak * ratio
             err.p_relax = err.p_relax * ratio
             idle(circuit, qD + qD_idle + qC, err)

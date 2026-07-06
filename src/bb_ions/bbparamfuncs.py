@@ -435,6 +435,37 @@ def two_gross_code():
     return code
 
 
+
+def bb6_288_16_12():
+    # From evolutionary discovery of BB codes paper [2606.02418v1]
+    l = 12
+    m = 12
+    Aij = [(3, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (1, 0), (2, 0)]
+    d = 12
+    code = get_code_paramas(l, m, Aij, Bij, d)
+
+    # Is a multiple of the gross code? This is just a 2-cover of the gross code
+
+    # l = 12 , m = 6,
+    # A = x^3 + y + y^2
+    # B = y^3 + x + x^2
+    return code
+
+
+
+def sum_gross_codes():
+    # [[288, 24, 12]]
+    # Is a direct sum of two gross codes -- from evolutionary discovery of BB codes paper [2606.02418v1]
+    l = 12
+    m = 12
+    Aij = [(6, 0), (0, 1), (0, 2)]
+    Bij = [(0, 3), (2, 0), (4, 0)]
+    d = 12
+    code = get_code_paramas(l, m, Aij, Bij, d)
+    return code
+
+
 '''bb6_360_code'''
 def bb6_360_code():
     # [[360, 12, ≤24]] BB6 code from OG BB paper [2308.07915] Table III
@@ -460,6 +491,9 @@ def interchanged_bb6_360_code():
     d = 24
     code = get_code_params(l, m, Aij, Bij, d)
     return code
+
+
+
 
 ''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
 def bb6_378_16_18():
