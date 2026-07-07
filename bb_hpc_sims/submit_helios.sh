@@ -3,9 +3,9 @@
 # Run this as: qsub submit.sh
 
 #PBS -N sims
-#PBS -l ncpus=64
-#PBS -l mem=120GB
-#PBS -l walltime=120:00:00
+#PBS -l ncpus=32
+#PBS -l mem=150GB
+#PBS -l walltime=100:00:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
 
