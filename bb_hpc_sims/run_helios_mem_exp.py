@@ -42,7 +42,6 @@ def main():
                 osd_order = 5,
                 osd_method = "osd_cs"
                 # (other settings left unspecified so they take the default values)
-                
             )
         }
 

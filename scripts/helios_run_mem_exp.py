@@ -23,8 +23,8 @@ custom_decoders = {
                 # Implies ms_scaling_factor is 1.0, schedule is parallel
             ),
             "bposd_625": SinterDecoder_BPOSD(
-                ## Rebecca's settings:
-                max_bp_iters = 10_000, # Becca: 10, # default 30
+                ## Rebecca's settings (slower but slightly better)
+                max_bp_iters = 10, # Becca: 10, # default 30
                 bp_method="min_sum", # product_sum (default), min_sum, min_sum_log
                 ms_scaling_factor = 0.625, # normalisation
                 schedule="serial", 
