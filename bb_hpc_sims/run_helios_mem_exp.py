@@ -13,7 +13,7 @@ def main():
  
     start_time = time.time()
     
-    circuit_paths = glob.glob(f"actual_helios/*.stim")
+    circuit_paths = glob.glob(f"all_codes/*.stim")
     if len(circuit_paths) == 0:
         print("No circuits")
         sys.exit()
@@ -23,7 +23,7 @@ def main():
     pbs_jobid = os.environ.get("PBS_JOBID")
     job_number = pbs_jobid.split(".", 1)[0]
 
-    csv_path = f"actual_helios_{job_number}.csv"
+    csv_path = f"all_codes_{job_number}.csv"
 
 
     tasks = [
