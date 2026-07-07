@@ -1,10 +1,13 @@
-import stim
+import deltakit_stim
+import sys
+sys.modules["stim"] = deltakit_stim 
+
+
 import sinter
 import numpy as np
 import glob
 from stimbposd import SinterDecoder_BPOSD, sinter_decoders
 import time
-import sys
 import os
 
 
