@@ -234,7 +234,7 @@ def helios_errors(p, code):
     l = code.l
     m = code.m
 
-    # ratio = 2 * l / 98 # Helios depth-1 transport error is for RANDOMLY pairing, cooling and performing two-qubit gates on 98 qubits. Each time step where we need to pair qubits it is l check qubits with l data qubits (where l depends on the BB code). These are already arranged into modules that need to be paired and within modules it is only a cyclic shift difference rather than a random pairing. Still, we will overestimate by assuming random pairings, however we will assume that requiring to pair x qubits rather than 98 would take ratio = x/98 the time. This ratio gets multiplied by the p_z = 2.4e-4 depth-1 transport error (could equivlently multiply it by the time then sub into p_idle_dephasing but get same result as for small t the exponential is almost linear)
+    ratio = 2 * l / 98 # Helios depth-1 transport error is for RANDOMLY pairing, cooling and performing two-qubit gates on 98 qubits. Each time step where we need to pair qubits it is l check qubits with l data qubits (where l depends on the BB code). These are already arranged into modules that need to be paired and within modules it is only a cyclic shift difference rather than a random pairing. Still, we will overestimate by assuming random pairings, however we will assume that requiring to pair x qubits rather than 98 would take ratio = x/98 the time. This ratio gets multiplied by the p_z = 2.4e-4 depth-1 transport error (could equivlently multiply it by the time then sub into p_idle_dephasing but get same result as for small t the exponential is almost linear)
 
     # ratio = l * m / 98 # temporarily for actual_helios
 

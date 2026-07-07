@@ -11,8 +11,8 @@ noise = 'helios'
 memory_basis = 'X' # mem X is worst-case in Helios due to two-qubit gate and idling being dominate by Z errors
 num_syndrome_extraction_cycles = 20
 only_CZs = True
-seq_ops = True
-seq_meas = True
+seq_ops = False
+seq_meas = False
 leakage = True
 loss = True
 leakage_repumping = True
@@ -20,15 +20,19 @@ cycles = 3
 swapLRC = False
 leakage_heralds = False
 exclude_opp_basis_detectors = True
+reuse_check_qubits = True
 
 
 for p in [0.001]:
 
     for code in [bb5_48_4_7(), bb5_60_4_8(), bb6_72_12_6(), gross_code(), two_gross_code(), bb6_360_code(), undercover_code(), interchanged_bb6_360_code()]:
-    
-        max_parallel_1q_ops = 16 * code.m
-        max_parallel_2q_ops = 4 * code.m
 
+        l = code.l
+        m = code.m
+        
+        if seq_ops == False and seq_meas == False and reuse_check_qubits == True:
+            max_parallel_1q_ops = 3 * l * m
+            max_parallel_2q_ops = l * m  # the most that can be done in a single time-step is l * m when doing non-interleaved syndrome extraction.
 
         filename = f"n={code.n},k={code.k},d={code.d_max},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)}"
         
@@ -36,14 +40,14 @@ for p in [0.001]:
 
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
-            errors = helios_errors(p, code.l),
-            idle_during = helios_idle_errors(p, code.l),
+            errors = helios_errors(p, code),
+            idle_during = helios_idle_errors(p, code),
             num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
             memory_basis = memory_basis,
             sequential_operations = seq_ops, 
             sequential_measurements = seq_meas,
             exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-            reuse_check_qubits = True,
+            reuse_check_qubits = reuse_check_qubits,
             leakage = leakage,
             only_CZs = only_CZs,
             leakage_repumping = leakage_repumping,
@@ -57,4 +61,4 @@ for p in [0.001]:
 
 
         # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/all_codes_parallel_ops/{filename}.stim")
