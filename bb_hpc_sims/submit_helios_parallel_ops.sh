@@ -4,7 +4,7 @@
 
 #PBS -N sims
 #PBS -l ncpus=64
-#PBS -l mem=120GB
+#PBS -l mem=200GB
 #PBS -l walltime=120:00:00
 #PBS -m abe
 #PBS -M anthony.orourke@student.uts.edu.au
@@ -21,8 +21,8 @@ mkdir -p ${SCRATCH}
 cd ${PBS_O_WORKDIR}
 
 # Copy your input files from there to the scratch directory you created above.
-if [ -d "../circuits/leakage_and_loss/all_codes/" ]; then
-    cp -r "../circuits/leakage_and_loss/all_codes/" "${SCRATCH}"
+if [ -d "../circuits/leakage_and_loss/all_codes_parallel_ops/" ]; then
+    cp -r "../circuits/leakage_and_loss/all_codes_parallel_ops/" "${SCRATCH}"
 fi
 
 ###############
@@ -33,7 +33,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate bb_env
 
 cd ${SCRATCH}
-python3 ${PBS_O_WORKDIR}/run_helios_mem_exp.py
+python3 ${PBS_O_WORKDIR}/run_helios_mem_exp_parallel_ops.py
 
 #####################################################
 # Copy results back to your own directory and cleanup
