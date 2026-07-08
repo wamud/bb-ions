@@ -101,8 +101,8 @@ for u,t in all_pairs:
     seen_structures = set()   # (Aij, Bij) normalisés
 
     for Aij, Bij in all_lifts(og_Aij, og_Bij, og_l, og_m, u, t):
-        print(Aij)
-        print(Bij)
+#        print(Aij)
+#        print(Bij)
 
 
         # --- normalisation translation ---
