@@ -133,7 +133,7 @@ for u,t in all_pairs:
             continue
         
         p = 0.1
-        target_runs = 1000
+        target_runs = 500
 
         with suppress_stdout():
             bb5 = css_decode_sim.css_decode_sim(hx = Hx, hz = Hz, error_rate = p, target_runs = target_runs, **osd_options)
