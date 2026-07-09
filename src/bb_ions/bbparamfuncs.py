@@ -659,10 +659,10 @@ def suppress_stdout():
 
 ''' find_d_max
 Given the X and Z parity-check matrices of a css code, this function finds the maximum distance it could have. I.e. it runs simulations with bposd decoder to find the distance of the code. We call this maximum distance as there could be a logical operator with a smaller weight that would cause a logical error (i.e., a smaller distance) but the simulations didn't see it. Increase target_runs for more certainty in d_max'''
-def find_d_max(Hx, Hz):
+def find_d_max(Hx, Hz, target_runs = 500):
     
     osd_options={
-    'target_runs': 500, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': int(round(100*random.random())), 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
+    'target_runs': target_runs, 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': int(round(100*random.random())), 'max_iter': 9, 'error_bar_precision_cutoff': 1e-6, 'tqdm_disable' : 1
     }
 
     error_rate = 0.1
@@ -686,7 +686,7 @@ Then
 Aij = [(0, 0), (1, 0)]
 Bij = [(0, 0), (0, 1), (2, 2)]
 The A and B matrices returned by this function are the actual matrices A, B'''
-def get_code_params(l, m, Aij, Bij, d_max = None):
+def get_code_params(l, m, Aij, Bij, d_max = None, target_runs = 500):
 
 
 
@@ -724,7 +724,7 @@ def get_code_params(l, m, Aij, Bij, d_max = None):
         return code
 
     if d_max == None:
-        d_max = find_d_max(Hx, Hz) 
+        d_max = find_d_max(Hx, Hz, target_runs = target_runs) 
 
     As_is = group_by_j(Aij)
     Bs_is = group_by_j(Bij)
