@@ -312,7 +312,7 @@ def bb8_64_12_8():
 
 
 
-'''bb6_72_12_6_code'''
+'''bb6_72_12_6'''
 def bb6_72_12_6():
     # [[72, 12, 6]] BB6 code from OG BB paper [2308.07915] Table II
     l = 6

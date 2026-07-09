@@ -56,17 +56,23 @@ def all_lifts(Aij, Bij, og_l, og_m, u, t):
 
 osd_options={ 'xyz_error_bias': [1, 1, 1], 'bp_method': "minimum_sum", 'ms_scaling_factor': 0.05, 'osd_method': "osd_cs", 'osd_order': 4, 'channel_update': None, 'seed': 42, 'max_iter': 9, 'tqdm_disable' : 1, 'error_bar_precision_cutoff': 1e-6}
 
-code = bb5_48_4_7()
 
 
-if len(sys.argv) < 2:
-    print("This script requires input h")
-
-h = int(sys.argv[1])
 
 
-min_k = 12
-min_d = 7
+code_name = str(sys.argv[1])
+h = int(sys.argv[2])
+min_k = int(sys.argv[3])
+min_d = int(sys.argv[4])
+
+
+
+if len(sys.argv) < 3:
+    print("This script requires inputs code, h-cover, min_k, min_d. E.g. find_h_cover_codes.py gross_code 4 12 12 (see src/bb_ions/bbparamfuncs for possible code names)")
+code = eval(f"{code_name}()")
+
+
+print(f"Finding {h}-cover codes of [[{code.n}, {code.k}, {code.d_max}]] code with k ≥ {min_k}, d ≥ {min_d}")
 
 
 og_l = code.l
@@ -78,8 +84,7 @@ og_Bij = code.Bij
 
 
 
-print(h)
-filename = f"[[{code.n}, {code.k}, {code.d_max}]] {h}-cover codes"
+filename = f"[[{code.n}, {code.k}, {code.d_max}]] {h}-covers min_k={min_k}, min_d={min_d}"
 temp_file = f"../found_h_cover_codes/{filename}_partial.jsonl"
 results_file = f"../found_h_cover_codes/{filename}.jsonl"
 progress_file = f"../found_h_cover_codes/{filename}_progress.txt"
@@ -87,16 +92,14 @@ progress_file = f"../found_h_cover_codes/{filename}_progress.txt"
 pairs = factor_pairs(h)
 reversed_pairs = [(t, u) for u, t in pairs]
 all_pairs = pairs + reversed_pairs
-print(all_pairs)
+# print(all_pairs)
 
 for u,t in all_pairs:
 
     l = u * og_l
     m = t * og_m
 
-    print(f"l={l}")
-    print(f"m={m}")
-    print()
+    print(f"l={l}, m={m}")
 
 
     seen_structures = set()   # (Aij, Bij) normalisés
@@ -153,7 +156,7 @@ for u,t in all_pairs:
             # f"pL at p = {p}": bb5.osdw_logical_error_rate,
         }
 
-        print(f"[[48, 4, 7]] {h}-cover: l={l},m={m}", entry)
+        print("  ", entry)
 
         append_entries_to_json([entry], temp_file)
         del bb5
