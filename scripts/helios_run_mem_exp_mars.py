@@ -62,7 +62,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 1000,
         max_errors = 10,
         tasks = tasks,
@@ -74,7 +74,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 100_000,
         max_errors = 10,
         tasks = tasks,
@@ -87,7 +87,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 1_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -100,7 +100,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 1_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -112,7 +112,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 10_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -124,7 +124,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 100_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -137,7 +137,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 1_000_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -149,7 +149,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 10_000_000_000,
         max_errors = 5,
         tasks = tasks,
@@ -161,7 +161,7 @@ def main():
         )
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2,
+        num_workers = 24,
         max_shots = 100_000_000_000,
         max_errors = 5,
         tasks = tasks,
