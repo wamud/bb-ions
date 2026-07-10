@@ -142,6 +142,17 @@ def bb8_12_4_2():
 
 ''' Larger BB codes from papers'''
 
+def bb5_18_4_3():
+    # [[18, 4, 3]] BB5 code from IonQ experimental realisation of many qLDPC codes []
+    l = 3
+    m = 3
+    Aij = [(0, 0), (1, 0)]
+    Bij = [(0, 0), (0, 1), (1, 2)]
+    d = 3
+    code = get_code_params(l, m, Aij, Bij, d)
+    return code
+
+
 def bb6_18_4_3():
     # [[18, 4, 3]] BB6 code from relayBP github: https://tinyurl.com/5a7urtbf
     l = 3 # only other options are l = 9 and m = 1 or vice versa which doesn't give logical qubits so must be  l = m = 3
@@ -497,7 +508,7 @@ def interchanged_bb6_360_code():
 
 
 
-''' Instead of h-cover, me searching for an undercover of the 756 code found:'''
+''' Instead of h-cover, searching for an undercover of the 756 code found:'''
 def bb6_378_16_18():
     l= 21
     m = 9
