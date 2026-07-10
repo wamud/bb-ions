@@ -437,13 +437,13 @@ def two_gross_code():
 
 
 def bb6_288_16_12():
-    # From evolutionary discovery of BB codes paper [2606.02418v1]
+    # 2-cover of gross code (can run ''find_codes/scripts/find_h_cover_codes.py gross_code 2 16 12''). (Identical to gross code except m = 2m_gross). Also found indepentently using an LLM in [2606.02418v1] but really they should have searched h-covers first as it's much faster and less costly.
     l = 12
     m = 12
     Aij = [(3, 0), (0, 1), (0, 2)]
     Bij = [(0, 3), (1, 0), (2, 0)]
     d = 12
-    code = get_code_paramas(l, m, Aij, Bij, d)
+    code = get_code_params(l, m, Aij, Bij, d)
 
     # Is a multiple of the gross code? This is just a 2-cover of the gross code
 
@@ -451,6 +451,8 @@ def bb6_288_16_12():
     # A = x^3 + y + y^2
     # B = y^3 + x + x^2
     return code
+
+two_cover_gross = bb6_288_16_12
 
 
 
