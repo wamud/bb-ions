@@ -41,7 +41,7 @@ def main():
     
 
     circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes.csv"
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_2.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -50,7 +50,7 @@ def main():
         print(path)
 
 
-    # existing = glob.glob(f"../collected_stats/helios_noise/other_investigations/actual_helios_best.csv") 
+    existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes.csv") 
 
     tasks = [
         sinter.Task(
