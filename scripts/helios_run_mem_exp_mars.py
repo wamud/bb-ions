@@ -40,8 +40,8 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_mars.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/288_16_12/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/288_16_12.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
