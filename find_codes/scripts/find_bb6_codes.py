@@ -253,10 +253,8 @@ print(f"l = {l}, m = {m}")
 
 filename = f"bb6_l{l}_m{m}_k{min_k}_d{min_d_max}"
 
-temp_file = f"../found_codes/not_multivariate/{filename}_partial.jsonl"
-results_file = f"../found_codes/not_multivariate/{filename}.jsonl"
-progress_file = f"../found_codes/not_multivariate/l{l}_m{m}_progress.txt"
-
+temp_file = f"../found_codes/around_416/{filename}_partial.jsonl"
+results_file = f"../found_codes/around_416/{filename}.jsonl"
 
 
 ivalues = range(l)
@@ -277,9 +275,6 @@ for loop in range(len(ivectors)):
     for count, jvec in enumerate(jvectors):
         ivec = ivectors[(count + loop) % len(ivectors)]
 
-        if count % 100 == 0:
-            with open(progress_file, "w") as f:
-                f.write(f"loop = {loop}, count = {count}")
 
 
         i0, i1, i2, i3, i4, i5 = ivec
@@ -300,8 +295,8 @@ for loop in range(len(ivectors)):
             continue 
 
         # BB6 codes of the form of original BB paper (not multivariate, A is x,y,y B is y,x,x)    
-        if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
-            continue
+        # if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
+            # continue
 
 
         Aij = [(i0, j0), (i1, j1), (i2, j2)]
@@ -351,7 +346,7 @@ for loop in range(len(ivectors)):
 
         # --- distance ---
         p = 0.1
-        target_runs = 500
+        target_runs = 1000
 
         with suppress_stdout():
             bb6 = css_decode_sim.css_decode_sim(
