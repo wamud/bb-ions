@@ -41,7 +41,7 @@ def main():
     
 
     circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/hash_test.csv"
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_3.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -49,7 +49,7 @@ def main():
     for path in circuit_paths:
         print(os.path.basename(path))
 
-    existing = [] #glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
+    existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
     # print(f"existing = {existing}")
 
     tasks = [
@@ -73,30 +73,30 @@ def main():
         print_progress = True
         )
 
-    # samples = sinter.collect(
-    #     num_workers = multiprocessing.cpu_count(),
-    #     max_shots = 100_000_000,
-    #     max_errors = 10,
-    #     tasks = tasks,
-    #     decoders=['bposd'],
-    #     existing_data_filepaths = existing,
-    #     save_resume_filepath = csv_path,
-    #     custom_decoders = custom_decoders,
-    #     print_progress = True
-    #     )
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 100_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
 
 
-    # samples = sinter.collect(
-    #     num_workers = multiprocessing.cpu_count(),
-    #     max_shots = 1_000_000_000,
-    #     max_errors = 10,
-    #     tasks = tasks,
-    #     decoders=['bposd'],
-    #     existing_data_filepaths = existing,
-    #     save_resume_filepath = csv_path,
-    #     custom_decoders = custom_decoders,
-    #     print_progress = True
-    #     )
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 1_000_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
 
     end_time = time.time()
     print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
