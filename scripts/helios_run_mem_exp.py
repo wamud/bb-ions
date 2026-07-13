@@ -50,12 +50,12 @@ def main():
         print(os.path.basename(path))
 
 
-    existing = [] #glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
+    existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
     # print(f"existing = {existing}")
 
     tasks = [
         sinter.Task(
-            circuit = deltakit_stim.Circuit.from_file(path),#.flattened(), # Have to flatten to make leakage heralds work, otherwise for some reason (deltakit stim bug?) 4 or more rounds in a circuit create a mismatch between the num. of detectors in the circuit versus the DEM.
+            circuit = deltakit_stim.Circuit.from_file(path).flattened(), # Have to flatten to make leakage heralds work, otherwise for some reason (deltakit stim bug?) 4 or more rounds in a circuit create a mismatch between the num. of detectors in the circuit versus the DEM.
             json_metadata = sinter.comma_separated_key_values(path),
         )
         for path in circuit_paths
