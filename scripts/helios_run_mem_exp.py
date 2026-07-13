@@ -47,10 +47,11 @@ def main():
     if len(circuit_paths) == 0:
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!No circuits!!!!!!!!!!!!!!!!!!!!!!!!!!")
     for path in circuit_paths:
-        print(path)
+        print(os.path.basename(path))
 
 
     existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
+    # print(f"existing = {existing}")
 
     tasks = [
         sinter.Task(
