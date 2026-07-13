@@ -434,7 +434,7 @@ def bb6_210_code():
     # A found 2-undercover of the found [[420, 16, 18]] code
     entry = {'nkd': [210, 8, 18], 'l': 7, 'm': 15, 'Aij': [(0, 0), (1, 2), (1, 8)], 'Bij': [(2, 13), (3, 11), (5, 4)]}
     return get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
-
+bb6_210_8_18 = bb6_210_code
 
 '''two_gross_code'''
 def two_gross_code():
@@ -454,7 +454,7 @@ def two_gross_code():
 
 
 def bb6_288_16_12():
-    # 2-cover of gross code (can run ''find_codes/scripts/find_h_cover_codes.py gross_code 2 16 12''). (Identical to gross code except m = 2m_gross). Also found indepentently using an LLM in [2606.02418v1] but really they should have searched h-covers first as it's much faster and less costly.
+    # 2-cover of gross code (can run ''find_codes/scripts/find_h_cover_codes.py gross_code 2 16 12''). (Identical to gross code except m = 2m_gross). Was found first using an LLM in [2606.02418v1] but really they should have searched h-covers first as it's much faster and less costly. I have simulated this code and sadly its performance isn't very good.
     l = 12
     m = 12
     Aij = [(3, 0), (0, 1), (0, 2)]
@@ -603,7 +603,6 @@ def bb8_192_14_16():
     return code
 
 
-
 def bb8_216_14_20():
     # From 2511.13560 -- actually returns code distance of d_max ≤ 16.
     l = 18
@@ -615,6 +614,7 @@ def bb8_216_14_20():
     d = 20
     code = get_code_params(l, m, Aij, Bij, d)
     return code
+
 
 def bb6_248_10_14():
     # From 2511.13560 -- had d = 18 in paper but actually returns code distance of d_max ≤ 14.

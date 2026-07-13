@@ -22,8 +22,8 @@ leakage_heralds = False
 exclude_opp_basis_detectors = True
 
 
-for p in [0.002]:
-    for code in [four_twenty_code(), undercover_code()]:
+for p in [0.001]:
+    for code in [four_twenty_code(), bb6_210_8_18()]:
         
 
         max_parallel_1q_ops = 16 * code.m
@@ -57,4 +57,4 @@ for p in [0.002]:
 
 
         # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/four_twenty/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")

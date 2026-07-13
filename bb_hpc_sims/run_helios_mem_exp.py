@@ -84,6 +84,9 @@ def main():
         print_progress = False
         )
 
+
+
+
     end_time = time.time()
     print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
 

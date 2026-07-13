@@ -2113,7 +2113,7 @@ def make_BB_circuit(
         # Append loop_body to circuit:
         circ = circ + (num_syndrome_extraction_cycles - 1) * loop_body
 
-    elif swapLRC  == True: # Just manually tack on the extra rounds rather than making a 'repeat' section. To simulate in deltakit_stim (with leakage) atm the circuits have to be flattened anyway..
+    elif swapLRC  == True: # Just manually tack on the extra rounds rather than making a 'repeat' section. To simulate in deltakit_stim (with leakage heralds) atm the circuits have to be flattened anyway..
       if num_syndrome_extraction_cycles > 1:
         for rep in range(num_syndrome_extraction_cycles - 1):
           
