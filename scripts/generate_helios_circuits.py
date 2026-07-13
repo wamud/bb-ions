@@ -27,20 +27,26 @@ entries = [   # These might all be equivalent
     {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
     {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
     {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [8, 2], [8, 8]],  "Bij": [[2, 13], [10, 11], [12, 4]]}
+    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [8, 2], [8, 8]],  "Bij": [[2, 13], [10, 11], [12, 4]]},
+    {"nkd": [420, 16, 18], "l": 10, "m": 21, "Aij": [[0, 0], [2, 17], [8, 11]], "Bij": [[0, 15], [2, 15], [6, 11]]}
     ]
 
 
 
-for p in [0.003]:
+for p in [0.003, 0.005]:
     for entry in entries:
 
         code = get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
-        max_parallel_1q_ops = 16 * code.m
-        max_parallel_2q_ops = 4 * code.m
+        if seq_ops == True and seq_meas == True:
+            max_parallel_1q_ops = 16 * code.m
+            max_parallel_2q_ops = 4 * code.m
+        else:
+            max_parallel_1q_ops = 'all'
+            max_parallel_2q_ops = 'all'
 
-
-        filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},b={memory_basis},excl_opp_dtctrs={exclude_opp_basis_detectors}"
+        filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_dtctrs={exclude_opp_basis_detectors}"
+        # prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},
+        
         
         print("Creating: ",filename)
 
