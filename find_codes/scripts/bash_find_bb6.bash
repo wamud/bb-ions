@@ -1,5 +1,5 @@
 #!/bin/bash
-for ((unique_integer=1; unique_integer<5; unique_integer++)); do
+for ((unique_integer=9; unique_integer<=10; unique_integer++)); do
     for ((m=2; m<=210; m++)); do
         for ((l=2; l<m+1; l++)); do  # m <= l pour éviter les doublons symétriques
 
@@ -21,7 +21,7 @@ for ((unique_integer=1; unique_integer<5; unique_integer++)); do
             source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
             conda activate base
 
-            python find_bb6_codes_2.py "$l" "$m" "$min_k" "$min_d" "$unique_integer"  &
+            python find_bb6_codes.py "$l" "$m" "$min_k" "$min_d" "$unique_integer"  &
 
         done
     done
