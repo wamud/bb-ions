@@ -3,7 +3,6 @@ import scipy
 import pandas as pd
 import itertools
 import random
-import time
 import sys
 import gc
 import os
@@ -45,26 +44,23 @@ osd_options = {
 }
 
 
-if len(sys.argv) < 4:
-    print("This script requires inputs l, m, min_k, min_d")
+if len(sys.argv) < 5:
+    print("This script requires inputs l, m, min_k, min_d, unique_integer")
 
 
 l = int(sys.argv[1])
 m = int(sys.argv[2])
 min_k = int(sys.argv[3])
 min_d_max = int(sys.argv[4])
+unique_integer = int(sys.argv[5])
 
 print(f"l = {l}, m = {m}")
 
-filename = f"bb6_l{l}_m{m}_k{min_k}_d{min_d_max}"
+filename = f"bb6_{unique_integer}_l{l}_m{m}_k{min_k}_d{min_d_max}"
 
 temp_file = f"../found_codes/around_416/{filename}_partial.jsonl"
 results_file = f"../found_codes/around_416/{filename}.jsonl"
 
-seed = int(time.time_ns())
-print(f"Seed for l={l}, m={m} is {seed}")
-
-random.seed(seed)
 
 ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat=6))
