@@ -21,6 +21,133 @@ class Error:
 
 
 
+
+
+
+''' zero_errors
+    Set all errors to zero'''
+def zero_errors():
+    errors = {
+
+        "RZ" : Error("DEPOLARIZE1", 0), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
+
+        "RX" : Error("DEPOLARIZE1", 0), # as opposed to Z_ERROR
+        "H" : Error("DEPOLARIZE1", 0),
+        "CNOT" : Error("DEPOLARIZE2", 0),
+        "CZ" : Error("DEPOLARIZE2", 0),
+        "MZ" : Error("X_ERROR", 0),
+        "MX" : Error("Z_ERROR", 0),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+
+        "shift_prop_to" : 0, 
+
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", 0) 
+        
+    }
+    
+    return errors
+
+
+''' zero_idling
+    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation'''
+def zero_idling():
+
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", 0),
+        "RX" : Error("DEPOLARIZE1", 0), 
+        "H" : Error("DEPOLARIZE1", 0),
+        "CNOT" : Error("DEPOLARIZE1", 0),
+        "CZ" : Error("DEPOLARIZE1", 0),
+        "MZ" : Error("DEPOLARIZE1", 0),
+        "MX" : Error("DEPOLARIZE1", 0),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+        "pause" : Error("DEPOLARIZE1", 0),
+
+        "shift_prop_to" : 0,
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
+        "error_per_repump" : Error("DEPOLARIZE1", 0),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+    }
+
+    return idle_during
+
+
+''' uniform_errors
+Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).'''
+def uniform_errors(p):
+    
+    p_relax = round_sig_fig(( p / (1 - p)), 6)
+    p_leak = p
+
+    errors = {
+
+        "RZ" : Error("X_ERROR", p, p_leak, p_relax), 
+        "RX" : Error("Z_ERROR", p, p_leak, p_relax),
+        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CNOT" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE2", p, p_leak, p_relax),
+        "MZ" : Error("X_ERROR", p, p_leak, p_relax),
+        "MX" : Error("Z_ERROR", p, p_leak, p_relax),
+
+
+        # Qubit module errors -- None
+        "shift" : Error("DEPOLARIZE1", 0),
+        "shift_prop_to" : None, 
+
+        # Additional for our architecture - None
+        "shuttle" : Error("DEPOLARIZE1", 0), 
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+
+        # Added repumping error from Honeywell in case it gets called:
+        "error_per_repump" : Error("DEPOLARIZE1", p),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
+
+        "four_ion_shift" : Error("DEPOLARIZE1", p),
+    }
+    
+    return errors
+
+
+def uniform_idling(p):
+
+
+    p_relax = round_sig_fig(( p / (1 - p)), 6)
+    p_leak = p
+
+    idle_during = {
+        "RZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "RX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CNOT" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "CZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "MZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+        "MX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
+
+        "shuttle" : Error("DEPOLARIZE1", 0),
+        "merge" : Error("DEPOLARIZE1", 0),
+        "split" : Error("DEPOLARIZE1", 0),
+        "shift" : Error("DEPOLARIZE1", 0),
+
+        "shift_prop_to" : 0,
+
+        "pause" : Error("DEPOLARIZE1", 0),
+
+        "four_ion_shift" : Error("DEPOLARIZE1", 0),
+
+    }
+
+    return idle_during
+
+
 ''' longchain_errors
 Ye & Delfossse "long chains of trapped ions" [2503.22071] noise values for within each module 
 (Note we define "shuttling" as the steps aligning modules before or after they have been cyclically shifted (getting them from the racetrack loop of check qubit modules into the legs that contain the data qubit modules. For the "shuttling" required for the cyclic shifts we call this "shift" error)'''
@@ -400,130 +527,6 @@ def helios_idle_errors(p, code):
     }
 
     return helios_idle_during
-
-
-''' zero_errors
-    Set all errors to zero'''
-def zero_errors():
-    errors = {
-
-        "RZ" : Error("DEPOLARIZE1", 0), # note is depolarize (as per longcahin paper) as opposed to X_ERROR
-
-        "RX" : Error("DEPOLARIZE1", 0), # as opposed to Z_ERROR
-        "H" : Error("DEPOLARIZE1", 0),
-        "CNOT" : Error("DEPOLARIZE2", 0),
-        "CZ" : Error("DEPOLARIZE2", 0),
-        "MZ" : Error("X_ERROR", 0),
-        "MX" : Error("Z_ERROR", 0),
-
-        "shuttle" : Error("DEPOLARIZE1", 0),
-        "merge" : Error("DEPOLARIZE1", 0),
-        "split" : Error("DEPOLARIZE1", 0),
-        "shift" : Error("DEPOLARIZE1", 0),
-
-        "shift_prop_to" : 0, 
-
-
-        # Added repumping error from Honeywell in case it gets called:
-        "error_per_repump" : Error("DEPOLARIZE1", 0) 
-        
-    }
-    
-    return errors
-
-
-''' zero_idling
-    Defines default idling gates and error rates, i.e. the operation and probability of that operation applied to qubits that are idling in a timestep that other qubits are experiencing the key operation'''
-def zero_idling():
-
-    idle_during = {
-        "RZ" : Error("DEPOLARIZE1", 0),
-        "RX" : Error("DEPOLARIZE1", 0), 
-        "H" : Error("DEPOLARIZE1", 0),
-        "CNOT" : Error("DEPOLARIZE1", 0),
-        "CZ" : Error("DEPOLARIZE1", 0),
-        "MZ" : Error("DEPOLARIZE1", 0),
-        "MX" : Error("DEPOLARIZE1", 0),
-
-        "shuttle" : Error("DEPOLARIZE1", 0),
-        "merge" : Error("DEPOLARIZE1", 0),
-        "split" : Error("DEPOLARIZE1", 0),
-        "shift" : Error("DEPOLARIZE1", 0),
-        "pause" : Error("DEPOLARIZE1", 0),
-
-        "shift_prop_to" : 0,
-        "four_ion_shift" : Error("DEPOLARIZE1", 0),
-        "error_per_repump" : Error("DEPOLARIZE1", 0),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
-    }
-
-    return idle_during
-
-
-''' uniform_errors
-Defines a standard depolarising noise channel, as used in original Bravyi et al. BB paper [2308.0791] (see page 16).'''
-def uniform_errors(p):
-    
-    p_relax = round_sig_fig(( p / (1 - p)), 6)
-    p_leak = p
-
-    errors = {
-
-        "RZ" : Error("X_ERROR", p, p_leak, p_relax), 
-        "RX" : Error("Z_ERROR", p, p_leak, p_relax),
-        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "CNOT" : Error("DEPOLARIZE2", p, p_leak, p_relax),
-        "CZ" : Error("DEPOLARIZE2", p, p_leak, p_relax),
-        "MZ" : Error("X_ERROR", p, p_leak, p_relax),
-        "MX" : Error("Z_ERROR", p, p_leak, p_relax),
-
-
-        # Qubit module errors -- None
-        "shift" : Error("DEPOLARIZE1", 0),
-        "shift_prop_to" : None, 
-
-        # Additional for our architecture - None
-        "shuttle" : Error("DEPOLARIZE1", 0), 
-        "merge" : Error("DEPOLARIZE1", 0),
-        "split" : Error("DEPOLARIZE1", 0),
-
-        # Added repumping error from Honeywell in case it gets called:
-        "error_per_repump" : Error("DEPOLARIZE1", p),  # For every repumping cycle there is a memory error on non-leaked qubits. This is not specified in the Quantinuum Helios paper but is instead based on this earlier paper from them (then Honeywell):  10.1103/PhysRevLett.124.170501 
-
-        "four_ion_shift" : Error("DEPOLARIZE1", p),
-    }
-    
-    return errors
-
-
-def uniform_idling(p):
-
-
-    p_relax = round_sig_fig(( p / (1 - p)), 6)
-    p_leak = p
-
-    idle_during = {
-        "RZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "RX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "H" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "CNOT" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "CZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "MZ" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-        "MX" : Error("DEPOLARIZE1", p, p_leak, p_relax),
-
-        "shuttle" : Error("DEPOLARIZE1", 0),
-        "merge" : Error("DEPOLARIZE1", 0),
-        "split" : Error("DEPOLARIZE1", 0),
-        "shift" : Error("DEPOLARIZE1", 0),
-
-        "shift_prop_to" : 0,
-
-        "pause" : Error("DEPOLARIZE1", 0),
-
-        "four_ion_shift" : Error("DEPOLARIZE1", 0),
-
-    }
-
-    return idle_during
 
 
 
