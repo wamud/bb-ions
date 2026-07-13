@@ -63,8 +63,9 @@ progress_file = f"../found_codes/l{l}_m{m}_progress.txt"
 # B = x^i3 * y^j3 + x^i4 * y^j4 + x^i5 * y^j5
 # In turn, A and B will be used in the Bicycle Bivariate code's parity check matrices as Hx = [A|B] and Hz = [B^T|A^T]
 
-
-i0, i1, i2, i3, i4, i5 = 3, 0, 0, 0, 3, 19
+# cover code values:
+i0_og, i1_og, i2_og, i3_og, i4_og, i5_og = 0, 2, 2, 5, 9, 11  # the x-power values of the original code 
+j0_og, j1_og, j2_og, j3_og, j4_og, j5_og = 0, 8, 6, 0, 9, 2
 
 # --- caches ---
 seen_structures = set()   # (Aij, Bij) normalisés
@@ -74,7 +75,7 @@ seen_codes = set()        # matrices canoniques
 for b in [0, 1]:
     for c in [0, 1]:
         for d in [0, 1]:
-            j0, j1, j2, j3, j4, j5 = 0, 10 - b * 9 , 17 - c * 9 , 5 - d * 9 , 0, 0
+            j0, j1, j2, j3, j4, j5 = j0_, 10 - b * 9 , 17 - c * 9 , 5 - d * 9 , 0, 0
 
             # Skip values where the same term appears twice in the same matrix (this would change the weight of the stabilisers as when they're added together mod 2 their ones cancel out in the parity check matrices)
             if (i0, j0) == (i1, j1) or (i0, j0) == (i2, j2) or (i1, j1) == (i2, j2):
@@ -82,15 +83,15 @@ for b in [0, 1]:
             if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i4, j4) == (i5, j5):
                 continue
 
-            ## Commented this out becasue original polynomials were not lexicographically ordered
-            # # Also equivalent polynomials with reordered terms need not be repeated. I.e. x^1y^2 + x^3 is equivalent to x^3 + x^1y^2.
+            ## Commented the below lines out becasue original polynomials were not lexicographically ordered
+            # # Equivalent polynomials with reordered terms need not be repeated. I.e. x^1y^2 + x^3 is equivalent to x^3 + x^1y^2.
             # # To avoid repeats let's just search terms that are in ascending order lexicographically (compare first element of tuple, if equal then compare second element of tuple)
             # if not ((i0, j0) < (i1, j1) < (i2, j2)):
             #     continue 
             # if not ((i3, j3) < (i4, j4) < (i5, j5)):
             #     continue 
 
-            Aij_orig = [(i0, j0), (i1, j1), (i2, j2)]
+            Aij_orig = [(i0, j0), (i1, j1), (i2, j2)] #pre-normalisation values
             Bij_orig = [(i3, j3), (i4, j4), (i5, j5)]
 
 

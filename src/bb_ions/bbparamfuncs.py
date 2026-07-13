@@ -429,6 +429,12 @@ def interchanged_gross_code():
 
     return code
 
+'''bb6_210_code'''
+def bb6_210_code():
+    # A found 2-undercover of the found [[420, 16, 18]] code
+    entry = {'nkd': [210, 8, 18], 'l': 7, 'm': 15, 'Aij': [(0, 0), (1, 2), (1, 8)], 'Bij': [(2, 13), (3, 11), (5, 4)]}
+    return get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
+
 
 '''two_gross_code'''
 def two_gross_code():
@@ -506,8 +512,6 @@ def interchanged_bb6_360_code():
     return code
 
 
-
-
 ''' Instead of h-cover, searching for an undercover of the 756 code found:'''
 def bb6_378_16_18():
     l= 21
@@ -574,7 +578,7 @@ def bb8_128_14_12():
     return code
 
 def fortnight_code():
-    # From 2511.13560
+    # From 2511.13560 - BB8 code
     l = 12
     m = 6
     # A = x^6 y^4 + x^5 y^4 + x^3 + x^11 y^3
@@ -599,6 +603,7 @@ def bb8_192_14_16():
     return code
 
 
+
 def bb8_216_14_20():
     # From 2511.13560 -- actually returns code distance of d_max ≤ 16.
     l = 18
@@ -621,8 +626,15 @@ def bb6_248_10_14():
     code = get_code_params(l, m, Aij, Bij)
     return code
 
+def bb6_648_code():
+    l = 18
+    m = 18
+    d_max = 36
+    Aij = [(3,0), (0, 13), (12, 2)]
+    Bij = [(0,3), (7, 12), (14, 6)]
+    return get_code_params(l, m, Aij, Bij, d_max)
 
-'''Bigger BB8 codes found by Ben Symons'''
+'''Bigger BB8 codes subsequently found by Ben Symons'''
 
 def bb8_288_14_20():
     l = 12
@@ -643,18 +655,11 @@ def bb8_360_14_30():
     return code
 
 
-''' more found codes '''
 def four_twenty_code():
+    # Found in this work.
     entry = {'nkd': [420, 16, 18], 'l': 14, 'm': 15, 'Aij': [(0, 0), (8, 2), (8, 8)], 'Bij': [(2, 13), (10, 11), (12, 4)]}
-    l = entry['l']
-    m = entry['m']
-    d_max = 18
-    Aij = entry['Aij']
-    Bij = entry['Bij']
-    code = get_code_params(l, m, Aij, Bij, d_max)
-    return code
-
-
+    return get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
+bb6_420_code = four_twenty_code
 
 
 '''bb6_756_code'''
@@ -672,7 +677,7 @@ def bb6_756_code():
 
 
 ''' suppress_stdout
-For suprressing the output from css_decode_sim'''
+For supressing the output from css_decode_sim'''
 @contextlib.contextmanager
 def suppress_stdout():
     with open(os.devnull, "w") as devnull:
@@ -715,7 +720,7 @@ Then
 Aij = [(0, 0), (1, 0)]
 Bij = [(0, 0), (0, 1), (2, 2)]
 The A and B matrices returned by this function are the actual matrices A, B'''
-def get_code_params(l, m, Aij, Bij, d_max = None, target_runs = 500):
+def get_code_params(l, m, Aij, Bij, d_max = None, target_runs = 1000):
 
 
 
