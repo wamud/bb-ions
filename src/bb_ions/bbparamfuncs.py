@@ -517,7 +517,8 @@ def bb6_378_16_18():
     d_max = 18
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
-undercover_code = bb6_378_16_18
+
+
 
 def interchanged_bb6_378_16_18():
     l= 9
@@ -527,21 +528,9 @@ def interchanged_bb6_378_16_18():
     d_max = 18
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
-interchanged_undercover_code = interchanged_bb6_378_16_18
+undercover_code = interchanged_bb6_378_16_18
 
 
-
-'''bb6_756_code'''
-def bb6_756_code():
-    # [[756, 16, ≤34]] BB6 code from OG BB paper [2308.07915] Table III
-    # Takes about a minute to find all the logical operators of this code
-    l = 21
-    m = 18
-    Aij = [(3,0),(0,10),(0,17)]
-    Bij = [(0,5),(3,0),(19,0)]
-    d_max = 34
-    code = get_code_params(l, m, Aij, Bij, d_max)
-    return code
 
 
 '''Codes from Abhishek Rajput and Ben Symons' paper 2511.13560'''
@@ -650,6 +639,33 @@ def bb8_360_14_30():
     d_max = 30
     Aij = [(6,4), (29,4), (9,0), (5,3)]
     Bij = [(6,5), (20,1), (23,5), (21,4)]
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
+
+''' more found codes '''
+def four_twenty_code():
+    entry = {'nkd': [420, 16, 18], 'l': 14, 'm': 15, 'Aij': [(0, 0), (8, 2), (8, 8)], 'Bij': [(2, 13), (10, 11), (12, 4)]}
+    l = entry['l']
+    m = entry['m']
+    d_max = 18
+    Aij = entry['Aij']
+    Bij = entry['Bij']
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
+
+
+
+'''bb6_756_code'''
+def bb6_756_code():
+    # [[756, 16, ≤34]] BB6 code from OG BB paper [2308.07915] Table III
+    # Takes about a minute to find all the logical operators of this code
+    l = 21
+    m = 18
+    Aij = [(3,0),(0,10),(0,17)]
+    Bij = [(0,5),(3,0),(19,0)]
+    d_max = 34
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
