@@ -10,12 +10,12 @@ import json
 noise = 'uniform_no_idling'
 memory_basis = 'X' # mem X is worst-case in Helios due to two-qubit gate and idling being dominate by Z errors
 num_syndrome_extraction_cycles = 20
-only_CZs = False
-seq_ops = False
-seq_meas = False
-leakage = False
-loss = False
-leakage_repumping = False
+only_CZs = True
+seq_ops = True
+seq_meas = True
+leakage = True
+loss = True
+leakage_repumping = True
 cycles = 3
 swapLRC = False
 leakage_heralds = False
@@ -23,17 +23,17 @@ exclude_opp_basis_detectors = True
 
 
 entries = [   # These might all be equivalent
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [4, 8], [6, 6]],  "Bij": [[5, 0], [5, 9], [7, 2]]}, 
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
+    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [4, 8], [6, 6]],  "Bij": [[5, 0], [5, 9], [7, 2]]}, 
+    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
+    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
+    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
     {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [8, 2], [8, 8]],  "Bij": [[2, 13], [10, 11], [12, 4]]},
     {"nkd": [420, 16, 18], "l": 10, "m": 21, "Aij": [[0, 0], [2, 17], [8, 11]], "Bij": [[0, 15], [2, 15], [6, 11]]}
     ]
 
 
 
-for p in [0.003, 0.005]:
+for p in [0.001]:
     for entry in entries:
 
         code = get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
@@ -44,8 +44,7 @@ for p in [0.003, 0.005]:
             max_parallel_1q_ops = 'all'
             max_parallel_2q_ops = 'all'
 
-        filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_dtctrs={exclude_opp_basis_detectors}"
-        # prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops},
+        filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops}"
         
         
         print("Creating: ",filename)
@@ -75,4 +74,4 @@ for p in [0.003, 0.005]:
 
 
         # Save circuit:
-        circuit.to_file(f"../circuits/without_leakage/test/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")

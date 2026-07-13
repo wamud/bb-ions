@@ -40,8 +40,8 @@ def main():
     print(f"Start time = {start_time}")
     
 
-    circuit_paths = glob.glob(f"../circuits/without_leakage/test/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/uniform/420_test.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_3.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -50,7 +50,7 @@ def main():
         print(path)
 
 
-    # existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes.csv") 
+    existing = glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
 
     tasks = [
         sinter.Task(
@@ -67,7 +67,7 @@ def main():
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
-        # existing_data_filepaths = existing,
+        existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
         print_progress = True
@@ -79,7 +79,7 @@ def main():
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
-        # existing_data_filepaths = existing,
+        existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
         print_progress = True
@@ -92,7 +92,7 @@ def main():
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
-        # existing_data_filepaths = existing,
+        existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
         print_progress = True
