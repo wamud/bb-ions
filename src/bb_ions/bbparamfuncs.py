@@ -266,8 +266,10 @@ def bb5_48_4_7():
 def bb5_60_4_8():
     l = 15
     m = 2
-    Aij = [[2, 0], [8, 1]]
-    Bij = [[0, 1], [4, 1], [14, 1]]
+    # Aij = [[2, 0], [8, 1]]
+    # Bij = [[0, 1], [4, 1], [14, 1]]
+    Aij = [[2, 1], [8, 0]] # minusing 1 off of every y term just permutes the rows. Makes for nice polynomials.
+    Bij = [[0, 0], [4, 0], [14, 0]]  
     d = 8
     code = get_code_params(l, m, Aij, Bij, d)
     return code
@@ -275,8 +277,6 @@ def bb5_60_4_8():
 
 
 ''' Some found n≈60 BB6 codes that could also be run on Helios because they take n data qubits and n/2 check qubits so if (n + n/2) ≤ 98 Helios qubits'''
-
-
 def bb8_48_6_8():
     l = 8
     m = 3
@@ -521,7 +521,7 @@ def bb6_378_16_18():
     d_max = 18
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
-
+undercover_code = bb6_378_16_18
 
 
 def interchanged_bb6_378_16_18():
@@ -532,7 +532,7 @@ def interchanged_bb6_378_16_18():
     d_max = 18
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
-undercover_code = interchanged_bb6_378_16_18
+interchanged_undercover_code = interchanged_bb6_378_16_18
 
 
 
