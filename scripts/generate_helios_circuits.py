@@ -23,10 +23,10 @@ exclude_opp_basis_detectors = True
 
 
 entries = [   # These might all be equivalent
-    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [4, 8], [6, 6]],  "Bij": [[5, 0], [5, 9], [7, 2]]}, 
-    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
-    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
-    # {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
+    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [4, 8], [6, 6]],  "Bij": [[5, 0], [5, 9], [7, 2]]}, 
+    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
+    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
+    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
     {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [8, 2], [8, 8]],  "Bij": [[2, 13], [10, 11], [12, 4]]},
     {"nkd": [420, 16, 18], "l": 10, "m": 21, "Aij": [[0, 0], [2, 17], [8, 11]], "Bij": [[0, 15], [2, 15], [6, 11]]}
     ]
@@ -51,10 +51,8 @@ for p in [0.001]:
 
         circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
             code,
-            # errors = helios_errors(p, code),
-            # idle_during = helios_idle_errors(p, code),
-            errors = uniform_errors(p),
-            idle_during = zero_idling(),
+            errors = helios_errors(p, code),
+            idle_during = helios_idle_errors(p, code),
             num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
             memory_basis = memory_basis,
             sequential_operations = seq_ops, 
@@ -74,4 +72,4 @@ for p in [0.001]:
 
 
         # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")
+        circuit.to_file(f"../circuits/leakage_and_loss/four_twenty/{filename}.stim")
