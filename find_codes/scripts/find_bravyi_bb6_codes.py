@@ -72,8 +72,6 @@ ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat=repeats))
 # random.shuffle(ivectors)
 
-
-
 jvalues = range(m)
 jvectors = list(itertools.product(jvalues, repeat=repeats))
 # random.shuffle(jvectors)
@@ -94,10 +92,10 @@ i3 = 0
 j4 = 0
 j5 = 0
 
+counting = 0
 for loop in range(len(ivectors)):
     for count, jvec in enumerate(jvectors):
         ivec = ivectors[(count + loop) % len(ivectors)]
-        print(count)
 
         i0, i4, i5 = ivec
         j1, j2, j3 = jvec
