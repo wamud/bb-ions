@@ -1,3 +1,6 @@
+### This is like find_bb6_codes.py except it searches for BB6 codes of the form of original Bravyi BB paper (i.e. not multivariate, A has terms x,y,y B has terms y,x,x (to various powers))
+
+
 import stim
 import scipy
 import pandas as pd
@@ -66,6 +69,9 @@ ivalues = range(l)
 ivectors = list(itertools.product(ivalues, repeat=6))
 random.shuffle(ivectors)
 
+# if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
+    # continue
+
 jvalues = range(m)
 jvectors = list(itertools.product(jvalues, repeat=6))
 random.shuffle(jvectors)
@@ -99,7 +105,7 @@ for loop in range(len(ivectors)):
         if not ((i3, j3) < (i4, j4) < (i5, j5)):
             continue 
 
-        ## BB6 codes of the form of original BB paper (not multivariate, A is x,y,y B is y,x,x)    ## better to implement this by never having these as part of the ivectors and jvectors above
+        ## BB6 codes of the form of original BB paper (not multivariate, A is x,y,y B is y,x,x)   
         # if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
             # continue
 
