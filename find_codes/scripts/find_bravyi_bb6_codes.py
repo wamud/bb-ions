@@ -48,14 +48,14 @@ osd_options = {
 
 
 if len(sys.argv) < 5:
-    print("This script requires inputs l, m, min_k, min_d, unique_integer")
+    print("This script requires inputs l, m, min_k, min_d")
 
 
 l = int(sys.argv[1])
 m = int(sys.argv[2])
 min_k = int(sys.argv[3])
 min_d_max = int(sys.argv[4])
-unique_integer = int(sys.argv[5])
+unique_integer = os.getpid()
 
 print(f"l = {l}, m = {m}")
 
@@ -65,16 +65,18 @@ temp_file = f"../found_codes/around_416/{filename}_partial.jsonl"
 results_file = f"../found_codes/around_416/{filename}.jsonl"
 
 
-ivalues = range(l)
-ivectors = list(itertools.product(ivalues, repeat=6))
-random.shuffle(ivectors)
+# A has terms x,y,y B has terms y,x,x (to various powers)). So only need three values of each.
+repeats = 3
 
-# if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
-    # continue
+ivalues = range(l)
+ivectors = list(itertools.product(ivalues, repeat=repeats))
+# random.shuffle(ivectors)
+
+
 
 jvalues = range(m)
-jvectors = list(itertools.product(jvalues, repeat=6))
-random.shuffle(jvectors)
+jvectors = list(itertools.product(jvalues, repeat=repeats))
+# random.shuffle(jvectors)
 
 
 # --- caches ---
@@ -82,24 +84,33 @@ seen_structures = set()   # (Aij, Bij) normalisés
 seen_codes = set()        # matrices canoniques
 
 
+# if j0 != 0 or i1 != 0 or i2 !=0 or i3 != 0 or j4 != 0 or j5 != 0:
+    # continue
+# A has terms x,y,y B has terms y,x,x (to various powers))
+j0 = 0
+i1 = 0
+i2 = 0
+i3 = 0
+j4 = 0
+j5 = 0
+
 for loop in range(len(ivectors)):
     for count, jvec in enumerate(jvectors):
         ivec = ivectors[(count + loop) % len(ivectors)]
 
 
-
-        i0, i1, i2, i3, i4, i5 = ivec
-        j0, j1, j2, j3, j4, j5 = jvec
+        i0, i4, i5 = ivec
+        j1, j2, j3 = jvec
 
 
         # --- éliminer duplications internes ---
-        if (i0, j0) == (i1, j1) or (i0, j0) == (i2, j2) or (i1, j1) == (i2, j2):
+        if (i0 == i1 and j0 ==j1) or (i0 == i2 and j0 == j2) or (i1 == i2 and j1 == j2):
             continue
-        if (i3, j3) == (i4, j4) or (i3, j3) == (i5, j5) or (i4, j4) == (i5, j5):
+        if (i3 == i4 and j3 == j4) or (i3 == i5 and j3 == j5) or (i4 == i5 and j4 == j5):
             continue
 
 
-        # --- ordre lexicographique ---
+        # --- ordre lexicographique --- # skip any not in lexicographical order (avoids equivalent codes that are simply a re-ordering of terms)
         if not ((i0, j0) < (i1, j1) < (i2, j2)):
             continue 
         if not ((i3, j3) < (i4, j4) < (i5, j5)):

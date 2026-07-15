@@ -7,9 +7,9 @@ for ((m=2; m<=210; m++)); do
 
 
 
-        if (( n > 414 )); then
+        if (( n > 420 )); then
             continue
-        elif (( n < 414)); then
+        elif (( n < 379)); then
             continue
         fi
 
@@ -19,10 +19,10 @@ for ((m=2; m<=210; m++)); do
         # # On iHPC:
         # source /home/aforourk/Data/anaconda3/etc/profile.d/conda.sh
         # conda activate base
-        # python find_bb6_codes.py "$l" "$m" "$min_k" "$min_d"  &
+        # python find_bravyi_bb6_codes.py "$l" "$m" "$min_k" "$min_d"  &
 
         # On laptop:
-        python3.11 find_bb6_codes.py "$l" "$m" "$min_k" "$min_d"  &
+        python3.11 find_bravyi_bb6_codes.py "$l" "$m" "$min_k" "$min_d"  &
     
     done
 done
