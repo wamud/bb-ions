@@ -62,7 +62,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2 * 3,
+        num_workers = multiprocessing.cpu_count()//4 * 3,
         max_shots = 100_000_000,
         max_errors = 10,
         tasks = tasks,
@@ -75,7 +75,7 @@ def main():
 
 
     samples = sinter.collect(
-        num_workers = multiprocessing.cpu_count()//2 * 3,
+        num_workers = multiprocessing.cpu_count()//4 * 3,
         max_shots = 1_000_000_000,
         max_errors = 10,
         tasks = tasks,
