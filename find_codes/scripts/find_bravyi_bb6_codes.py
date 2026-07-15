@@ -61,8 +61,8 @@ print(f"l = {l}, m = {m}")
 
 filename = f"bb6_bravyi_l{l}_m{m}_k{min_k}_d{min_d_max}_id{unique_integer}"
 
-temp_file = f"../found_codes/around_416/{filename}_partial.jsonl"
-results_file = f"../found_codes/around_416/{filename}.jsonl"
+temp_file = f"../found_codes/bravyi_BB6/{filename}_partial.jsonl"
+results_file = f"../found_codes/bravyi_BB6/{filename}.jsonl"
 
 
 # A has terms x,y,y B has terms y,x,x (to various powers)). So only need three values of each.
