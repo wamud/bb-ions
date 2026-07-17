@@ -9,7 +9,7 @@ for ((m=2; m<=210; m++)); do
 
         if (( n > 420 )); then
             continue
-        elif (( n < 3)); then
+        elif (( n < 400)); then
             continue
         fi
 
