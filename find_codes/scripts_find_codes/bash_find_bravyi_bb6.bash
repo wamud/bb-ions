@@ -7,9 +7,9 @@ for ((m=2; m<=210; m++)); do
 
 
 
-        if (( n > 420 )); then
+        if (( n >= 400 )); then
             continue
-        elif (( n < 400)); then
+        elif (( n < 378)); then
             continue
         fi
 

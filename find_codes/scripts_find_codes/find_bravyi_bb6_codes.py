@@ -92,7 +92,6 @@ i3 = 0
 j4 = 0
 j5 = 0
 
-counting = 0
 for loop in range(len(ivectors)):
     for count, jvec in enumerate(jvectors):
         ivec = ivectors[(count + loop) % len(ivectors)]
@@ -207,3 +206,8 @@ for loop in range(len(ivectors)):
 if os.path.exists(temp_file):
     os.rename(temp_file, results_file)
     print(f"Final results saved to {results_file}")
+else:
+    script = f"No results for l={l} m={m} min_k={min_k} min_d={min_d}"
+    print(script)
+    with open("../no_bb6_bravyi_results.txt", "a", encoding="utf-8") as f:
+        f.write(script + "\n")
