@@ -456,7 +456,7 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     
     ###### start of for loop ######
     
-    for i in range(l*m):
+    for i in range(len(register)):
     
       qs.append(register[i])
 
@@ -1903,7 +1903,7 @@ def make_BB_circuit(
     global LOSS
     LOSS = loss
 
-    # Going to set all below to be equal to sequential_operations. Just doing like this in case in future some operations (e.g. measurements) can be done all at once whereas others can't. Note that they are inefficiently sequential (will do all hadamards sequentially, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zone multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). This is because the difference in pL even when introducing sequential H, M and R rather than everything completely parallel is probably negligible -- will test.
+    # Note that they are currently inefficiently sequential (will do all hadamards sequentially on all qubits, then all measurements, then all resets, then all hadamards again if necessary, shuttling all the qubits through the operation zones multiple times, rather than doing a H M R H on two qubits in the operation zone in one fell swoop). 
     global SEQUENTIAL_RESETS
     SEQUENTIAL_RESETS = sequential_operations
     global SEQUENTIAL_HADAMARDS
@@ -2248,13 +2248,13 @@ def make_BB_circuit(
         hadamard_register(idle_during, registers, code, circ, qL, errors)
         hadamard_register(idle_during, registers, code, circ, qR, errors)
 
-    if SEQUENTIAL_MEASUREMENTS:
-      measure_register(idle_during, registers, code, 'Z', circ, qL, errors)
-      measure_register(idle_during, registers, code, 'Z', circ, qR, errors)
+    # if SEQUENTIAL_MEASUREMENTS:
+    #   measure_register(idle_during, registers, code, 'Z', circ, qL, errors)
+    #   measure_register(idle_during, registers, code, 'Z', circ, qR, errors)
     
     
-    else:
-      measure_register(idle_during, registers, code, 'Z', circ, qL + qR, errors)
+    # else:
+    measure_register(idle_during, registers, code, 'Z', circ, qL + qR, errors)
 
 
     ### Add final detectors:

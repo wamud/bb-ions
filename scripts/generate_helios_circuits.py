@@ -22,54 +22,48 @@ leakage_heralds = False
 exclude_opp_basis_detectors = True
 
 
-entries = [   # These might all be equivalent
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [4, 8], [6, 6]],  "Bij": [[5, 0], [5, 9], [7, 2]]}, 
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [0, 3], [8, 14]], "Bij": [[1, 10], [5, 13], [7, 9]]}, 
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [6, 1], [6, 4]],  "Bij": [[0, 0], [2, 9], [8, 7]]},
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [2, 2], [2, 9]],  "Bij": [[5, 3], [9, 0], [11, 4]]},
-    {"nkd": [420, 16, 18], "l": 14, "m": 15, "Aij": [[0, 0], [8, 2], [8, 8]],  "Bij": [[2, 13], [10, 11], [12, 4]]},
-    {"nkd": [420, 16, 18], "l": 10, "m": 21, "Aij": [[0, 0], [2, 17], [8, 11]], "Bij": [[0, 15], [2, 15], [6, 11]]}
-    ]
 
-
+code = bb6_18_4_4()
 
 for p in [0.001]:
-    for entry in entries:
-
-        code = get_code_params(entry['l'], entry['m'], entry['Aij'], entry['Bij'], entry['nkd'][2])
-        if seq_ops == True and seq_meas == True:
-            max_parallel_1q_ops = 16 * code.m
-            max_parallel_2q_ops = 4 * code.m
-        else:
-            max_parallel_1q_ops = 'all'
-            max_parallel_2q_ops = 'all'
-
-        filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops}"
-        
-        
-        print("Creating: ",filename)
-
-        circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-            code,
-            errors = helios_errors(p, code),
-            idle_during = helios_idle_errors(p, code),
-            num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-            memory_basis = memory_basis,
-            sequential_operations = seq_ops, 
-            sequential_measurements = seq_meas,
-            exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
-            reuse_check_qubits = True,
-            leakage = leakage,
-            only_CZs = only_CZs,
-            leakage_repumping = leakage_repumping,
-            num_repumping_cycles=cycles,
-            swapLRC = swapLRC,
-            loss = loss,
-            leakage_heralds=leakage_heralds,
-            num_parallel_1q_ops = max_parallel_1q_ops, 
-            num_parallel_2q_ops = max_parallel_2q_ops,
-        )
 
 
-        # Save circuit:
-        circuit.to_file(f"../circuits/leakage_and_loss/four_twenty/{filename}.stim")
+    if seq_ops == True and seq_meas == True:
+        max_parallel_1q_ops = 16 * code.m
+        max_parallel_2q_ops = 4 * code.m
+    else:
+        max_parallel_1q_ops = 'all'
+        max_parallel_2q_ops = 'all'
+
+    filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude_opp_basis_detectors},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops}"
+    
+    
+    print("Creating: ",filename)
+
+    circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+        code,
+        errors = helios_errors(p, code),
+        idle_during = helios_idle_errors(p, code),
+        num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+        memory_basis = memory_basis,
+        sequential_operations = seq_ops, 
+        sequential_measurements = seq_meas,
+        exclude_opposite_basis_detectors = exclude_opp_basis_detectors,
+        reuse_check_qubits = True,
+        leakage = leakage,
+        only_CZs = only_CZs,
+        leakage_repumping = leakage_repumping,
+        num_repumping_cycles=cycles,
+        swapLRC = swapLRC,
+        loss = loss,
+        leakage_heralds=leakage_heralds,
+        num_parallel_1q_ops = max_parallel_1q_ops, 
+        num_parallel_2q_ops = max_parallel_2q_ops,
+    )
+
+
+    # Save circuit:
+    circuit.to_file(f"../circuits/scrap.stim")
+    # svg = circuit.diagram('timeline-svg')
+    # svg_string = str(svg)
+    # with open(f"../scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
