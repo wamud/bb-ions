@@ -39,7 +39,7 @@ def main():
     
 
     circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/test.csv"
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_6.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -47,7 +47,7 @@ def main():
     for path in circuit_paths:
         print(os.path.basename(path))
 
-    existing = []  #["../collected_stats/helios_noise/leakage_and_loss/test.csv"]# glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
+    existing =  glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
     # print(f"existing = {existing}")
 
     tasks = [
