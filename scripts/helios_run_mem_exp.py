@@ -63,7 +63,7 @@ def main():
 
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
-        max_shots = 20,
+        max_shots = 1_000_000_000,
         max_errors = 10,
         tasks = tasks,
         decoders=['bposd'],
@@ -73,18 +73,6 @@ def main():
         print_progress = True
         )
 
-
-    # samples = sinter.collect(
-    #     num_workers = multiprocessing.cpu_count(),
-    #     max_shots = 1_000_000_000,
-    #     max_errors = 10,
-    #     tasks = tasks,
-    #     decoders=['bposd'],
-    #     existing_data_filepaths = existing,
-    #     save_resume_filepath = csv_path,
-    #     custom_decoders = custom_decoders,
-    #     print_progress = True
-    #     )
 
     end_time = time.time()
     print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
