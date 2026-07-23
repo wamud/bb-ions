@@ -479,7 +479,7 @@ def helios_idle_errors(p, code):
     m = 8e-3 # from p_l = mt -- the linear leakage function in comments above
 
     # t_2q = 70e-6  # from paper. It's ≈ 70μs
-    t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and the 300μs of cooling after a four-ion shift and the 70μs of the actual two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates (i.e. simulating just one operation zone when sequential_gates = True in the circuit).
+    t_2q = 650e-6  # Have added idling time for a four-ion shift of 280μs and the 300μs of cooling after a four-ion shift and the 70μs of the actual two-qubit gate, i.e. 650μs. This simulates being able to do four-ion shifts between two-qubit gates 
     t_1q = 70e-6    # assuming same as two-qubit gate (overestimate so will produce larger idling errors. Usually is at least an order of magnitude faster)
     
     

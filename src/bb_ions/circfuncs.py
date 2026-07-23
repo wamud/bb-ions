@@ -221,7 +221,7 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
 
 
     qs = []
-    for i in range(l * m):
+    for i in range(len(register)):
       
       qs.append(register[i])
       # print(qs)
@@ -344,13 +344,11 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
     l = code.l
     m = code.m 
 
-    if len(register) > l * m:
-      raise ValueError("This function is written to apply sequential operations to a register of size l*m")
 
 
 
     qs = []
-    for i in range(l * m):
+    for i in range(len(register)):
       
       qs.append(register[i])
       # print(qs)
@@ -1957,36 +1955,28 @@ def make_BB_circuit(
 
     if memory_basis == 'Z': 
       if ONLYCZs == True:
-        init_register(idle_during, registers, code,'Z', circ, qL, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
-        init_register(idle_during, registers, code,'Z', circ, qR, errors)
+        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
     if memory_basis == 'X':
       if ONLYCZs == False:
-        init_register(idle_during, registers, code,'Z', circ, qL, errors)  # comment out for diagram
-        init_register(idle_during, registers, code,'Z', circ, qR, errors)
+        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)  # comment out for diagram
 
     tick(circ)
-
-    ########## INITIALISE QUBITS #######################
     
     # Hadamard check qubits to |+⟩
     hadamard_register(idle_during, registers, code, circ, qX, errors)
     # Deal with data qubits:
     if ONLYCZs == True:
       if memory_basis == 'Z':  
-        hadamard_register(idle_during, registers, code, circ, qL, errors)
-        hadamard_register(idle_during, registers, code, circ, qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
-        init_register(idle_during, registers, code,'Z', circ, qL, errors)
-        init_register(idle_during, registers, code,'Z', circ, qR, errors)  # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)
 
     if ONLYCZs == False:
       if memory_basis == 'Z':
-        init_register(idle_during, registers, code,'Z', circ, qL, errors)   # comment out for diagram
-        init_register(idle_during, registers, code,'Z', circ, qR, errors)
+        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)   # comment out for diagram
       if memory_basis == 'X':
-        hadamard_register(idle_during, registers, code, circ, qL, errors)
-        hadamard_register(idle_during, registers, code, circ, qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
 
     if not SEQUENTIAL_HADAMARDS:
       if not SEQUENTIAL_RESETS:
@@ -2014,8 +2004,7 @@ def make_BB_circuit(
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qL + qR, idle_during['H']) # t_had)
       elif ONLYCZs == True:
-        hadamard_register(idle_during, registers, code, circ, qL, errors)
-        hadamard_register(idle_during, registers, code, circ, qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
       
       if not SEQUENTIAL_HADAMARDS:
         tick(circ)
@@ -2127,8 +2116,7 @@ def make_BB_circuit(
           # Hadamard X-check qubits to |+⟩ (and Hadamard data qubits if doing only CZ gates)
           hadamard_register(idle_during, registers, code, circ, qX, errors)
           if ONLYCZs == True: # Only doing CZ gates, so also need to Hadamard data qubits (so that the CZs on them will act like CNOTs)
-            hadamard_register(idle_during, registers, code, circ, qL, errors)
-            hadamard_register(idle_during, registers, code, circ, qR, errors)
+            hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
           elif ONLYCZs == False:
             if not SEQUENTIAL_HADAMARDS:
               idle(circ, qL + qR, idle_during['H']) # otherwise just idle data qubits
@@ -2146,8 +2134,7 @@ def make_BB_circuit(
               if not SEQUENTIAL_HADAMARDS:
                 idle(circ, qL + qR, idle_during['H']) # t_had) # idle data qubits during hadamard
             elif ONLYCZs == True:
-              hadamard_register(idle_during, registers, code, circ, qL, errors)
-              hadamard_register(idle_during, registers, code, circ, qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks. 
+              hadamard_register(idle_during, registers, code, circ, qL + qR, errors) # hadamard data qubits as we were using only CZ gates so they need to be hadamarded for X checks. 
             if not SEQUENTIAL_HADAMARDS:
               tick(circ)
           
@@ -2245,12 +2232,7 @@ def make_BB_circuit(
     # # Measure all data qubits:
 
     if memory_basis == 'X':
-        hadamard_register(idle_during, registers, code, circ, qL, errors)
-        hadamard_register(idle_during, registers, code, circ, qR, errors)
-
-    # if SEQUENTIAL_MEASUREMENTS:
-    #   measure_register(idle_during, registers, code, 'Z', circ, qL, errors)
-    #   measure_register(idle_during, registers, code, 'Z', circ, qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
     
     
     # else:
