@@ -1945,20 +1945,19 @@ def make_BB_circuit(
     ############# INITIALISE QUBITS:  !!!!!!!!!!!
 
     # # # For diagram (get the data qubit resets and measures out of the picture)
-    # init_register(idle_during, registers, code,'Z', circ, qL, errors)
-    # init_register(idle_during, registers, code,'Z', circ, qR, errors)
-    # tick(circ)
+    init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)
+    tick(circ)
 
 
     # Initialise X-check qubits
     init_register(idle_during, registers, code,'Z', circ, qX, errors)
 
-    if memory_basis == 'Z': 
-      if ONLYCZs == True:
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
-    if memory_basis == 'X':
-      if ONLYCZs == False:
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)  # comment out for diagram
+    # if memory_basis == 'Z': 
+    #   if ONLYCZs == True:
+    #     init_register(idle_during, registers, code,'Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
+    # if memory_basis == 'X':
+    #   if ONLYCZs == False:
+    #     init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)  # comment out for diagram
 
     tick(circ)
     
@@ -1973,8 +1972,8 @@ def make_BB_circuit(
         init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)
 
     if ONLYCZs == False:
-      if memory_basis == 'Z':
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)   # comment out for diagram
+      # if memory_basis == 'Z':
+      #   init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)   # comment out for diagram
       if memory_basis == 'X':
         hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
 
@@ -2086,7 +2085,7 @@ def make_BB_circuit(
       tick(circ)
     
     # # # for diagram:
-    # tick(circ)
+    tick(circ)
 
 
     ## SUBSEQUENT ROUNDS:
