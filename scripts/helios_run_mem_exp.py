@@ -47,7 +47,7 @@ def main():
     for path in circuit_paths:
         print(os.path.basename(path))
 
-    existing =  glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
+    existing =  [] #glob.glob(f"../collected_stats/helios_noise/leakage_and_loss/*new_all_codes*.csv") 
     # print(f"existing = {existing}")
 
     tasks = [
