@@ -11,10 +11,10 @@ memory_basis = 'X' # mem X is worst-case in Helios due to two-qubit gate and idl
 num_syndrome_extraction_cycles = 20
 only_CZs = True
 seq_ops = True
-seq_meas = True
-leakage = True
-loss = True
-leakage_repumping = True
+seq_meas = False
+leakage = False
+loss = False
+leakage_repumping = False
 cycles = 3
 swapLRC = False
 leakage_heralds = False
@@ -30,12 +30,19 @@ for exclude in [True, False]:
         for p in [0.001, 0.002, 0.003]:
 
 
-            if seq_ops == True and seq_meas == True:
-                max_parallel_1q_ops = 16 * code.m
-                max_parallel_2q_ops = 4 * code.m
-            else:
-                max_parallel_1q_ops = 'all'
-                max_parallel_2q_ops = 'all'
+            # if seq_ops == True and seq_meas == True:
+            #     max_parallel_1q_ops = 16 * code.m
+            #     max_parallel_2q_ops = 4 * code.m
+            # else :
+            #     max_parallel_1q_ops = np.inf
+            #     max_parallel_2q_ops = np.inf
+
+
+            max_parallel_1q_ops = np.inf
+            max_parallel_2q_ops = code.m
+
+
+
 
             filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops}"
             
@@ -65,7 +72,7 @@ for exclude in [True, False]:
 
 
             # Save circuit:
-            circuit.to_file(f"../circuits/leakage_and_loss/exclude_vs_include/{filename}.stim")
+            circuit.to_file(f"../circuits/without_leakage/exclude_vs_include/{filename}.stim")
             # svg = circuit.diagram('timeline-svg')
             # svg_string = str(svg)
             # with open(f"../scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)

@@ -1874,8 +1874,8 @@ def make_BB_circuit(
     loss: bool = False,
     check_detecting_regions: bool = True,
     # reshuffling: bool = True,
-    num_parallel_1q_ops: int = 16,
-    num_parallel_2q_ops: int = 4,
+    num_parallel_1q_ops = np.inf,
+    num_parallel_2q_ops = np.inf,
 ):
 
 
