@@ -41,7 +41,7 @@ def main():
     
 
     circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_12.csv"
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_13.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
