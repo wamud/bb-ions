@@ -38,8 +38,8 @@ def main():
  
     
 
-    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/exclude_vs_include/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/exclude_vs_include.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/new_all_codes_11.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -52,7 +52,7 @@ def main():
 
     tasks = [
         sinter.Task(
-            circuit = deltakit_stim.Circuit.from_file(path).flattened(), # Have to flatten to make leakage heralds work, otherwise for some reason (deltakit stim bug?) 4 or more rounds in a circuit create a mismatch between the num. of detectors in the circuit versus the DEM.
+            circuit = deltakit_stim.Circuit.from_file(path),#.flattened(), # Have to flatten to make leakage heralds work, otherwise for some reason (deltakit stim bug?) 4 or more rounds in a circuit create a mismatch between the num. of detectors in the circuit versus the DEM.
             json_metadata = sinter.comma_separated_key_values(path),
         )
         for path in circuit_paths
