@@ -691,6 +691,17 @@ def bb6_756_code():
     code = get_code_params(l, m, Aij, Bij, d_max)
     return code
 
+def interchanged_756_code():
+    # [[756, 16, ≤34]] BB6 code from OG BB paper [2308.07915] Table III
+    # Takes about a minute to find all the logical operators of this code
+    l = 18
+    m = 21
+    Aij = [(0,3),(10,0),(17,0)]
+    Bij = [(5,0),(0,3),(0,19)]
+    d_max = 34
+    code = get_code_params(l, m, Aij, Bij, d_max)
+    return code
+
 
 
 ''' suppress_stdout

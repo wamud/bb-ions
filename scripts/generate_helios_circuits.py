@@ -24,17 +24,17 @@ leakage_heralds = False
 
 
 
-code = interchanged_undercover_code()
+code = interchanged_756_code()
 
 p = 0.001
 
 
 if seq_ops == True and seq_meas == True:
     max_parallel_1q_ops = 16 * code.m
-    max_parallel_2q_ops = 6 * code.m # USUALLY 4, BUT I WANT TO SEE WHAT MAKING TWO EXTRA PER X JUNCTION TWO-QUBIT-GATE-CAPABLE DOES
+    max_parallel_2q_ops = 4 * code.m # USUALLY 4, BUT I WANT TO SEE WHAT MAKING TWO EXTRA PER X JUNCTION TWO-QUBIT-GATE-CAPABLE DOES
 else :
-    max_parallel_1q_ops = np.inf
-    max_parallel_2q_ops = np.inf
+    max_parallel_1q_ops = np.inf # SE wants to be able to do usually 2lm at once (occasionally 3lm)
+    max_parallel_2q_ops = np.inf # SE (non-interleaved) wants to be able to do lm at once 
 
 
 
