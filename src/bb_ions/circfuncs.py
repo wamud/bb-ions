@@ -217,22 +217,22 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
 
 
     # A register has l rows, m columns. Each column is a module. We can just go up the qubit indices and get one qubit per module if we go up m. Or if 1.5m for example we have the first two qubits of the first half of the columns and the first qubit of the second half. In the next time step it would be the third qubit of the first half of the modules and the second and third of the second half of the modules. So just going up the qubit indices naturally takes care of the order of qubit operations even with a number of operation zones not a multiple of m. Four our architecture it will be a multiple of m though so can much more easily design the shuttling for this too, and once again just going up the qubit indices takes care of doing the required operations in order.
-
-
-
+   
     qs = []
+    num_batches = math.ceil(len(register) / NUM_PARALLEL_R)
+    
     for i in range(len(register)):
       
       qs.append(register[i])
       # print(qs)
-      
       if (i + 1) % NUM_PARALLEL_R == 0: # for every group of NUM_PARALLEL_R qubits, append the resets then go to next time step
         
         apply_resets(circuit, reset, qs, all_registers, errors, idle_during)
-
-        # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
-        apply_four_ion_shift_error(circuit, all_registers, idle_during)
-        tick(circuit)
+        
+        if num_batches > 1 :
+          apply_four_ion_shift_error(circuit, all_registers, idle_during)  # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
+          tick(circuit)
+        
         
         qs = [] # empty the list of qubits to have operations applied to them in this time step
       
@@ -240,9 +240,11 @@ def init_register(idle_during, registers, code, basis, circuit, register, errors
 
       apply_resets(circuit, reset, qs, all_registers, errors, idle_during)
 
-      # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
-      apply_four_ion_shift_error(circuit, all_registers, idle_during)
-      tick(circuit)
+      # add four-ion shift to move next qubits in to be measured (or simulate moving them all out ... or not if only one batch):
+      if num_batches > 1:
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+      
       
       qs = [] # empty the list of qubits to have operations applied to them in this time step
 
@@ -324,18 +326,19 @@ After the gate it adds a depolarising noise of strength p (i.e. an error will oc
 Unlike the hadamard function, this can do sequential operations (limited by having m operation zones so can't do all hadamards at once) but this sequentiality is only written for when you wnant to measure an entire register at once (qX, qL, qR or qZ). This is always the case in this research.'''
 def hadamard_register(idle_during, registers, code, circuit, register, errors: dict):
 
+  temp_register = register[::-1] # Reverse the order of the register. I realised that in all cases in my circuits, when Hadamarding qubits I want the last ones to be Hadamarded to be the first ones operated on subsequently, or the first ones Hadamarded were the last ones previously operated on. So if the ions have been sent through the operation zones to the storage legs, when they come back out their order is reversed. As there are appropriate shuttling errors around groups of operations including Hadamards we can choose the order we want such that the last to be Hadamarded is the first, on the backswing, to be measured or the last to be reset is the first to be Hadamarded etc.
   if not SEQUENTIAL_HADAMARDS:
 
     if LEAKAGE:
-      add_relax_then_leak("H", circuit, register, errors)
+      add_relax_then_leak("H", circuit, temp_register, errors)
 
-    circuit.append("H", register)
+    circuit.append("H", temp_register)
 
     
     p = errors['H'].p
     
     if p > 0:
-      circuit.append(errors['H'].op, register, p)
+      circuit.append(errors['H'].op, temp_register, p)
 
   elif SEQUENTIAL_HADAMARDS:
 
@@ -348,18 +351,21 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
 
 
     qs = []
-    for i in range(len(register)):
+    num_batches = math.ceil(len(temp_register) / NUM_PARALLEL_1Q)
+    
+    for i in range(len(temp_register)):
       
-      qs.append(register[i])
+      qs.append(temp_register[i])
       # print(qs)
       
       if (i + 1) % NUM_PARALLEL_1Q == 0: # for every group of NUM_PARALLEL_1Q qubits, append the operations then go to next time step
         
         apply_1q_ops(circuit, 'H', qs, all_registers, errors, idle_during)
 
-        # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
-        apply_four_ion_shift_error(circuit, all_registers, idle_during)
-        tick(circuit)
+        # add four-ion shift to move next qubits in to be measured if more than one batch:
+        if num_batches > 1:
+          apply_four_ion_shift_error(circuit, all_registers, idle_during)
+          tick(circuit)
         
         qs = [] # empty the list of qubits to have operations applied to them in this time step
       
@@ -367,9 +373,10 @@ def hadamard_register(idle_during, registers, code, circuit, register, errors: d
 
       apply_1q_ops(circuit, 'H', qs, all_registers, errors, idle_during)
 
-      # add four-ion shift to move next qubits in to be measured (or simulate moving them all out):
-      apply_four_ion_shift_error(circuit, all_registers, idle_during)
-      tick(circuit)
+      # add four-ion shift to move next qubits in to be measured if more than one batch:
+      if num_batches > 1:
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
       
       qs = [] # empty the list of qubits to have operations applied to them in this time step
 
@@ -454,6 +461,8 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
     
     ###### start of for loop ######
     
+    num_batches = math.ceil(len(register) / NUM_PARALLEL_M)
+
     for i in range(len(register)):
     
       qs.append(register[i])
@@ -488,14 +497,17 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
         # idling: 
         idle_qs = [q for q in all_registers if q not in qs]
         idle(circuit, idle_qs, idle_during[measure_string])
-
         
-        tick(circuit)
-        
-        # add four-ion shift to move next qubits in (or simulate moving them all out):
-        apply_four_ion_shift_error(circuit, all_registers, idle_during)
-        tick(circuit)
         qs = []
+        
+        tick(circuit)
+        
+        # add four-ion shift to move next qubits in if multiple batches
+        if num_batches > 1:
+          apply_four_ion_shift_error(circuit, all_registers, idle_during)
+          tick(circuit)
+        
+        
 
       ###### end of for loop ######
 
@@ -505,6 +517,13 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
       if p > 0:
         error_op = errors[measure_string].op
         circuit.append(error_op, qs, p)
+      
+      if LOSS:
+        p_loss = errors[measure_string].p_loss
+        if p_loss > 0:
+          loss_op = errors[measure_string].loss_op
+          circuit.append(loss_op, qs, p_loss)
+      
       if LEAKAGE_HERALDS:
         circuit.append("HERALD_LEAKAGE_EVENT", qs, 0)
         for i in reversed(range(len(qs))):
@@ -524,8 +543,10 @@ def measure_register(idle_during, registers, code, basis: str, circuit, register
       tick(circuit)
       
       # add four-ion shift to move next qubits in (or simulate moving them all out):
-      apply_four_ion_shift_error(circuit, all_registers, idle_during)
-      tick(circuit)
+      if num_batches > 1:
+        apply_four_ion_shift_error(circuit, all_registers, idle_during)
+        tick(circuit)
+      
       qs = []
 
 
@@ -658,14 +679,17 @@ def myCP(circuit, gate, l, m, control, target, errors: dict):
 
   if LEAKAGE_REPUMPING: # Going to repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit) # based on Honeywell (now Quantinuum after merger) paper 10.1103/PhysRevLett.124.170501
     if REPUMPING_CYCLES != 0:
-      # cycles = 4 # num_repumping_cycles 
-      p_relax = round_sig_fig(1 - 1/(3 ** REPUMPING_CYCLES), 4) 
+      
+      p_relax = round_sig_fig(1 - 1/(3 ** REPUMPING_CYCLES), 4) # chance of a qubit being pumped back to the qubit subspace is 1/3.
 
       repump_error = errors['error_per_repump'].op
       p_repump_error = REPUMPING_CYCLES * errors['error_per_repump'].p
 
       circuit.append("RELAX", [kc, kt], p_relax)
       circuit.append(repump_error, [kc, kt], p_repump_error)
+
+      if LOSS:
+        circuit.append("DEPOLARIZE1", [kc, kt], round_sig_fig(REPUMPING_CYCLES * errors['error_per_repump'].p_loss, 4)) # the loss error
   
   if LEAKAGE:
     add_relax_then_leak(gate, circuit, [kc, kt], errors)
@@ -1557,6 +1581,12 @@ def apply_four_ion_shift_error(circuit, register, idle_during: dict):
     if LEAKAGE:
       add_relax_then_leak('four_ion_shift', circuit, register, idle_during)
 
+    if LOSS:
+      p_loss = idle_during['four_ion_shift'].p_loss
+      if p_loss > 0:
+        loss_op = idle_during['four_ion_shift'].loss_op
+        circuit.append(loss_op, register, p_loss)
+
 
 
 ''' apply_shift_error
@@ -1628,7 +1658,8 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
         idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
     
     elif ONLYCZs == True: # we are only using CZ gates so Hadamard all data qubits before the X-checks to effectively have CNOTs
-      hadamard_register(idle_during, registers, code, loop_body, qC + qL + qR, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qC, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qL + qR, errors)
     
     if not SEQUENTIAL_HADAMARDS:
       tick(loop_body)
@@ -1722,13 +1753,13 @@ def make_loop_body(jval_prev, code, errors, idle_during, registers, memory_basis
     qC = registers.qZ 
 
     # Initialise Z-check qubits
-    init_register(idle_during, registers, code,'Z', loop_body, qC, errors) # (note qZ = qX if reuse_check_qubits == True)
+    init_register(idle_during, registers, code,'Z', loop_body, qC[::-1], errors) # (note qZ = qX if reuse_check_qubits == True)
     idle(loop_body, qL + qR, idle_during['RZ']) # t_init) # idle data qubits
     tick(loop_body)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     if ONLYCNOTs == False:
-      hadamard_register(idle_during, registers, code, loop_body, qC, errors)
+      hadamard_register(idle_during, registers, code, loop_body, qC[::-1], errors)
       if not SEQUENTIAL_HADAMARDS:
         idle(loop_body, qL + qR, idle_during['H']) # t_init) # idle data qubits
         tick(loop_body)
@@ -1839,6 +1870,7 @@ Inputs are:
             As per 10.1103/PhysRevLett.124.170501 (note this is on Ytterbium ions) this pumps the qubit such that if it is leaked it returns to the qubit manifold as the maximally mixed state with probability 1 - 1/3^n where n is the number of repumping cycles. This imparts a 'memory error' onto non-leaked qubits of n*2*10^-5. We repump BEFORE each two-qubit gate (this accounts for leakage from transport and prevents the damaging effect of a leaked qubit depolarising another qubit). We also apply the memory error from repumping to all qubits whether they are leaked or not.
     - num_repumping_cycles
             As per 10.1103/PhysRevLett.124.170501, given num_repumping_cycles = c, p_relax = 1 - 1/3^c  and p_error = c * 2e-5 . I.e. You reduce the leaked population by a third every time you repump, but introduce an error of 2e-5 on non-leaked qubits (which we apply to all qubits whether they're leaked or not).
+            Note that currently the idling error from repumping is done by having the idling time from repumping incorporated into the 2q gate time.
     - loss 
             Add loss_op (loss operation) from the noise model to each operation with a probablity given by the noise model inserted into errors.
     - swap-LRC
@@ -1951,32 +1983,38 @@ def make_BB_circuit(
 
 
     # Initialise X-check qubits
-    init_register(idle_during, registers, code,'Z', circ, qX, errors)
 
     if memory_basis == 'Z': 
       if ONLYCZs == True:
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
+        init_register(idle_during, registers, code, 'Z', circ, qX + qL + qR, errors) # need to initialise data qubits in this step to hadamard next  # comment out for diagram
+      # else:
+        # init_register(idle_during, registers, code,'Z', circ, qX, errors)
+    
     if memory_basis == 'X':
       if ONLYCZs == False:
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)  # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, qX + qL + qR, errors)  # comment out for diagram
+      else:
+        init_register(idle_during, registers, code,'Z', circ, qX, errors)
 
-    tick(circ)
+    # tick(circ)
     
-    # Hadamard check qubits to |+⟩
-    hadamard_register(idle_during, registers, code, circ, qX, errors)
-    # Deal with data qubits:
+    # Hadamard check qubits to |+⟩ and deal with data qubits:
     if ONLYCZs == True:
       if memory_basis == 'Z':  
-        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qX + qL + qR, errors) # the qubits all went through the operation zones in one direction, now they pass back through the operation zones in reverse order
 
       if memory_basis == 'X': # If only doing CZs, need to Hadamard all the data qubits before the CZs of the X-checks (to make them CNOTs). If memory basis is X though, where you usually prepare in |0⟩ then Hadamard to |+⟩, this means the two hadamards cancel out and all you have to do is prepare in Z here.
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)
+        init_register(idle_during, registers, code,'Z', circ, (qL + qR)[: : -1], errors) # then again this does all qL then qR or vice versa, implying you've split their modules up
+        hadamard_register(idle_during, registers, code, circ, qX, errors)
+
 
     if ONLYCZs == False:
       if memory_basis == 'Z':
-        init_register(idle_during, registers, code,'Z', circ, qL + qR, errors)   # comment out for diagram
+        init_register(idle_during, registers, code,'Z', circ, (qX + qL + qR)[: : -1], errors)   # comment out for diagram
+        hadamard_register(idle_during, registers, code, circ, qX[::-1], errors)
+        
       if memory_basis == 'X':
-        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
+        hadamard_register(idle_during, registers, code, circ, qX + qL + qR, errors)
 
     if not SEQUENTIAL_HADAMARDS:
       if not SEQUENTIAL_RESETS:
@@ -1995,26 +2033,37 @@ def make_BB_circuit(
 
 
 
-    # Now to hadamard the check qubits (they've already been shuttled back into racetrack in apply_cyclic... function)
+    # Now to hadamard the check qubits 
     apply_shuttle_error(circ, qX + qL + qR, errors)
     if SWAPLRC == False:
-      hadamard_register(idle_during, registers, code, circ, qX, errors)
+      
+      # hadamard_register(idle_during, registers, code, circ, qX, errors)
+      
       # Also hadamard data qubits if we were using only CZ gates (sandwiching all the CZ gates with hadamards turns their targets to CNOTs) else idle them ... unless we did a swapLRC  with CZs then it turns out the hadamards cancel
       if ONLYCZs == False:
+        
+        hadamard_register(idle_during, registers, code, circ, qX, errors) # have the previous shuttle arrange them to send them through the operation zones in the reverse order such that when they come back in reversed order they will be being measured in ascending order.
+        
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qL + qR, idle_during['H']) # t_had)
+
       elif ONLYCZs == True:
-        hadamard_register(idle_during, registers, code, circ, qL + qR, errors)
+        
+        hadamard_register(idle_during, registers, code, circ, qX + qL + qR, errors) # hadamard them in reverse order (order taken care of by previous shuttle) such that on the way back they can be measured in ascending order (the check qubits will be closest to the operation zones, so measured
       
       if not SEQUENTIAL_HADAMARDS:
         tick(circ)
 
     elif SWAPLRC == True:
+      
       if ONLYCZs == False:
+      
         hadamard_register(idle_during, registers, code, circ, qX, errors)
+      
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qL + qR, idle_during['H'])
           tick(circ)
+      
       elif ONLYCZs == True:
         pass  # hadamards at the end cancel.
     
@@ -2022,7 +2071,8 @@ def make_BB_circuit(
     # Now measure the check qubits
     append_meas_detectors = True if memory_basis == 'X' else False # If preserving logical plus we put detectors on these measurements in the first round:
     measure_register(idle_during, registers, code, 'Z', circ, qX, errors, append_meas_detectors)
-    if not SEQUENTIAL_MEASUREMENTS:
+    
+    if not SEQUENTIAL_MEASUREMENTS: # idling not dealt with in function if not sequential
       idle(circ, qL + qR, idle_during['MZ']) # t_meas)
 
     if reuse_check_qubits == True:
@@ -2035,13 +2085,13 @@ def make_BB_circuit(
     qZ = registers.qZ   ### NEED THIS UPDATE
 
     # Initialise Z-check qubits
-    init_register(idle_during, registers, code,'Z', circ, qZ, errors) # (note qZ = qX if reuse_check_qubits == True)
+    init_register(idle_during, registers, code,'Z', circ, qZ[::-1], errors) # (note qZ = qX if reuse_check_qubits == True)
     idle(circ, qL + qR, idle_during['RZ']) # idle data qubits
     tick(circ)
 
     # Hadamard check qubits to |+⟩ and IDLE data qubits:
     if ONLYCNOTs == False:  # If we're doing Z-checks with CNOTs gates then don't need to Hadamard check qubits, just have reversed CNOTs
-      hadamard_register(idle_during, registers, code, circ, qZ, errors)
+      hadamard_register(idle_during, registers, code, circ, qZ[::-1], errors)
       if not SEQUENTIAL_HADAMARDS:
         idle(circ, qL + qR, idle_during['H'])
         tick(circ)
@@ -2059,7 +2109,9 @@ def make_BB_circuit(
     # Now to hadamard the check qubits (they've already been shuttled to properly align)
     if ONLYCNOTs == False:
       if SWAPLRC == False:
+        
         hadamard_register(idle_during, registers, code, circ, qZ, errors)
+        
         if not SEQUENTIAL_HADAMARDS:
           idle(circ, qL + qR, idle_during['H'])
           tick(circ)

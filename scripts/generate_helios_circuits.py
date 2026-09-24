@@ -31,7 +31,7 @@ p = 0.001
 
 if seq_ops == True and seq_meas == True:
     max_parallel_1q_ops = 16 * code.m
-    max_parallel_2q_ops = 4 * code.m # USUALLY 4, BUT I WANT TO SEE WHAT MAKING TWO EXTRA PER X JUNCTION TWO-QUBIT-GATE-CAPABLE DOES
+    max_parallel_2q_ops = 8 * code.m # Each X junction has two legs with four operation zones, but only two on each leg can do two-qubit gates. So for each of the m X junctions what happens is four two-qubit gates, then a four-ion shift and 300μs of cooling, then the next four two-qubit gates. In fact, this is how the 2QCB and 2QRB was performed in the Helios paper. So the noise values for two-qubit gate infidelity are INCLUDING the four-ion shift and cooling for doing EIGHT two-qubit gates in a single "time-step". For this reason, we input "8" as the maximum number of two-qubit gates that can be done in a single time step per X junction, and then in the idling errors (helios_idle_during['2q']) on qubits not in these eight two-qubit gates we have calculated the full time for two sets of: two-qubit gates, four-ion shifts, cooling.
 else :
     max_parallel_1q_ops = np.inf # SE wants to be able to do usually 2lm at once (occasionally 3lm)
     max_parallel_2q_ops = np.inf # SE (non-interleaved) wants to be able to do lm at once 
