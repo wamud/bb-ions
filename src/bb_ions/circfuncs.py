@@ -110,16 +110,28 @@ def make_registers(code, reuse_check_qubits = False):
 
 ''' add_qubit_coordinates
 Adds coordinates to the qubits for use in circuit diagrams and importing to crumble.
-Note that (0,0) is the top left of the diagram, and increasing row or column moves down or right respectively.
-NOTE: in Stim it is QUBIT_COORD(COLUMN, ROW) 
-We will place qubits in blocks of (reading clockwise from top left) X-check, L-data, Z-check, R-data.
-Implying that the zeroth X-check qubit at (0,0), zeroth L-data at (0,1), zeroth R-data at (1,0) and zeroth Z-check at (1,1).
-We will do l rows by m columns of each of these blocks.
-If reuse check qubits is true we will simply not fill in Z-check qubits
-Workings:
-To convert indices k into rows of length m (i.e. m columns per row) it is:
-row = floor(k/m) , column = k mod m
-We then additionally need to place each qubit in the appropritate spot in its block so will have some factors of 2'''
+
+If coordinates (x,y) are cartesian then we are:
+
+Arrange qubits into blocks such that the i-th block is:
+
+qL[i]  qZ[i]
+
+qX[i]  qR[i]
+
+
+Will then arrange the blocks starting at 0 in bottom left, then ascending up the column in columns of size m.
+For example, block arrangement for a code with l = 3, m = 2:
+
+1  3  5
+0  2  4
+
+Arranging the qubits like this means a term x^i⋅y^j makes a connection from block (a,b) to block (a+i,b+j) in the (x,y)
+
+However!
+Stim and crumble coordinates (x,y) is the cartesian coordinate system but with y going in the negative direction for some reason'''
+
+
 def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
   
   qX = registers.qX
@@ -131,37 +143,39 @@ def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
   m = code.m
   n = code.n
 
-  
+
+
+
   # qX: top left of each block:
   for k in range(n//2):
     qubit = qX[k]
-    v, w = convtorowcol(m, k)
-    x_coord = 2 * w
-    y_coord = 2 * v
-    # x_coord =  2 * math.floor(k/m)
-    # y_coord =  2 * (k % m)
+    v, w = convtorowcol(m, k)    
+    y_coord = 2 * w  # we set y coord to the column and x coord to the row then x^iy^j means make a connection i movements in the x direction and j movements in the y direction on the cartesian plane.
+    x_coord = 2 * v
+    # # x_coord =  2 * math.floor(k/m)
+    # # y_coord =  2 * (k % m)
     circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
   
   # qL: top right of each block.
   # Will be same row as qX, then to the right by 1 for each column.
   for k in range(n//2):
     qubit = qL[k]
-    v, w = convtorowcol(m, k)
-    x_coord = 2 * w + 1
-    y_coord = 2 * v
-    # x_coord =    2 * math.floor(k/m)  
-    # y_coord =  (2 * (k % m)) + 1
+    v, w = convtorowcol(m, k)  
+    y_coord = 2 * w + 1  # we set y coord to the column and x coord to the row then x^iy^j means make a connection i movements in the x direction and j movements in the y direction on the cartesian plane.
+    x_coord = 2 * v
+    # # x_coord =    2 * math.floor(k/m)  
+    # # y_coord =  (2 * (k % m)) + 1
     circ.append("QUBIT_COORDS", qubit, [x_coord,y_coord])
 
   # qR: bottom left of each block.
   # Same x_coord of qX, one higher row
   for k in range(n//2):
     qubit = qR[k]
-    v, w = convtorowcol(m, k)
-    x_coord = 2 * w
-    y_coord = 2 * v + 1
-    # x_coord =    (2 * math.floor(k/m)) + 1
-    # y_coord =  2 * (k % m)
+    v, w = convtorowcol(m, k)  
+    y_coord = 2 * w  # we set y coord to the column and x coord to the row then x^iy^j means make a connection i movements in the x direction and j movements in the y direction on the cartesian plane.
+    x_coord = 2 * v + 1
+    # # x_coord =    (2 * math.floor(k/m)) + 1
+    # # y_coord =  2 * (k % m)
     circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
 
   # qZ: if reusing one set of check qubits we don't have separate qZ and will just draw qX. If NOT reusing then qZ is bottom right of each block.
@@ -169,11 +183,12 @@ def add_qubit_coordinates(circ, code, registers, reuse_check_qubits):
   if reuse_check_qubits == False:
     for k in range(n//2):
       qubit = qZ[k]
-      v, w = convtorowcol(m, k)
-      x_coord = 2 * w + 1
-      y_coord = 2 * v + 1
-      # x_coord =    (2 * math.floor(k/m)) + 1
-      # y_coord =  (2 * (k % m)) + 1
+      v, w = convtorowcol(m, k)  
+
+ # we set y coord to the column and x coord to the row then x^iy^j means make a connection i movements in the x direction and j movements in the y direction on the cartesian plane.      y_coord = 2 * w + 1 
+      x_coord = 2 * v + 1
+      # # x_coord =    (2 * math.floor(k/m)) + 1
+      # # y_coord =  (2 * (k % m)) + 1
       circ.append("QUBIT_COORDS", qubit, [x_coord, y_coord])
 
   return 
