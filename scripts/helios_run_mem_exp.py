@@ -51,8 +51,8 @@ def main():
  
     
 
-    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes/*.stim") 
-    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/testing_stats.csv"
+    circuit_paths = glob.glob(f"../circuits/leakage_and_loss/all_codes_updated/8_op_zones_per_X_junction_and_4_do_2q_gates/*.stim") 
+    csv_path = f"../collected_stats/helios_noise/leakage_and_loss/updated_codes.csv"
 
     circuit_paths.sort()
     if len(circuit_paths) == 0:
@@ -71,15 +71,13 @@ def main():
         for path in circuit_paths
     ]
 
-    start_time = time.time()
-    print(f"Start time = {start_time}")
 
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
-        max_shots = 1000,
-        max_errors = 5,
+        max_shots = 10000,
+        max_errors = 100,
         tasks = tasks,
-        decoders=['beam64_32res_640iters'],
+        decoders=['bposd'],
         existing_data_filepaths = existing,
         save_resume_filepath = csv_path,
         custom_decoders = custom_decoders,
@@ -87,8 +85,54 @@ def main():
         )
 
 
-    end_time = time.time()
-    print(f"Finished collecting in {(end_time - start_time):.2f} seconds")
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 100000,
+        max_errors = 100,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 1_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 100_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
+        max_shots = 1_000_000_000,
+        max_errors = 2,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
+
 
 
 if __name__ == "__main__":

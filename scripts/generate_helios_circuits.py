@@ -8,7 +8,7 @@ from bb_ions import *
 import json
 
 memory_basis = 'X' # mem X is worst-case in Helios due to two-qubit gate and idling being dominate by Z errors
-num_syndrome_extraction_cycles = 20
+num_syndrome_extraction_cycles = 24
 
 only_CZs = True
 seq_ops = True
@@ -23,51 +23,53 @@ swapLRC = False
 leakage_heralds = False
 
 
-
-code = interchanged_756_code()
-
 p = 0.001
 
+codes = [bb6_72_12_6(), gross_code(), two_gross_code(), interchanged_bb6_360_code(), interchanged_undercover_code()]
 
-if seq_ops == True and seq_meas == True:
-    max_parallel_1q_ops = 16 * code.m
-    max_parallel_2q_ops = 8 * code.m # Each X junction has two legs with four operation zones, but only two on each leg can do two-qubit gates. So for each of the m X junctions what happens is four two-qubit gates, then a four-ion shift and 300μs of cooling, then the next four two-qubit gates. In fact, this is how the 2QCB and 2QRB was performed in the Helios paper. So the noise values for two-qubit gate infidelity are INCLUDING the four-ion shift and cooling for doing EIGHT two-qubit gates in a single "time-step". For this reason, we input "8" as the maximum number of two-qubit gates that can be done in a single time step per X junction, and then in the idling errors (helios_idle_during['2q']) on qubits not in these eight two-qubit gates we have calculated the full time for two sets of: two-qubit gates, four-ion shifts, cooling.
-else :
-    max_parallel_1q_ops = np.inf # SE wants to be able to do usually 2lm at once (occasionally 3lm)
-    max_parallel_2q_ops = np.inf # SE (non-interleaved) wants to be able to do lm at once 
+for code in codes:
+        
 
-
-
-
-filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops}"
-
-
-print("Creating: ",filename)
-
-circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
-    code,
-    errors = helios_errors(p, code),
-    idle_during = helios_idle_errors(p, code),
-    num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
-    memory_basis = memory_basis,
-    sequential_operations = seq_ops, 
-    sequential_measurements = seq_meas,
-    exclude_opposite_basis_detectors = exclude,
-    reuse_check_qubits = True,
-    leakage = leakage,
-    only_CZs = only_CZs,
-    leakage_repumping = leakage_repumping,
-    num_repumping_cycles=cycles,
-    swapLRC = swapLRC,
-    loss = loss,
-    leakage_heralds=leakage_heralds,
-    num_parallel_1q_ops = max_parallel_1q_ops, 
-    num_parallel_2q_ops = max_parallel_2q_ops,
-)
+    if seq_ops == True and seq_meas == True:
+        max_parallel_1q_ops = 2 * code.l * code.m
+        max_parallel_2q_ops = code.l * code.m # Each X junction has two legs with four operation zones, but only two on each leg can do two-qubit gates. So for each of the m X junctions what happens is four two-qubit gates, then a four-ion shift and 300μs of cooling, then the next four two-qubit gates. In fact, this is how the 2QCB and 2QRB was performed in the Helios paper. So the noise values for two-qubit gate infidelity are INCLUDING the four-ion shift and cooling for doing EIGHT two-qubit gates in a single "time-step" (though it's actually two time steps). For this reason, we input "8" as the maximum number of two-qubit gates that can be done in a single time step per X junction, and then in the idling errors (helios_idle_during['2q']) on qubits not in these eight two-qubit gates we have calculated the full time for two-qubit gates, four-ion shifts, cooling, two-qubit gates.
+    else :
+        max_parallel_1q_ops = np.inf # SE wants to be able to do usually 2lm at once (occasionally 3lm)
+        max_parallel_2q_ops = np.inf # SE (non-interleaved) wants to be able to do lm at once 
 
 
-# Save circuit:
-circuit.to_file(f"../circuits/leakage_and_loss/all_codes/{filename}.stim")
-# svg = circuit.diagram('timeline-svg')
-# svg_string = str(svg)
-# with open(f"../scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)
+
+
+    filename = f"n={code.n},k={code.k},d={code.d_max},l={code.l},m={code.m},A={'+'.join(f'x{i}y{j}' for i, j in code.Aij)},B={'+'.join(f'x{i}y{j}' for i, j in code.Bij)},p={p},leakage={leakage},loss={loss},leak_heralds={leakage_heralds},leak_repump={leakage_repumping},repump_cycles={cycles},swapLRC={swapLRC},r={num_syndrome_extraction_cycles},seq_ops={seq_ops},seq_meas={seq_meas},b={memory_basis},excl_opp_detectors={exclude},prllel_1q={max_parallel_1q_ops},prllel_2q={max_parallel_2q_ops//2}" 
+    # !!!!!!!!!!!!!!!!!!! DIVIDING MAX_PARALLEL_2Q_OPS BY 2 for the actual amount being done in parallel. !!!!!!!!!!!!!!!!!!!!!!
+
+
+    print("Creating: ",filename)
+
+    circuit = make_BB_circuit(  # see src/bb_ions/circfuncs for explanation of make_BB_circuit inputs
+        code,
+        errors = helios_errors(p, code),
+        idle_during = helios_idle_errors(p, code),
+        num_syndrome_extraction_cycles = num_syndrome_extraction_cycles,  
+        memory_basis = memory_basis,
+        sequential_operations = seq_ops, 
+        sequential_measurements = seq_meas,
+        exclude_opposite_basis_detectors = exclude,
+        reuse_check_qubits = True,
+        leakage = leakage,
+        only_CZs = only_CZs,
+        leakage_repumping = leakage_repumping,
+        num_repumping_cycles=cycles,
+        swapLRC = swapLRC,
+        loss = loss,
+        leakage_heralds=leakage_heralds,
+        num_parallel_1q_ops = max_parallel_1q_ops, 
+        num_parallel_2q_ops = max_parallel_2q_ops,
+    )
+
+
+    # Save circuit:
+    circuit.to_file(f"../circuits/leakage_and_loss/all_codes_updated/l_op_zones_per_X_junction_and_half_do_2q_gates/{filename}.stim")
+    # svg = circuit.diagram('timeline-svg')
+    # svg_string = str(svg)
+    # with open(f"../scrap.svg", "w", encoding="utf-8") as f: f.write(svg_string)

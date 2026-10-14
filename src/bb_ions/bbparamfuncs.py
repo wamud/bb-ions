@@ -464,7 +464,7 @@ def two_gross_code():
 
 
 def bb6_288_16_12():
-    # 2-cover of gross code (can run ''find_codes/scripts/find_h_cover_codes.py gross_code 2 16 12''). (Identical to gross code except m = 2m_gross). Was found first using an LLM in [2606.02418v1] but really they should have searched h-covers first as it's much faster and less costly. I have simulated this code and sadly its performance isn't very good.
+    # 2-cover of gross code (can run ''find_codes/scripts/find_h_cover_codes.py gross_code 2 16 12''). (Identical to gross code except m = 2m_gross). Was found first using an LLM in [2606.02418v1] but really they should have searched h-covers of gross code first as it's much faster and less costly (just double m in the gross code and keep everything else the same and voilà). I have simulated this code and sadly its performance isn't very good.
     l = 12
     m = 12
     Aij = [(3, 0), (0, 1), (0, 2)]
@@ -472,8 +472,7 @@ def bb6_288_16_12():
     d = 12
     code = get_code_params(l, m, Aij, Bij, d)
 
-    # Is a multiple of the gross code? This is just a 2-cover of the gross code
-
+    # Gross code was the same but with m = 6:
     # l = 12 , m = 6,
     # A = x^3 + y + y^2
     # B = y^3 + x + x^2
