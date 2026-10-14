@@ -1894,8 +1894,8 @@ Inputs are:
             In general this should always be set to True. It uses stim's in-built circuit.detecting_regions() to check if there are any detectors which, in the absence of noise, don't commute and hence produce non-determenistic outcomes. In the absence of noise all detectors should commute so this is a problem if they don't. The only time this should be set to false is when tinkering with the circuit builder and adding and moving detectors, so you might want to look at a visual of a circuit before having finished all the detectors (and consequently want to build the circuit without checking the detecting regions)
     - num_parallel_1q_ops
             a limitation of the hardware we're imagining running the circuit on. This is how many simultaneous single-qubit operations (R, M, H) can be done. In Helios (for example) there are eight operation zones and each can hold two qubits so num_parallel_1q_ops = 16.
-    - num_2Q_parallel_2q_ops = 4.
-            same as above but for 2q gates. In Helios (for example) only four operation zones are equipped with 2q gates so this number is 4 (acting on 8 qubits).
+    - num_2Q_parallel_2q_ops = 8.
+            same as above but for 2q gates. In Helios (for example) only four operation zones are equipped with 2q gates so this number is 8 (four two-qubit gates acting on 8 qubits)
     - reshuffling
             Ignore now as I've added it by default as a 'shuttle' between every term in each polynomial being applied.
             Previous explanation: You have aligned required modules but might need to (as you do in Helios) cyclic shift *within* the modules to align required qubits. When two modules are first aligned this error is already accounted for in 'shuttle' but when changing from one term to another you need to reshuffle (not a technical term) / realign again.
