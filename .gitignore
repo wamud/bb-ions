@@ -18,4 +18,5 @@ output.pdf
 *output*
 find_codes/found_codes/*progress*
 find_codes/found_codes/around_60/*progress*
+*.egg-info
 *client.log*
