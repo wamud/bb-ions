@@ -12,9 +12,9 @@ import sys
 import os
 import multiprocessing
 
-sys.path.append(os.path.abspath("../packages/BeamSearchDecoder"))
-from beamsearch import BeamSearch
-from sinter_beamsearch import SinterDecoder_BeamSearch
+#sys.path.append(os.path.abspath("../packages/BeamSearchDecoder"))
+#from beamsearch import BeamSearch
+#from sinter_beamsearch import SinterDecoder_BeamSearch
 
 
 
@@ -38,12 +38,12 @@ custom_decoders = {
             ),
             
             # Beamsearch decoders:
-            "beam8_230iters": SinterDecoder_BeamSearch(),
-            "beam32_340iters": SinterDecoder_BeamSearch(beam_width=32, initial_iters=40, iters_per_round=30),
-            "beam64_640iters": SinterDecoder_BeamSearch(max_rounds=20, beam_width=64, initial_iters=40, iters_per_round=30),
-            "beam64_32res_640iters": SinterDecoder_BeamSearch(
-                max_rounds=20, beam_width=64, num_results=32, initial_iters=40, iters_per_round=30
-            ),
+ #           "beam8_230iters": SinterDecoder_BeamSearch(),
+  #          "beam32_340iters": SinterDecoder_BeamSearch(beam_width=32, initial_iters=40, iters_per_round=30),
+   #         "beam64_640iters": SinterDecoder_BeamSearch(max_rounds=20, beam_width=64, initial_iters=40, iters_per_round=30),
+    #        "beam64_32res_640iters": SinterDecoder_BeamSearch(
+     #           max_rounds=20, beam_width=64, num_results=32, initial_iters=40, iters_per_round=30
+      #      ),
         }
 
 def main():
