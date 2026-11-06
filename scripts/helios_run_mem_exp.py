@@ -123,6 +123,18 @@ def main():
 
     samples = sinter.collect(
         num_workers = multiprocessing.cpu_count(),
+        max_shots = 200_000_000,
+        max_errors = 10,
+        tasks = tasks,
+        decoders=['bposd'],
+        existing_data_filepaths = existing,
+        save_resume_filepath = csv_path,
+        custom_decoders = custom_decoders,
+        print_progress = True
+        )
+
+    samples = sinter.collect(
+        num_workers = multiprocessing.cpu_count(),
         max_shots = 1_000_000_000,
         max_errors = 2,
         tasks = tasks,
